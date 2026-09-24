@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<title th:text="${model.voucherNumber}">سند قبض</title>
+<style>
+    @page { size: A4; margin: 20mm 18mm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Noto Naskh Arabic', 'Noto Sans', sans-serif;
+        direction: rtl;
+        font-size: 13px;
+        color: #1f2530;
+        margin: 0;
+    }
+    .header {
+        display: table; width: 100%;
+        border-bottom: 2px solid #2563eb;
+        padding-bottom: 12px; margin-bottom: 20px;
+    }
+    .header .company { display: table-cell; width: 60%; vertical-align: top; }
+    .header .voucher-meta { display: table-cell; width: 40%; vertical-align: top; text-align: left; }
+    .company-name { font-size: 20px; font-weight: bold; color: #1e3a8a; }
+    .company-name-en { font-size: 12px; color: #64748b; }
+    .company-line { font-size: 11px; color: #475569; margin-top: 2px; }
+    .voucher-title {
+        display: inline-block; background: #2563eb; color: #ffffff;
+        padding: 5px 16px; border-radius: 4px; font-size: 15px; font-weight: bold;
+        margin-bottom: 6px;
+    }
+    .meta-row { font-size: 12px; margin-top: 3px; }
+    .meta-row b { color: #1e293b; }
+
+    .box { background: #f1f5f9; border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; }
+    .row { display: table; width: 100%; margin-bottom: 12px; }
+    .row .label { display: table-cell; width: 30%; color: #64748b; font-size: 12.5px; vertical-align: top; }
+    .row .value { display: table-cell; width: 70%; font-weight: bold; color: #0f172a; font-size: 13px; }
+
+    .amount-box {
+        text-align: center; margin: 22px 0; padding: 16px;
+        border: 2px solid #2563eb; border-radius: 8px;
+    }
+    .amount-value { font-size: 26px; font-weight: bold; color: #1e3a8a; direction: ltr; unicode-bidi: embed; }
+    .amount-label { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+    .signatures { display: table; width: 100%; margin-top: 60px; }
+    .signatures .sig { display: table-cell; width: 50%; text-align: center; }
+    .sig-line { border-top: 1px solid #334155; width: 70%; margin: 0 auto 6px; padding-top: 6px; }
+    .sig-label { font-size: 11.5px; color: #475569; }
+
+    .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="company">
+        <div class="company-name" th:text="${model.companyName}">اسم المحل</div>
+        <div class="company-name-en" th:text="${model.companyNameEn}">Company Name</div>
+        <div class="company-line" th:if="${model.companyAddress}" th:text="${model.companyAddress}">العنوان</div>
+        <div class="company-line" th:if="${model.companyPhone}">هاتف: <span th:text="${model.companyPhone}">-</span></div>
+    </div>
+    <div class="voucher-meta">
+        <div class="voucher-title" th:text="'سند قبض ' + ${model.categoryLabel}">سند قبض راتب</div>
+        <div class="meta-row">الرقم: <b th:text="${model.voucherNumber}">-</b></div>
+        <div class="meta-row">التاريخ: <b th:text="${#temporals.format(model.date, 'yyyy-MM-dd')}">-</b></div>
+    </div>
+</div>
+
+<div class="box">
+    <div class="row">
+        <div class="label">استلم الموظف</div>
+        <div class="value" th:text="${model.employeeName}">-</div>
+    </div>
+    <div class="row" th:if="${model.employeePosition}">
+        <div class="label">الوظيفة</div>
+        <div class="value" th:text="${model.employeePosition}">-</div>
+    </div>
+    <div class="row" th:if="${model.notes}">
+        <div class="label">ملاحظات</div>
+        <div class="value" th:text="${model.notes}">-</div>
+    </div>
+</div>
+
+<div class="amount-box">
+    <div class="amount-value" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.amount, 3)} + ' ' + ${model.currency}">0.000</div>
+    <div class="amount-label">المبلغ المستلم</div>
+</div>
+
+<div class="signatures">
+    <div class="sig">
+        <div class="sig-line">&#160;</div>
+        <div class="sig-label">توقيع المستلم (الموظف)</div>
+    </div>
+    <div class="sig">
+        <div class="sig-line">&#160;</div>
+        <div class="sig-label" th:text="'صرفها: ' + (${model.recordedByName} ?: '-')">صرفها</div>
+    </div>
+</div>
+
+<div class="footer">
+    <div>هذا السند دليل استلام المبلغ المذكور أعلاه</div>
+</div>
+
+</body>
+</html>

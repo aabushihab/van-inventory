@@ -1,0 +1,11 @@
+node_modules/
+target/
+dist/
+*.log
+*.jar
+*.exe
+*.rar
+_to_delete/
+foreeky 25082026 Work Version/
+backend/backups/
+backend/.claude/

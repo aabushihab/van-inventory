@@ -1,0 +1,291 @@
+{
+  "app": { "title": "Shop Management System" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "catalog": "Categories & Units",
+    "stock": "Stock",
+    "branches": "Branches & Warehouses",
+    "purchaseInvoices": "Purchase Invoices",
+    "purchaseQuotes": "Purchase Quotes",
+    "salesInvoices": "Sales Invoices",
+    "salesQuotes": "Sales Quotes",
+    "parties": "Customers & Suppliers",
+    "users": "Users",
+    "roles": "Roles & Permissions",
+    "notifications": "Notifications",
+    "damaged": "Damaged Goods",
+    "reports": "Reports",
+    "balances": "Receivables & Payables",
+    "expenses": "Expenses",
+    "employees": "Employees",
+    "accounts": "Accounts",
+    "checks": "Checks",
+    "stocktake": "Stocktake",
+    "fixedAssets": "Fixed Assets",
+    "fiscalClosing": "Fiscal Closing",
+    "companySettings": "Company Settings",
+    "auditLogs": "Audit Log",
+    "backups": "Backups",
+    "logout": "Logout"
+  },
+  "common": {
+    "save": "Save", "cancel": "Cancel", "edit": "Edit", "delete": "Delete", "add": "Add New", "clear": "Clear",
+    "exportExcel": "Export Excel",
+    "search": "Search", "actions": "Actions", "name": "Name", "nameEn": "Name (English)",
+    "active": "Active", "inactive": "Inactive", "status": "Status", "confirmDelete": "Are you sure you want to delete this?",
+    "close": "Close", "print": "Print", "loading": "Loading...", "noData": "No data",
+    "phone": "Phone", "email": "Email", "address": "Address", "notes": "Notes",
+    "total": "Total", "quantity": "Quantity", "price": "Price", "tax": "Tax", "discount": "Discount",
+    "createdAt": "Created At", "back": "Back", "language": "Language", "yes": "Yes", "no": "No",
+    "success": "Operation successful", "error": "An error occurred", "sku": "SKU", "barcode": "Barcode",
+    "unit": "Unit", "category": "Category", "warehouse": "Warehouse", "branch": "Branch",
+    "parentCategory": "Parent Category (optional)", "noParent": "None — top-level category"
+  },
+  "auth": {
+    "username": "Username", "password": "Password", "login": "Login",
+    "welcome": "Welcome", "loginSubtitle": "Sign in to manage your shop",
+    "changePassword": "Change Password", "currentPassword": "Current Password",
+    "newPassword": "New Password", "confirmPassword": "Confirm Password",
+    "passwordTooShort": "Password must be at least 6 characters", "passwordMismatch": "Passwords do not match"
+  },
+  "dashboard": {
+    "todaySales": "Today's Sales", "todayInvoices": "Today's Invoices", "monthSales": "This Month's Sales",
+    "lowStock": "Low Stock Items", "notifications": "Unread Notifications", "products": "Total Products",
+    "warehouses": "Warehouses", "branches": "Branches",
+    "financialSnapshot": "Financial Snapshot", "quickLinks": "Quick Links", "recentActivity": "Recent Activity",
+    "salesTrend": "Sales Trend - Last 7 Days", "noRecentActivity": "No recent activity",
+    "sale": "Sale", "purchase": "Purchase", "noPermissionHint": "Only screens you have permission for are shown here"
+  },
+  "products": {
+    "title": "Products", "size": "Size", "color": "Color", "origin": "Origin Country",
+    "piecesPerBox": "Pieces/Box", "areaPerBox": "Sqm/Box", "purchasePrice": "Purchase Price",
+    "salePrice": "Sale Price", "minStock": "Low Stock Threshold", "totalStock": "Total Stock",
+    "image": "Image", "uploadImage": "Upload Image", "imageTooLarge": "Image is too large (max 15 MB)",
+    "priceBelowCostWarning": "Warning: sale price is below purchase price (selling at a loss)",
+    "allCategories": "All Categories"
+  },
+  "stock": { "adjust": "Add Stock", "transfer": "Transfer Between Warehouses", "movements": "Stock Movements",
+    "from": "From Warehouse", "to": "To Warehouse", "current": "Current Balance", "lowStockOnly": "Low stock only",
+    "selectCategoryPrompt": "Select a category first to view its products",
+    "purchasePriceOptional": "Purchase Price (optional)", "salePriceOptional": "Sale Price (optional)",
+    "purchasePriceHelp": "Averaged with existing stock cost, only applied when increasing stock",
+    "salePriceHelp": "Directly replaces the product's sale price regardless of adjustment type",
+    "editPrices": "Edit Prices" },
+  "invoice": {
+    "number": "Invoice Number", "date": "Date", "customer": "Customer", "supplier": "Supplier",
+    "items": "Items", "addItem": "Add Item", "grandTotal": "Grand Total", "paid": "Paid",
+    "due": "Due", "paymentMethod": "Payment Method", "cash": "Cash", "card": "Card",
+    "transfer": "Bank Transfer", "credit": "Credit", "printA4": "Print A4", "printThermal": "Print Receipt",
+    "create": "Create Invoice", "cancelInvoice": "Cancel Invoice", "confirmCancel": "Are you sure you want to cancel this invoice? Unreturned quantities will be restocked, and the invoice stays archived as \"Cancelled\" rather than being deleted.", "confirmed": "Confirmed", "cancelled": "Cancelled",
+    "returned": "Returned", "return": "Return", "remainingQty": "Returnable Qty", "returnQty": "Return Qty",
+    "selectReturnItem": "Select at least one item to return",
+    "paidExceedsTotal": "Paid amount cannot exceed the invoice total",
+    "allCustomers": "All Customers", "allSuppliers": "All Suppliers",
+    "allStatuses": "All Statuses",
+    "fullyPaid": "Fully Paid", "payments": "Payments", "paymentHistory": "Payment History",
+    "addPayment": "Add Payment", "amount": "Amount", "invalidPaymentAmount": "Invalid payment amount or exceeds the remaining balance", "accountRequired": "You must select an account (cash/bank)",
+    "creditOwed": "Refund owed to customer", "supplierCreditOwed": "Refund owed by supplier",
+    "markRefunded": "Record Refund", "refundAmount": "Refund Amount", "refundSuccess": "Refund recorded successfully",
+    "refundHistoryLabel": "Refund", "dueDate": "Due Date"
+  },
+  "notifications": { "title": "Notifications", "markAllRead": "Mark All Read", "lowStockAlert": "Low Stock Alert" },
+  "damaged": {
+    "title": "Damaged Goods", "add": "Record Damage", "reason": "Reason", "unitCost": "Unit Cost",
+    "lostValue": "Lost Value", "totalLoss": "Total Loss", "confirmHint": "Quantity is always deducted from warehouse stock",
+    "available": "Available in Warehouse", "compensate": "Supplier Compensation", "compensated": "Compensated", "remaining": "Remaining Uncompensated",
+    "originalQuantity": "Original Quantity", "active": "Active", "cancelled": "Cancelled"
+  },
+  "reports": {
+    "title": "Reports", "financial": "Financial Report (Profit)", "inventoryValue": "Inventory Value",
+    "from": "From", "to": "To", "groupBy": "Group By", "byDay": "Day", "byMonth": "Month", "byWeek": "Week",
+    "period": "Period", "invoiceCount": "Invoice Count", "salesTotal": "Total Sales",
+    "costOfGoodsSold": "Cost of Goods Sold", "damagedLoss": "Damaged Goods Loss", "expensesTotal": "Expenses", "grossProfit": "Gross Profit", "purchasesTotal": "Total Purchases",
+    "allWarehouses": "All Warehouses", "value": "Value", "totalValue": "Total Inventory Value",
+    "performance": "Performance & Top Sellers", "topProducts": "Top-Selling Products",
+    "topCustomers": "Top Customers", "topSuppliers": "Top Suppliers",
+    "quantitySold": "Quantity Sold", "revenue": "Revenue", "totalPurchased": "Total Purchased",
+    "stockMovement": "Periodic Stock Movement", "quantityIn": "In", "quantityOut": "Out", "net": "Net",
+    "taxPayable": "Tax Payable", "taxCollected": "Tax Collected on Sales", "taxPaid": "Tax Paid on Purchases",
+    "netPayable": "Net Payable",
+    "balanceSheet": "Balance Sheet", "assets": "Assets", "liabilitiesAndEquity": "Liabilities & Equity",
+    "cashAndBank": "Cash & Bank", "accountsReceivable": "Accounts Receivable", "fixedAssetsValue": "Fixed Assets (Net Book Value)",
+    "totalAssets": "Total Assets", "accountsPayable": "Accounts Payable", "totalLiabilities": "Total Liabilities",
+    "equity": "Equity",
+    "cashFlow": "Cash Flow Statement", "openingCash": "Opening Cash", "closingCash": "Closing Cash",
+    "operatingActivities": "Net Operating Activities", "investingActivities": "Net Investing Activities",
+    "financingActivities": "Net Financing Activities", "netChange": "Net Change for Period"
+  },
+  "users": { "fullName": "Full Name", "role": "Role", "lastLogin": "Last Login", "resetPassword": "Reset Password" },
+  "roles": { "permissions": "Permissions", "systemRole": "System Role" },
+  "parties": { "searchByNameOrPhone": "Search by name or phone",
+    "newSalesInvoice": "New sales invoice for this customer", "newPurchaseInvoice": "New purchase invoice from this supplier" },
+  "balances": {
+    "byParty": "Balance by Party", "outstandingInvoices": "Outstanding Invoices", "invoiceCount": "Invoice Count",
+    "totalReceivables": "Total Sales Receivables", "totalPayables": "Total Purchase Payables",
+    "current": "0-30 days", "days31to60": "31-60 days", "days61to90": "61-90 days", "over90": "Over 90 days",
+    "aging": "Aging", "searchCustomer": "Search by customer name", "searchSupplier": "Search by supplier name"
+  },
+  "expenses": {
+    "title": "Shop Expenses", "searchPlaceholder": "Search by category or notes",
+    "date": "Date", "category": "Category", "amount": "Amount", "recordedBy": "Recorded By",
+    "employee": "Employee", "employeeRequiredHint": "You must select an employee for a salary or advance expense",
+    "receipt": "Receipt Photo", "uploadReceipt": "Upload Receipt Photo", "imageTooLarge": "Image size exceeds 15MB"
+  },
+  "employees": {
+    "title": "Employees", "position": "Position", "monthlySalary": "Monthly Salary",
+    "viewSalary": "Salary & Advances", "salaryDetails": "Salary Details", "paidThisMonth": "Paid in Selected Month",
+    "remaining": "Remaining Monthly Salary", "paySalary": "Record Payment", "recordPayment": "Save Payment",
+    "history": "Salary & Advance Payment History", "noHistory": "No payments recorded yet",
+    "month": "Month", "year": "Year", "printVoucher": "Print Voucher", "uploadSignedVoucher": "Upload Signed Voucher",
+    "paidThisMonthColumn": "Received in {{month}}", "currentMonthNote": "Salary received below reflects {{month}}",
+    "paidThisYearColumn": "Received in {{year}}",
+    "payAppliesToSelectedMonth": "This payment will be deducted from {{month}}'s salary, regardless of the actual transaction date below",
+    "transactionDate": "Actual Transaction Date", "statement": "Employee Statement", "yearTotal": "{{year}} Total"
+  },
+  "accounts": {
+    "title": "Cash & Bank Accounts", "type": "Account Type", "typeCASH": "Cash", "typeBANK": "Bank",
+    "openingBalance": "Opening Balance", "currentBalance": "Current Balance", "ledger": "Transaction Ledger",
+    "recordCapital": "Record Capital Transaction", "account": "Account", "direction": "Direction",
+    "directionIN": "In", "directionOUT": "Out", "capitalIn": "Capital Injection", "capitalOut": "Capital Draw",
+    "sourceType": "Source",
+    "sourceSALES_PAYMENT": "Sales Invoice Payment", "sourcePURCHASE_PAYMENT": "Purchase Invoice Payment",
+    "sourceEXPENSE": "Expense", "sourceCAPITAL_IN": "Capital Injection", "sourceCAPITAL_OUT": "Capital Draw",
+    "sourceCHECK_CLEARED": "Check Cleared", "sourceMANUAL": "Manual Entry", "sourceTRANSFER": "Account Transfer",
+    "transfer": "Transfer Between Accounts", "fromAccount": "From Account", "toAccount": "To Account",
+    "reconciled": "Reconciled", "bookBalance": "Book Balance", "reconciledBalance": "Reconciled Balance",
+    "searchLedger": "Search by notes, source, or user"
+  },
+  "checks": {
+    "title": "Checks", "direction": "Check Type", "received": "Received from Customer", "issued": "Issued to Supplier",
+    "party": "Name", "dueDate": "Due Date", "checkNumber": "Check Number", "bankName": "Bank Name",
+    "statusPENDING": "Pending", "statusCLEARED": "Cleared", "statusBOUNCED": "Bounced", "statusCANCELLED": "Cancelled",
+    "markCleared": "Mark Cleared", "markBounced": "Mark Bounced", "markCancelled": "Cancel Check",
+    "confirmBounce": "Confirm this check bounced?", "confirmCancel": "Confirm cancelling this check?"
+  },
+  "stocktake": {
+    "title": "Physical Stocktake", "newSession": "Start New Stocktake", "sessionDate": "Stocktake Date",
+    "draft": "In Progress", "completed": "Completed", "systemQuantity": "System Quantity",
+    "countedQuantity": "Counted Quantity", "variance": "Variance", "saveCounts": "Save Counts",
+    "complete": "Complete Stocktake", "confirmComplete": "Completing will apply all variances to stock immediately and cannot be undone. Continue?"
+  },
+  "fixedAssets": {
+    "title": "Fixed Assets", "category": "Category", "purchaseDate": "Purchase Date", "purchaseCost": "Purchase Cost",
+    "salvageValue": "Salvage Value", "usefulLifeMonths": "Useful Life (months)",
+    "accumulatedDepreciation": "Accumulated Depreciation", "netBookValue": "Net Book Value",
+    "paidFromAccount": "Paid From Account", "active": "Active", "disposed": "Disposed",
+    "dispose": "Dispose Asset", "disposedDate": "Disposal Date", "saleAmount": "Sale Amount (optional)"
+  },
+  "fiscalClosing": {
+    "title": "Fiscal Year Closing", "closeNew": "Close New Period",
+    "currentlyLockedUntil": "The period is locked through {{date}} — no financial transactions or stocktake completions can be dated on or before this date",
+    "noClosingYet": "No closing recorded yet",
+    "history": "Closing History", "closingDate": "Closing Date", "closedAt": "Closed At",
+    "warning": "Warning: after closing, no account transaction, stocktake completion, or edit/cancel/return of a sales or purchase invoice can be dated on or before the closing date. This action cannot be undone.",
+    "confirmClose": "Are you sure you want to close the fiscal period through {{date}}? This action cannot be undone."
+  },
+  "quote": {
+    "create": "Create Quote", "number": "Quote Number", "confirm": "Confirm & Convert to Invoice",
+    "confirmHint": "Confirming will deduct stock and issue a real invoice with this data",
+    "convertedInvoice": "Resulting Invoice", "pending": "Pending", "confirmed": "Confirmed", "cancelled": "Cancelled"
+  },
+  "company": {
+    "title": "Company Settings", "name": "Company Name", "nameEn": "Company Name (English)",
+    "taxNumber": "Tax Number", "phone": "Phone", "address": "Address", "currency": "Currency",
+    "loginBackground": "Login Screen Background", "uploadBackground": "Upload Background Image",
+    "uploadMode": "Upload Image", "designMode": "Design a Background",
+    "pickIcon": "Pick an Icon", "pickColor": "Pick a Background Color", "preview": "Preview",
+    "subtitle": "Subtitle (optional)", "useThisDesign": "Use This Design",
+    "saved": "Company settings saved successfully"
+  },
+  "auditLog": {
+    "title": "Audit Log", "user": "User", "action": "Action", "entityType": "Screen",
+    "path": "Path", "description": "Details", "date": "Date & Time",
+    "allActions": "All Actions", "allEntityTypes": "All Screens",
+    "CREATE": "Create", "UPDATE": "Update", "DELETE": "Delete", "CANCEL": "Cancel", "CONFIRM": "Confirm",
+    "RETURN": "Return", "COMPENSATE": "Compensate", "PAYMENT": "Payment", "LOGIN": "Login",
+    "PASSWORD_CHANGE": "Password Change", "RESET_PASSWORD": "Password Reset",
+    "retentionNote": "Logs are kept for 30 days and then purged automatically every day",
+    "purgeNow": "Purge Old Logs Now", "purgeConfirm": "This will permanently delete all audit log entries older than 30 days. Continue?",
+    "purged": "{{count}} log entries deleted"
+  },
+  "backup": {
+    "title": "Backups", "runNow": "Backup Now", "fileName": "File Name",
+    "downloadResetScript": "Download Data Reset Script",
+    "resetScriptNote": "A ready-made SQL script that deletes all system data (except units) in a safe order - manual use only, never runs automatically; run it yourself against the database with great care.",
+    "size": "Size", "createdAt": "Created At", "download": "Download",
+    "note": "A backup is created automatically every day at 10 PM and kept for 30 days",
+    "success": "Backup created successfully",
+    "restore": "Restore", "restoreTitle": "Restore Backup",
+    "restoreWarning": "Warning: this will completely replace all current data in the system with this backup's data. A safety backup of the current state will be taken automatically before starting, but anything entered after this backup's date will be lost.",
+    "restoreConfirmPrompt": "To confirm, type the file name exactly:",
+    "restoreConfirmButton": "Yes, replace all current data",
+    "restoreSuccess": "Backup restored successfully",
+    "enterPin": "This screen is password protected",
+    "pinLabel": "Password",
+    "unlock": "Unlock",
+    "wrongPin": "Incorrect password"
+  },
+  "pageGuide": {
+    "title": "How to use this screen",
+    "accounts": {
+      "points": [
+        "Create a \"Cash Box\" account and a \"Bank\" account if you have one, and set the opening balance to the exact cash you actually hold today.",
+        "One account is enough for both sales and purchases - no need for a separate account per movement type. The \"Source\" column in the transaction log already shows the type of each movement.",
+        "Click the \"Transaction Log\" 📖 icon next to any account to see all its movements, with search, pagination, and print/export-to-Excel buttons.",
+        "The \"Reconciled\" column in the transaction log: only check it for a movement you've actually confirmed from a bank statement or cash count, so \"book balance\" can be compared against \"reconciled balance\".",
+        "Use \"Transfer Between Accounts\" to move money between the cash box and bank, and \"Record Capital Movement\" to add/withdraw personal capital."
+      ]
+    },
+    "balances": {
+      "points": [
+        "The \"Due Date\" field on sales/purchase invoices is optional - if you give customers a payment grace period (30 days, say), fill it in so the aging here stays accurate.",
+        "The four columns (0-30 / 31-60 / 61-90 / over 90 days) split the same \"remaining\" amount by debt age - they always add up to the \"remaining\" total.",
+        "Pay special attention to the \"over 90 days\" column - that's the money most at risk of being forgotten or lost.",
+        "There's a search box by customer/supplier name and pagination if you have a lot of parties."
+      ]
+    },
+    "checks": {
+      "points": [
+        "Record any check you receive from a customer or issue to a supplier, with its number, bank name, and due date.",
+        "When the check actually clears, click \"Clear Check\" and pick the account - it's automatically reflected in that account's balance.",
+        "If a check bounces, mark it \"Bounced\" instead of deleting it - it stays in the historical record."
+      ]
+    },
+    "fiscalClosing": {
+      "warning": "This action cannot be undone: after closing, you won't be able to record or edit any financial transaction, complete a stocktake, or edit/cancel/return any sales or purchase invoice dated on or before the closing date.",
+      "points": [
+        "Only use this after you're sure you've finished all your entries for a given period (month/year end) and taken a backup.",
+        "The goal: protect your closed figures (e.g. ones already submitted externally) from being accidentally changed later."
+      ]
+    },
+    "fixedAssets": {
+      "points": [
+        "For tracking things like a delivery vehicle or equipment - fill in the cost, purchase date, and useful life in months.",
+        "If you paid for it from an account, select it - it's deducted automatically and shows up in the cash flow statement as \"Investing\".",
+        "\"Accumulated Depreciation\" and \"Net Book Value\" update automatically every month with no action needed from you.",
+        "When you sell or dispose of the asset, click \"Dispose Asset\" 🏷️."
+      ]
+    },
+    "reportsBalanceSheet": {
+      "points": [
+        "A snapshot (right now) of everything you own (cash+bank, inventory, receivables, fixed assets) against what you owe (payables) and your equity.",
+        "Review it monthly to keep an overall eye on the shop's financial health."
+      ]
+    },
+    "reportsCashFlow": {
+      "points": [
+        "Splits cash movement for the chosen period into 3 activity types: Operating (sales/purchases/expenses), Investing (buying/selling fixed assets), Financing (capital).",
+        "The closing balance at the end should always match the total of your actual account balances on the \"Accounts\" screen."
+      ]
+    },
+    "stocktake": {
+      "warning": "Completing a stocktake is final - it applies the differences directly to real stock and cannot be undone or edited afterward.",
+      "points": [
+        "Click \"New Stocktake\" and pick a warehouse - the system pulls in all products and their system quantities automatically.",
+        "Count the actual goods and record the real quantity for each item - the difference is calculated instantly.",
+        "Click \"Complete Stocktake\" only after you've double-checked every number."
+      ]
+    }
+  }
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<title th:text="${model.invoiceNumber}">إيصال</title>
+<style th:inline="css">
+    @page { size: [[${widthMm}]]mm auto; margin: 3mm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Noto Naskh Arabic', 'Noto Sans', sans-serif;
+        direction: rtl;
+        font-size: 9.5px;
+        color: #000;
+        margin: 0;
+        width: 100%;
+    }
+    .center { text-align: center; }
+    .company-name { font-size: 13px; font-weight: bold; }
+    .company-name-en { font-size: 9px; color: #333; }
+    .small { font-size: 8.5px; color: #333; }
+    hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+    table.items { width: 100%; border-collapse: collapse; margin: 4px 0; }
+    table.items th { font-size: 8.5px; border-bottom: 1px solid #000; padding: 2px 1px; text-align: center; }
+    table.items td { font-size: 9px; padding: 2px 1px; text-align: center; vertical-align: top; }
+    table.items td.name-cell { text-align: right; }
+    .num { direction: ltr; unicode-bidi: embed; }
+    table.totals { width: 100%; margin-top: 4px; }
+    table.totals td { font-size: 9.5px; padding: 2px 0; }
+    table.totals td.label { text-align: right; color: #333; }
+    table.totals td.value { text-align: left; font-weight: bold; }
+    table.totals tr.grand td { font-size: 11.5px; border-top: 1px dashed #000; padding-top: 4px; }
+    .footer { text-align: center; margin-top: 8px; font-size: 9px; }
+</style>
+</head>
+<body>
+
+<div class="center">
+    <div class="company-name" th:text="${model.companyName}">اسم المحل</div>
+    <div class="company-name-en" th:text="${model.companyNameEn}">Company</div>
+    <div class="small" th:if="${model.companyAddress}" th:text="${model.companyAddress}">العنوان</div>
+    <div class="small" th:if="${model.companyPhone}" th:text="'هاتف: ' + ${model.companyPhone}">هاتف</div>
+</div>
+
+<hr/>
+
+<div class="small"><b th:text="${model.invoiceTypeLabel}">فاتورة بيع</b></div>
+<div class="small">رقم: <span th:text="${model.invoiceNumber}">-</span></div>
+<div class="small">التاريخ: <span th:text="${#temporals.format(model.date, 'yyyy-MM-dd HH:mm')}">-</span></div>
+<div class="small" th:if="${model.partyName}" th:text="${model.partyLabel} + ': ' + ${model.partyName}">العميل</div>
+<div class="small" th:if="${model.paymentMethod}" th:text="'الدفع: ' + ${model.paymentMethod}">الدفع</div>
+
+<hr/>
+
+<table class="items">
+    <thead>
+    <tr>
+        <th style="width:40%">الصنف</th>
+        <th style="width:15%">كمية</th>
+        <th style="width:20%">سعر</th>
+        <th style="width:25%">إجمالي</th>
+    </tr>
+    </thead>
+    <tbody>
+    <th:block th:each="row : ${model.items}">
+    <tr>
+        <td class="name-cell" th:text="${row.name}">منتج</td>
+        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.quantity, 2)}">1</td>
+        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.unitPrice, 2)}">0</td>
+        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.lineTotal, 2)}">0</td>
+    </tr>
+    <tr th:if="${row.returnedQuantity != null and row.returnedQuantity.signum() > 0}">
+        <td colspan="4" style="text-align:right;color:#000;font-weight:bold">
+            <span th:if="${row.returnedQuantity.compareTo(row.quantity) >= 0}">↳ مرتجع بالكامل</span>
+            <span th:unless="${row.returnedQuantity.compareTo(row.quantity) >= 0}"
+                  th:text="'↳ مرتجع جزئياً: ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.returnedQuantity, 2)}">↳ مرتجع جزئياً</span>
+        </td>
+    </tr>
+    </th:block>
+    </tbody>
+</table>
+
+<hr/>
+
+<table class="totals">
+    <tr>
+        <td class="label">المجموع الفرعي</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.subtotal, 2)}">0</td>
+    </tr>
+    <tr th:if="${model.discountTotal != null and model.discountTotal.signum() != 0}">
+        <td class="label">الخصم</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.discountTotal, 2)}">0</td>
+    </tr>
+    <tr th:if="${model.taxTotal != null and model.taxTotal.signum() != 0}">
+        <td class="label">الضريبة</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.taxTotal, 2)}">0</td>
+    </tr>
+    <tr class="grand">
+        <td class="label">الإجمالي</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.grandTotal, 2)} + ' ' + ${model.currency}">0</td>
+    </tr>
+    <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}">
+        <td class="label">قيمة المرتجع</td>
+        <td class="value num" th:text="'- ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.returnedTotal, 2)}">0</td>
+    </tr>
+    <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}" class="grand">
+        <td class="label">الصافي بعد الإرجاع</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.netTotal, 2)} + ' ' + ${model.currency}">0</td>
+    </tr>
+    <tr>
+        <td class="label">المدفوع</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.paidAmount, 2)}">0</td>
+    </tr>
+    <tr>
+        <td class="label">المتبقي</td>
+        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.dueAmount, 2)}">0</td>
+    </tr>
+</table>
+
+<hr/>
+
+<div class="footer">
+    <div th:text="${model.cashierName}">الكاشير</div>
+    <div>شكراً لزيارتكم</div>
+</div>
+
+</body>
+</html>

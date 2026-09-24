@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ceramic-erp-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shop_erp}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:CHANGE_THIS_SECRET_TO_A_LONG_RANDOM_STRING_IN_PRODUCTION_ENV_1234567890}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}          # 24h
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}   # 7d
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  low-stock:
+    check-cron: ${LOW_STOCK_CRON:0 0 * * * *}    # every hour
+    notify-email-enabled: ${LOW_STOCK_EMAIL_ENABLED:false}
+  audit-log:
+    retention-days: ${AUDIT_LOG_RETENTION_DAYS:30}   # يُحتفظ بالسجلات شهراً ثم تُحذف تلقائياً
+    purge-cron: ${AUDIT_LOG_PURGE_CRON:0 0 3 * * *}  # كل يوم الساعة 3 صباحاً
+  backup:
+    enabled: ${BACKUP_ENABLED:true}
+    cron: ${BACKUP_CRON:0 0 22 * * *}    # نسخة احتياطية يومية الساعة 10 مساءً
+    # يُفضَّل مسار مطلق خارج مجلد المشروع (خاصة إن احتوى مسار المشروع أحرفاً غير إنجليزية،
+    # لأن pg_dump كأداة خارجية على ويندوز قد لا يقرأها بشكل صحيح كوسيط سطر أوامر)
+    directory: ${BACKUP_DIR:${user.home}/ceramic-erp-backups}
+    retention-days: ${BACKUP_RETENTION_DAYS:30}
+    pg-dump-path: ${PG_DUMP_PATH:pg_dump}
+    pg-restore-path: ${PG_RESTORE_PATH:pg_restore}
+  company:
+    name: ${COMPANY_NAME:محلات السيراميك والبورسلان}
+    name-en: ${COMPANY_NAME_EN:Ceramic & Porcelain Shop}
+    tax-number: ${COMPANY_TAX_NUMBER:}
+    phone: ${COMPANY_PHONE:}
+    address: ${COMPANY_ADDRESS:}
+    currency: ${COMPANY_CURRENCY:JOD}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    com.ceramicerp: INFO
+    org.springframework.security: WARN
