@@ -33,4 +33,28 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                           @Param("categoryId") Long categoryId,
                           @Param("activeOnly") boolean activeOnly,
                           Pageable pageable);
+
+    /** الأصناف المتوفرة (كمية > 0) في مخزن معيّن - أصناف حمولة سيارة المندوب. */
+    @Query(value = """
+        SELECT p FROM Product p, StockItem si
+        WHERE si.product = p AND si.warehouse.id = :warehouseId AND si.quantity > 0
+          AND (:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.nameEn) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+        """,
+        countQuery = """
+        SELECT COUNT(p) FROM Product p, StockItem si
+        WHERE si.product = p AND si.warehouse.id = :warehouseId AND si.quantity > 0
+          AND (:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.nameEn) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+        """)
+    Page<Product> searchInWarehouse(@Param("q") String q,
+                                    @Param("categoryId") Long categoryId,
+                                    @Param("warehouseId") Long warehouseId,
+                                    Pageable pageable);
 }

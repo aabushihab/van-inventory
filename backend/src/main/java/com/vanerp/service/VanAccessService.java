@@ -2,6 +2,7 @@ package com.vanerp.service;
 
 import com.vanerp.dto.InvoiceItemRequest;
 import com.vanerp.dto.SalesInvoiceCreateRequest;
+import com.vanerp.dto.SalesInvoiceDto;
 import com.vanerp.exception.ApiException;
 import com.vanerp.model.User;
 import com.vanerp.model.Van;
@@ -58,11 +59,11 @@ public class VanAccessService {
         return isRestrictedSalesman(user) ? findVanOf(user).get().getWarehouse().getId() : null;
     }
 
-    /** المندوب المقيّد يرى ويطبع فواتير سيارته فقط. */
+    /** المندوب المقيّد يرى ويطبع فواتيره هو فقط (التي أنشأها من سيارته). */
     @Transactional(readOnly = true)
-    public void assertCanView(User user, Long invoiceWarehouseId) {
+    public void assertCanView(User user, SalesInvoiceDto invoice) {
         Long own = restrictedWarehouseId(user);
-        if (own != null && !own.equals(invoiceWarehouseId)) {
+        if (own != null && (!own.equals(invoice.warehouseId()) || !user.getId().equals(invoice.createdById()))) {
             throw ApiException.forbidden("هذه الفاتورة ليست من سيارتك");
         }
     }

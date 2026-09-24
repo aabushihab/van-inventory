@@ -64,17 +64,17 @@ public class SalesInvoiceService {
 
     @Transactional(readOnly = true)
     public Page<SalesInvoiceDto> search(Long customerId, InvoiceStatus status, LocalDate from, LocalDate to, String q, Pageable pageable) {
-        return search(customerId, null, status, from, to, q, pageable);
+        return search(customerId, null, null, status, from, to, q, pageable);
     }
 
-    /** نفس البحث مع حصر النتائج بمخزن معيّن (فواتير سيارة المندوب فقط). */
+    /** نفس البحث مع حصر النتائج بمخزن ومنشئ معيّنين (فواتير المندوب من سيارته فقط). */
     @Transactional(readOnly = true)
-    public Page<SalesInvoiceDto> search(Long customerId, Long warehouseId, InvoiceStatus status, LocalDate from, LocalDate to,
-                                        String q, Pageable pageable) {
+    public Page<SalesInvoiceDto> search(Long customerId, Long warehouseId, Long createdById, InvoiceStatus status,
+                                        LocalDate from, LocalDate to, String q, Pageable pageable) {
         // نتجنب تمرير NULL لمعاملات التاريخ لأن PostgreSQL/PgJDBC لا يستطيع استنتاج نوعها في حالة NULL
         LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime toDateTime = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusYears(50);
-        return salesInvoiceRepository.search(customerId, warehouseId, status, fromDateTime, toDateTime, q, pageable).map(this::toDto);
+        return salesInvoiceRepository.search(customerId, warehouseId, createdById, status, fromDateTime, toDateTime, q, pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -465,6 +465,7 @@ public class SalesInvoiceService {
                 inv.getStatus().name(), inv.getSubtotal(), inv.getTaxTotal(), inv.getDiscountTotal(),
                 inv.getGrandTotal(), inv.getPaidAmount(), netDueAmount(inv), netCreditOwed(inv),
                 inv.getPaymentMethod().name(), inv.getNotes(), inv.getDueDate(),
+                inv.getCreatedBy() != null ? inv.getCreatedBy().getId() : null,
                 inv.getCreatedBy() != null ? inv.getCreatedBy().getFullName() : null,
                 inv.getCreatedAt(), items
         );

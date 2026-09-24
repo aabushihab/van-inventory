@@ -33,6 +33,22 @@ public class ProductService {
         return productRepository.search(q, categoryId, activeOnly, pageable).map(this::toDto);
     }
 
+    /** أصناف مخزن معيّن فقط، والمخزون المعروض هو كمية ذلك المخزن (لا يكشف مخزون المستودعات الأخرى). */
+    @Transactional(readOnly = true)
+    public Page<ProductDto> searchInWarehouse(String q, Long categoryId, Long warehouseId, Pageable pageable) {
+        return productRepository.searchInWarehouse(q, categoryId, warehouseId, pageable)
+                .map(p -> toDto(p, stockItemRepository.findByProductIdAndWarehouseId(p.getId(), warehouseId)
+                        .map(si -> si.getQuantity()).orElse(BigDecimal.ZERO)));
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDto findInWarehouse(Long id, Long warehouseId) {
+        BigDecimal qty = stockItemRepository.findByProductIdAndWarehouseId(id, warehouseId)
+                .map(si -> si.getQuantity()).orElse(BigDecimal.ZERO);
+        if (qty.signum() <= 0) throw ApiException.notFound("المنتج غير موجود على سيارتك");
+        return toDto(getOrThrow(id), qty);
+    }
+
     @Transactional(readOnly = true)
     public ProductDto findById(Long id) {
         return toDto(getOrThrow(id));
@@ -127,6 +143,10 @@ public class ProductService {
         BigDecimal totalStock = stockItemRepository.findByProductId(p.getId()).stream()
                 .map(si -> si.getQuantity())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return toDto(p, totalStock);
+    }
+
+    private ProductDto toDto(Product p, BigDecimal totalStock) {
 
         return new ProductDto(
                 p.getId(), p.getSku(), p.getBarcode(), p.getName(), p.getNameEn(),

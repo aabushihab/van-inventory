@@ -129,23 +129,27 @@ export default function SalesInvoicesPage() {
   useEffect(() => { load(); }, [page, size]);
 
   useEffect(() => {
-    Promise.all([warehouseApi.list(), vanApi.my().catch(() => ({ data: null })), productApi.search({ size: 500 })])
-      .then(([{ data: whs }, { data: my }, { data: prods }]) => {
+    Promise.all([warehouseApi.list(), vanApi.my().catch(() => ({ data: null })), productApi.search({ size: 500 }), categoryApi.list()])
+      .then(([{ data: whs }, { data: my }, { data: prods }, { data: cats }]) => {
         if (my?.restricted && my.van) {
+          // المندوب: أصناف حمولة سيارته فقط (الخادم يحصرها أصلاً)، والتصنيفات التي فيها أصناف منها فقط
           const stock = Object.fromEntries(my.stock.map((s) => [s.productId, Number(s.quantity)]));
+          const vanProducts = prods.content.filter((p) => stock[p.id] !== undefined);
+          const vanCategoryIds = new Set(vanProducts.map((p) => p.categoryId).filter(Boolean));
           setVanStock(stock);
           setVanCashAccountId(my.van.cashAccountId || '');
           setWarehouses(whs.filter((w) => w.id === my.van.warehouseId));
           setWarehouseId(my.van.warehouseId);
-          setProducts(prods.content.filter((p) => stock[p.id] !== undefined));
+          setProducts(vanProducts);
+          setCategories(cats.filter((c) => vanCategoryIds.has(c.id)));
         } else {
           setWarehouses(whs);
           if (whs.length) setWarehouseId(whs[0].id);
           setProducts(prods.content);
+          setCategories(cats);
         }
       });
     customerApi.list().then(({ data }) => setCustomers(data));
-    categoryApi.list().then(({ data }) => setCategories(data));
     Promise.all([accountApi.list(), vanApi.my().catch(() => ({ data: null }))]).then(([{ data }, { data: my }]) => {
       // المندوب يحصّل في صندوق سيارته فقط
       setAccounts(my?.restricted && my.van?.cashAccountId ? data.filter((a) => a.id === my.van.cashAccountId) : data);

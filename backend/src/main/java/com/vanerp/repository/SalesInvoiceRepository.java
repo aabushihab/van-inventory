@@ -19,6 +19,7 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
         LEFT JOIN s.customer c
         WHERE (:customerId IS NULL OR c.id = :customerId)
           AND (:warehouseId IS NULL OR s.warehouse.id = :warehouseId)
+          AND (:createdById IS NULL OR s.createdBy.id = :createdById)
           AND (:status IS NULL OR s.status = :status)
           AND s.createdAt >= :from
           AND s.createdAt < :to
@@ -27,6 +28,7 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
         ORDER BY s.createdAt DESC
         """)
     Page<SalesInvoice> search(@Param("customerId") Long customerId, @Param("warehouseId") Long warehouseId,
+                               @Param("createdById") Long createdById,
                                @Param("status") InvoiceStatus status,
                                @Param("from") LocalDateTime from,
                                @Param("to") LocalDateTime to, @Param("q") String q, Pageable pageable);

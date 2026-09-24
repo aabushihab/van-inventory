@@ -26,6 +26,7 @@ public record SalesInvoiceDto(
         String paymentMethod,
         String notes,
         LocalDate dueDate,
+        Long createdById,
         String createdByName,
         LocalDateTime createdAt,
         List<InvoiceItemDto> items
