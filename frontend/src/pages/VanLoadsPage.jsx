@@ -16,7 +16,7 @@ import { getErrorMessage } from '../utils/apiError';
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 const emptyLine = { productId: '', productName: '', quantity: '' };
 
-export default function VanLoadsPage() {
+export default function VanLoadsPage({ preset, onPresetHandled }) {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
   const canLoad = hasPermission('VAN_LOAD');
@@ -64,6 +64,13 @@ export default function VanLoadsPage() {
     warehouseApi.list().then(({ data }) => setMainWarehouses(data.filter((w) => w.warehouseType !== 'VAN' && w.active)));
   }, []);
 
+  // فتح سند تحميل/تنزيل مباشرة لسيارة معيّنة عند القدوم من تبويب السيارات
+  useEffect(() => {
+    if (!preset || !vans.length || !mainWarehouses.length) return;
+    openDialog(preset.type, preset.vanId);
+    if (onPresetHandled) onPresetHandled();
+  }, [preset, vans, mainWarehouses]);
+
   const selectedVan = vans.find((v) => v.id === vanId);
   // مصدر البضاعة: المخزن الرئيسي عند التحميل، ومخزن السيارة عند التنزيل
   const sourceWarehouseId = dialogType === 'LOAD' ? warehouseId : selectedVan?.warehouseId;
@@ -82,9 +89,9 @@ export default function VanLoadsPage() {
     return m;
   }, [lines]);
 
-  function openDialog(type) {
+  function openDialog(type, presetVanId) {
     setDialogType(type);
-    setVanId(vans.find((v) => v.active)?.id || '');
+    setVanId(presetVanId || vans.find((v) => v.active)?.id || '');
     setWarehouseId((mainWarehouses.find((w) => w.isDefault) || mainWarehouses[0])?.id || '');
     setNotes('');
     setLines([{ ...emptyLine }]);

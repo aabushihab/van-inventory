@@ -1,6 +1,8 @@
 package com.vanerp.service;
 
 import com.vanerp.dto.VanDto;
+import com.vanerp.dto.VanInvoiceRowDto;
+import com.vanerp.dto.VanStockRowDto;
 import com.vanerp.dto.VanSettlementDto;
 import com.vanerp.dto.VanSettlementLineDto;
 import com.vanerp.dto.VanUpsertRequest;
@@ -196,14 +198,37 @@ public class VanService {
         }
         lines.sort(Comparator.comparing(VanSettlementLineDto::productName));
 
-        List<SalesInvoice> invoices = salesInvoiceRepository.findByWarehouseBetween(warehouseId, start, end);
+        List<SalesInvoice> allInvoices = salesInvoiceRepository.findAllByWarehouseBetween(warehouseId, start, end);
+        List<SalesInvoice> invoices = allInvoices.stream()
+                .filter(i -> i.getStatus() == InvoiceStatus.CONFIRMED || i.getStatus() == InvoiceStatus.RETURNED).toList();
         BigDecimal salesTotal = invoices.stream().map(SalesInvoice::getGrandTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal collected = invoices.stream().map(SalesInvoice::getPaidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal credit = salesTotal.subtract(collected).max(BigDecimal.ZERO);
 
+        List<VanInvoiceRowDto> invoiceRows = allInvoices.stream().map(i -> new VanInvoiceRowDto(
+                i.getId(), i.getInvoiceNumber(), i.getCreatedAt(),
+                i.getCustomer() != null ? i.getCustomer().getName() : null,
+                i.getStatus().name(),
+                i.getItems().stream().map(SalesInvoiceItem::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add),
+                i.getGrandTotal(), i.getPaidAmount(), i.getGrandTotal().subtract(i.getPaidAmount()).max(BigDecimal.ZERO),
+                i.getCreatedBy() != null ? i.getCreatedBy().getFullName() : null)).toList();
+
+        List<VanStockRowDto> currentStock = stockItemRepository.findByWarehouseId(warehouseId).stream()
+                .filter(si -> si.getQuantity().signum() != 0)
+                .map(si -> new VanStockRowDto(si.getProduct().getId(), si.getProduct().getName(), si.getProduct().getSku(),
+                        si.getProduct().getUnit().getName(), si.getQuantity(), si.getProduct().getSalePrice(),
+                        si.getQuantity().multiply(si.getProduct().getSalePrice())))
+                .sorted(Comparator.comparing(VanStockRowDto::productName))
+                .toList();
+        BigDecimal currentQty = currentStock.stream().map(VanStockRowDto::quantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal currentValue = currentStock.stream().map(VanStockRowDto::value).reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new VanSettlementDto(van.getId(), van.getName(),
                 van.getSalesman() != null ? van.getSalesman().getFullName() : null,
-                fromDate, toDate, invoices.size(), salesTotal, collected, credit, closingValue, lines);
+                van.getDriver() != null ? van.getDriver().getName() : van.getDriverName(),
+                van.getPlateNumber(),
+                fromDate, toDate, invoices.size(), salesTotal, collected, credit, closingValue, lines,
+                invoiceRows, currentQty, currentValue, currentStock);
     }
 
     /** رمز السيارة ورقم لوحتها فريدان، والمندوب الواحد مربوط بسيارة فعّالة واحدة فقط. */

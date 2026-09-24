@@ -8,7 +8,6 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
@@ -26,10 +25,9 @@ const emptyForm = {
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 
-export default function VansPage() {
+export default function VansPage({ onOpenReport, onLoad }) {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
-  const navigate = useNavigate();
   const canManage = hasPermission('VAN_MANAGE');
   const canLoad = hasPermission('VAN_LOAD');
 
@@ -230,7 +228,13 @@ export default function VansPage() {
                         </span>
                       </Tooltip>
                     )}
-                    <Button size="small" onClick={() => navigate('/van-settlement', { state: { vanId: r.id } })}>{t('vans.settlement')}</Button>
+                    {canLoad && r.active && onLoad && (
+                      <>
+                        <Button size="small" onClick={() => onLoad(r.id, 'LOAD')}>{t('vanLoads.LOAD')}</Button>
+                        <Button size="small" disabled={Number(r.stockQuantity) === 0} onClick={() => onLoad(r.id, 'UNLOAD')}>{t('vanLoads.UNLOAD')}</Button>
+                      </>
+                    )}
+                    {onOpenReport && <Button size="small" onClick={() => onOpenReport(r.id)}>{t('vans.report')}</Button>}
                     {canManage && (
                       <>
                         <IconButton size="small" onClick={() => openEdit(r)}><EditIcon fontSize="small" /></IconButton>

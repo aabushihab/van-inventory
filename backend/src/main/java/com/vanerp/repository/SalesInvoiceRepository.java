@@ -85,6 +85,15 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
         """)
     List<SalesInvoice> findOverdue(@Param("today") java.time.LocalDate today);
 
+    /** كل فواتير مخزن معيّن ضمن فترة بما فيها الملغاة - لعرضها في تقرير السيارة. */
+    @Query("""
+        SELECT s FROM SalesInvoice s
+        WHERE s.warehouse.id = :warehouseId AND s.createdAt >= :from AND s.createdAt < :to
+        ORDER BY s.createdAt DESC
+        """)
+    List<SalesInvoice> findAllByWarehouseBetween(@Param("warehouseId") Long warehouseId,
+                                                 @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
     /** فواتير البيع الصادرة من مخزن معيّن (مثل مخزن سيارة توزيع) ضمن فترة. */
     @Query("""
         SELECT s FROM SalesInvoice s

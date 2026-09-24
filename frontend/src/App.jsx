@@ -32,9 +32,7 @@ import FixedAssetsPage from './pages/FixedAssetsPage';
 import FiscalClosingPage from './pages/FiscalClosingPage';
 import CompanySettingsPage from './pages/CompanySettingsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
-import VansPage from './pages/VansPage';
-import VanLoadsPage from './pages/VanLoadsPage';
-import VanSettlementPage from './pages/VanSettlementPage';
+import VansHubPage from './pages/VansHubPage';
 import MyVanPage from './pages/MyVanPage';
 import { createEmotionCache, buildTheme } from './theme';
 
@@ -79,9 +77,9 @@ export default function App() {
                 <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockPage /></ProtectedRoute>} />
                 <Route path="damaged" element={<ProtectedRoute permission="STOCK_VIEW"><DamagedGoodsPage /></ProtectedRoute>} />
                 <Route path="my-van" element={<ProtectedRoute><MyVanPage /></ProtectedRoute>} />
-                <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansPage /></ProtectedRoute>} />
-                <Route path="van-loads" element={<ProtectedRoute permission="VAN_VIEW"><VanLoadsPage /></ProtectedRoute>} />
-                <Route path="van-settlement" element={<ProtectedRoute permission="VAN_VIEW"><VanSettlementPage /></ProtectedRoute>} />
+                <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansHubPage /></ProtectedRoute>} />
+                <Route path="van-loads" element={<Navigate to="/vans?tab=loads" replace />} />
+                <Route path="van-settlement" element={<Navigate to="/vans?tab=report" replace />} />
                 <Route path="branches" element={<ProtectedRoute permission="WAREHOUSE_MANAGE"><BranchesPage /></ProtectedRoute>} />
                 <Route path="purchase-invoices" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchaseInvoicesPage /></ProtectedRoute>} />
                 <Route path="sales-invoices" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesInvoicesPage /></ProtectedRoute>} />

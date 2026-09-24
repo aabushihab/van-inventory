@@ -19,7 +19,7 @@
     "myVan": "My Van",
     "vans": "Distribution Vans",
     "vanLoads": "Van Loading",
-    "vanSettlement": "Van Settlement",
+    "vanSettlement": "Drivers Report",
     "damaged": "Damaged Goods",
     "reports": "Reports",
     "balances": "Receivables & Payables",
@@ -150,7 +150,11 @@
     "confirmClose": "Confirm Count & Return",
     "driver": "Driver",
     "driverHint": "Lists active employees whose position is \"Driver\"",
-    "noDrivers": "No employees with the Driver position - add them first from the Employees screen"
+    "noDrivers": "No employees with the Driver position - add them first from the Employees screen",
+    "tabList": "Vans",
+    "tabLoads": "Loading & Unloading",
+    "tabReport": "Drivers Report",
+    "report": "Report"
   },
   "vanLoads": {
     "title": "Van Loading & Unloading",
@@ -182,7 +186,7 @@
     "fillAll": "Fill everything on the van"
   },
   "vanSettlement": {
-    "title": "Van Settlement",
+    "title": "Drivers & Vans Report",
     "selectVan": "Select Van",
     "from": "From",
     "to": "To",
@@ -203,9 +207,31 @@
     "closingStockValue": "Remaining Stock Value",
     "salesman": "Salesman",
     "guide": [
-      "Remaining = Opening + Loaded − Unloaded − Sold + Customer Returns ± Other (damage/adjustments/stocktake).",
-      "Collected is the amount paid when sales invoices were created from the van's warehouse in the period."
-    ]
+      "Pick the van (its salesman and driver are shown next to it) and the period, or use Today/Week/Month.",
+      "\"Driver invoices\": every invoice made from the van with collected and due amounts; you can print them.",
+      "\"Sold & remaining\": per item = opening + loaded − sold + customer returns − unloaded ± other (shortage/count).",
+      "\"Current load\": exactly what is on the van right now."
+    ],
+    "today": "Today",
+    "week": "Last 7 days",
+    "month": "This month",
+    "currentQty": "Current qty on van",
+    "currentValue": "Current load value",
+    "tabInvoices": "Driver invoices",
+    "tabSold": "Sold & remaining per item",
+    "tabCurrent": "Current load",
+    "invoiceNumber": "Invoice #",
+    "customer": "Customer",
+    "cashCustomer": "Cash customer",
+    "paid": "Collected",
+    "due": "Due from customer",
+    "createdBy": "By",
+    "soldValue": "Sold value",
+    "status": {
+      "CONFIRMED": "Confirmed",
+      "RETURNED": "Returned",
+      "CANCELLED": "Cancelled"
+    }
   },
   "products": {
     "title": "Products",

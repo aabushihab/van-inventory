@@ -29,8 +29,6 @@ import RequestPageIcon from '@mui/icons-material/RequestPageOutlined';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
-import MoveUpIcon from '@mui/icons-material/MoveUpOutlined';
-import SummarizeIcon from '@mui/icons-material/SummarizeOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import LockResetIcon from '@mui/icons-material/LockResetOutlined';
@@ -50,8 +48,6 @@ const NAV_ITEMS = [
   { to: '/damaged', key: 'damaged', icon: BrokenImageIcon, permission: 'STOCK_VIEW' },
   { to: '/my-van', key: 'myVan', icon: LocalShippingIcon, permission: 'SALES_INVOICE_CREATE', vanOnly: true },
   { to: '/vans', key: 'vans', icon: LocalShippingIcon, permission: 'VAN_VIEW' },
-  { to: '/van-loads', key: 'vanLoads', icon: MoveUpIcon, permission: 'VAN_VIEW' },
-  { to: '/van-settlement', key: 'vanSettlement', icon: SummarizeIcon, permission: 'VAN_VIEW' },
   { to: '/branches', key: 'branches', icon: StoreIcon, permission: 'WAREHOUSE_MANAGE' },
   { to: '/purchase-invoices', key: 'purchaseInvoices', icon: ShoppingCartIcon, permission: 'PURCHASE_INVOICE_VIEW' },
   { to: '/purchase-quotes', key: 'purchaseQuotes', icon: RequestQuoteIcon, permission: 'PURCHASE_INVOICE_VIEW' },

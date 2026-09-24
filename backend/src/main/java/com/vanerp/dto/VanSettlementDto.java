@@ -4,11 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-/** تسوية سيارة توزيع لفترة: حركة البضاعة لكل صنف + ملخص المبيعات والتحصيل. */
+/** تقرير سيارة التوزيع/السائق لفترة: حركة البضاعة لكل صنف، فواتير البيع، والحمولة الحالية. */
 public record VanSettlementDto(
         Long vanId,
         String vanName,
         String salesmanName,
+        String driverName,
+        String plateNumber,
         LocalDate from,
         LocalDate to,
         long invoiceCount,
@@ -16,5 +18,9 @@ public record VanSettlementDto(
         BigDecimal collectedAmount,
         BigDecimal creditAmount,
         BigDecimal closingStockValue,
-        List<VanSettlementLineDto> lines
+        List<VanSettlementLineDto> lines,
+        List<VanInvoiceRowDto> invoices,
+        BigDecimal currentStockQuantity,
+        BigDecimal currentStockValue,
+        List<VanStockRowDto> currentStock
 ) {}
