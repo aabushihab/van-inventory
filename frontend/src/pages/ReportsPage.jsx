@@ -188,10 +188,11 @@ export default function ReportsPage() {
     discountTotal: acc.discountTotal + Number(r.discountTotal || 0),
     costOfGoodsSold: acc.costOfGoodsSold + Number(r.costOfGoodsSold || 0),
     damagedLoss: acc.damagedLoss + Number(r.damagedLoss || 0),
+    shortageLoss: acc.shortageLoss + Number(r.shortageLoss || 0),
     expensesTotal: acc.expensesTotal + Number(r.expensesTotal || 0),
     grossProfit: acc.grossProfit + Number(r.grossProfit || 0),
     purchasesTotal: acc.purchasesTotal + Number(r.purchasesTotal || 0),
-  }), { salesCount: 0, salesTotal: 0, discountTotal: 0, costOfGoodsSold: 0, damagedLoss: 0, expensesTotal: 0, grossProfit: 0, purchasesTotal: 0 }), [financialRows]);
+  }), { salesCount: 0, salesTotal: 0, discountTotal: 0, costOfGoodsSold: 0, damagedLoss: 0, shortageLoss: 0, expensesTotal: 0, grossProfit: 0, purchasesTotal: 0 }), [financialRows]);
 
   const inventoryTotalValue = useMemo(
     () => inventoryRows.reduce((s, r) => s + Number(r.value || 0), 0),
@@ -345,6 +346,7 @@ export default function ReportsPage() {
                   <TableCell>{t('common.discount')}</TableCell>
                   <TableCell>{t('reports.costOfGoodsSold')}</TableCell>
                   <TableCell>{t('reports.damagedLoss')}</TableCell>
+                  <TableCell>{t('reports.shortageLoss')}</TableCell>
                   <TableCell>{t('reports.expensesTotal')}</TableCell>
                   <TableCell>{t('reports.grossProfit')}</TableCell>
                   <TableCell>{t('reports.purchasesTotal')}</TableCell>
@@ -360,6 +362,9 @@ export default function ReportsPage() {
                     <TableCell>{fmt(r.costOfGoodsSold)}</TableCell>
                     <TableCell sx={{ color: Number(r.damagedLoss) > 0 ? 'error.main' : 'inherit' }}>
                       {fmt(r.damagedLoss)}
+                    </TableCell>
+                    <TableCell sx={{ color: Number(r.shortageLoss) > 0 ? 'error.main' : 'inherit' }}>
+                      {fmt(r.shortageLoss)}
                     </TableCell>
                     <TableCell sx={{ color: Number(r.expensesTotal) > 0 ? 'error.main' : 'inherit' }}>
                       {fmt(r.expensesTotal)}
@@ -380,6 +385,9 @@ export default function ReportsPage() {
                   <TableCell>{fmt(financialTotals.costOfGoodsSold)}</TableCell>
                   <TableCell sx={{ color: financialTotals.damagedLoss > 0 ? 'error.main' : 'inherit' }}>
                     {fmt(financialTotals.damagedLoss)}
+                  </TableCell>
+                  <TableCell sx={{ color: financialTotals.shortageLoss > 0 ? 'error.main' : 'inherit' }}>
+                    {fmt(financialTotals.shortageLoss)}
                   </TableCell>
                   <TableCell sx={{ color: financialTotals.expensesTotal > 0 ? 'error.main' : 'inherit' }}>
                     {fmt(financialTotals.expensesTotal)}

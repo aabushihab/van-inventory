@@ -51,6 +51,13 @@ public class VanShortageController {
         return vanShortageService.salaryDeductions(year, month);
     }
 
+    /** خصومات العجز على راتب موظف معيّن لكل شهر من السنة. */
+    @GetMapping("/salary-deductions/employee/{employeeId}")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') or hasAuthority('VAN_VIEW')")
+    public Map<Integer, BigDecimal> employeeYearDeductions(@PathVariable Long employeeId, @RequestParam int year) {
+        return vanShortageService.employeeYearDeductions(employeeId, year);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('VAN_VIEW')")
     public VanShortageDto findById(@PathVariable Long id) {

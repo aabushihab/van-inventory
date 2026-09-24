@@ -15,6 +15,8 @@ public record FinancialPeriodDto(
         BigDecimal discountTotal,
         BigDecimal costOfGoodsSold,
         BigDecimal damagedLoss,
+        /** عجز سائقين تمت مسامحتهم - خسارة بسعر التكلفة في فترة تسجيل العجز. */
+        BigDecimal shortageLoss,
         BigDecimal expensesTotal,
         BigDecimal grossProfit,
         BigDecimal purchasesTotal

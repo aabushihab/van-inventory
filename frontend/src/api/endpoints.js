@@ -264,6 +264,7 @@ export const vanShortageApi = {
   settle: (id, data) => client.post(`/van-shortages/${id}/settle`, data),
   reopen: (id) => client.post(`/van-shortages/${id}/reopen`),
   salaryDeductions: (year, month) => client.get('/van-shortages/salary-deductions', { params: { year, month } }),
+  employeeDeductions: (employeeId, year) => client.get(`/van-shortages/salary-deductions/employee/${employeeId}`, { params: { year } }),
 };
 
 export const userApi = {

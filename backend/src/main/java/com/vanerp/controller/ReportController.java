@@ -113,11 +113,11 @@ public class ReportController {
             @RequestParam(defaultValue = "day") String groupBy) {
         List<FinancialPeriodDto> data = reportService.financialReport(from, to, groupBy);
         List<String> headers = List.of("الفترة", "عدد الفواتير", "إجمالي المبيعات", "الخصم",
-                "تكلفة البضاعة المباعة", "خسارة التوالف", "المصاريف", "إجمالي الربح", "إجمالي المشتريات");
+                "تكلفة البضاعة المباعة", "خسارة التوالف", "عجز سائقين مُسامح", "المصاريف", "إجمالي الربح", "إجمالي المشتريات");
         List<List<Object>> rows = new ArrayList<>();
         for (FinancialPeriodDto d : data) {
             rows.add(List.of(d.period(), d.salesCount(), d.salesTotal(), d.discountTotal(),
-                    d.costOfGoodsSold(), d.damagedLoss(), d.expensesTotal(), d.grossProfit(), d.purchasesTotal()));
+                    d.costOfGoodsSold(), d.damagedLoss(), d.shortageLoss(), d.expensesTotal(), d.grossProfit(), d.purchasesTotal()));
         }
         return excelResponse(excelExportService.build("التقرير المالي", headers, rows), "التقرير-المالي.xlsx");
     }

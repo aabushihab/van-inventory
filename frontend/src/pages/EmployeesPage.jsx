@@ -65,6 +65,9 @@ export default function EmployeesPage() {
   const [yearlyPaidSummary, setYearlyPaidSummary] = useState({});
   // خصومات عجز السائقين على راتب الشهر المعروض
   const [shortageDeductions, setShortageDeductions] = useState({});
+  // خصومات العجز لكل شهر لموظف نافذة الراتب/الكشف المفتوحة: الشهر ← المبلغ
+  const [detailsDeductions, setDetailsDeductions] = useState({});
+  const [statementDeductions, setStatementDeductions] = useState({});
   const [statementEmployee, setStatementEmployee] = useState(null);
   const [statementYear, setStatementYear] = useState(currentYear);
   const [statementHistory, setStatementHistory] = useState([]);
@@ -96,6 +99,18 @@ export default function EmployeesPage() {
       setLoadingHistory(false);
     }
   }
+
+  useEffect(() => {
+    if (!detailsEmployee) { setDetailsDeductions({}); return; }
+    vanShortageApi.employeeDeductions(detailsEmployee.id, periodYear)
+      .then(({ data }) => setDetailsDeductions(data)).catch(() => setDetailsDeductions({}));
+  }, [detailsEmployee, periodYear]);
+
+  useEffect(() => {
+    if (!statementEmployee) { setStatementDeductions({}); return; }
+    vanShortageApi.employeeDeductions(statementEmployee.id, statementYear)
+      .then(({ data }) => setStatementDeductions(data)).catch(() => setStatementDeductions({}));
+  }, [statementEmployee, statementYear]);
 
   function openDetails(row) {
     setDetailsEmployee(row);
@@ -138,7 +153,8 @@ export default function EmployeesPage() {
         && Number(h.salaryPeriod?.slice(5, 7)) === month)
       .reduce((sum, h) => sum + Number(h.amount || 0), 0);
     const salary = Number(statementEmployee?.monthlySalary || 0);
-    return { month, paid, remaining: salary - paid };
+    const deduction = Number(statementDeductions[month] || 0);
+    return { month, paid, deduction, remaining: salary - paid - deduction };
   });
   const statementYearTotal = statementRows.reduce((sum, r) => sum + r.paid, 0);
 
@@ -163,7 +179,8 @@ export default function EmployeesPage() {
   const paidThisMonth = filteredHistory
     .filter((h) => PAY_CATEGORIES.includes(h.category))
     .reduce((sum, h) => sum + Number(h.amount || 0), 0);
-  const remaining = Number(detailsEmployee?.monthlySalary || 0) - paidThisMonth;
+  const shortageThisMonth = Number(detailsDeductions[periodMonth] || 0);
+  const remaining = Number(detailsEmployee?.monthlySalary || 0) - paidThisMonth - shortageThisMonth;
 
   async function handleRowVoucherUpload(row, e) {
     const file = e.target.files?.[0];
@@ -330,6 +347,12 @@ export default function EmployeesPage() {
               <Typography variant="caption" color="text.secondary">{t('employees.paidThisMonth')}</Typography>
               <Typography variant="h6">{fmt(paidThisMonth)}</Typography>
             </Grid>
+            {shortageThisMonth > 0 && (
+              <Grid item xs={4}>
+                <Typography variant="caption" color="text.secondary">{t('shortages.salaryDeductionColumn')}</Typography>
+                <Typography variant="h6" color="error.main">{fmt(shortageThisMonth)}</Typography>
+              </Grid>
+            )}
             <Grid item xs={4}>
               <Typography variant="caption" color="text.secondary">{t('employees.remaining')}</Typography>
               <Typography variant="h6" color={remaining > 0 ? 'error.main' : 'success.main'}>{fmt(remaining)}</Typography>
@@ -480,6 +503,7 @@ export default function EmployeesPage() {
                   <TableRow>
                     <TableCell>{t('employees.month')}</TableCell>
                     <TableCell>{t('employees.paidThisMonth')}</TableCell>
+                    <TableCell>{t('shortages.salaryDeductionColumn')}</TableCell>
                     <TableCell>{t('employees.remaining')}</TableCell>
                   </TableRow>
                 </TableHead>
@@ -488,6 +512,7 @@ export default function EmployeesPage() {
                     <TableRow key={r.month} hover>
                       <TableCell>{statementYear}-{String(r.month).padStart(2, '0')}</TableCell>
                       <TableCell>{fmt(r.paid)}</TableCell>
+                      <TableCell sx={{ color: r.deduction > 0 ? 'error.main' : 'text.secondary' }}>{r.deduction > 0 ? fmt(r.deduction) : '-'}</TableCell>
                       <TableCell>
                         <Box component="span" sx={{ color: r.remaining > 0 ? 'error.main' : 'success.main', fontWeight: 600 }}>
                           {fmt(r.remaining)}

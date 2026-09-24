@@ -132,6 +132,16 @@ public class VanShortageService {
         return result;
     }
 
+    /** خصومات العجز على راتب موظف لكل شهر من سنة: الشهر ← المبلغ (لكشف الراتب ونافذة صرف الراتب). */
+    @Transactional(readOnly = true)
+    public Map<Integer, BigDecimal> employeeYearDeductions(Long employeeId, int year) {
+        Map<Integer, BigDecimal> result = new TreeMap<>();
+        for (VanShortage s : vanShortageRepository.findByStatusAndDriverIdAndSalaryYear(ShortageStatus.SALARY_DEDUCTED, employeeId, year)) {
+            result.merge(s.getSalaryMonth(), s.getTotalValue(), BigDecimal::add);
+        }
+        return result;
+    }
+
     @Transactional
     public VanShortageDto settle(Long id, ShortageSettleRequest request, User actingUser) {
         VanShortage s = getOrThrow(id);

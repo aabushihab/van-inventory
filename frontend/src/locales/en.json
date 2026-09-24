@@ -403,7 +403,8 @@
     "operatingActivities": "Net Operating Activities",
     "investingActivities": "Net Investing Activities",
     "financingActivities": "Net Financing Activities",
-    "netChange": "Net Change for Period"
+    "netChange": "Net Change for Period",
+    "shortageLoss": "Waived driver shortages"
   },
   "users": {
     "fullName": "Full Name",
@@ -764,7 +765,8 @@
     "guide": [
       "Every van count with missing goods is recorded here against the van's driver, priced as chosen at count time (sale or cost).",
       "Settle by deducting from a month's salary (shown on the Employees screen), cash payment (goes to the cash box), or waiving with a reason.",
-      "Click a driver's card to see only their shortages. A wrong settlement can be reopened."
+      "Click a driver's card to see only their shortages. A wrong settlement can be reopened.",
+      "Waived shortages count as a loss at cost and reduce profit; shortages deducted from salary or paid in cash are recovered and are not a loss."
     ]
   }
 }

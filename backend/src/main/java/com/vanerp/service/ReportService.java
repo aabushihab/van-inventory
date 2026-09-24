@@ -9,6 +9,10 @@ import com.vanerp.dto.TaxPayableSummaryDto;
 import com.vanerp.dto.TopPartyDto;
 import com.vanerp.dto.TopProductDto;
 import com.vanerp.model.PurchaseInvoice;
+import com.vanerp.model.ShortageStatus;
+import com.vanerp.model.VanShortage;
+import com.vanerp.model.VanShortageItem;
+import com.vanerp.repository.VanShortageRepository;
 import com.vanerp.model.PurchaseReturn;
 import com.vanerp.model.PurchaseReturnItem;
 import com.vanerp.model.SalesInvoice;
@@ -66,6 +70,7 @@ public class ReportService {
     private final AccountService accountService;
     private final AccountTransactionRepository accountTransactionRepository;
     private final FixedAssetService fixedAssetService;
+    private final VanShortageRepository vanShortageRepository;
 
     @Transactional(readOnly = true)
     public List<FinancialPeriodDto> financialReport(LocalDate from, LocalDate to, String groupBy) {
@@ -136,6 +141,16 @@ public class ReportService {
             acc.damagedLoss = acc.damagedLoss.add(lostValue);
         }
 
+        // عجز السائقين المُسامَح به خسارة فعلية بسعر التكلفة (بضاعة خرجت بلا مقابل ولم تُسترد)، تُنسب لفترة
+        // تسجيل العجز. العجز المخصوم من الراتب أو المدفوع نقداً مُسترد فلا يُعد خسارة، والمستحق لم يُحسم بعد.
+        for (VanShortage shortage : vanShortageRepository.findByStatusAndCreatedAtBetween(ShortageStatus.WAIVED, start, end)) {
+            String period = shortage.getCreatedAt().format(formatter);
+            Accumulator acc = byPeriod.computeIfAbsent(period, p -> new Accumulator());
+            for (VanShortageItem item : shortage.getItems()) {
+                acc.shortageLoss = acc.shortageLoss.add(item.getProduct().getPurchasePrice().multiply(item.getQuantity()));
+            }
+        }
+
         // مصاريف المحل التشغيلية (كهرباء، إيجار...) تُخصم من ربح يوم/شهر تاريخ المصروف نفسه.
         List<Expense> expenses = expenseRepository.findByExpenseDateBetween(from, to);
         for (Expense expense : expenses) {
@@ -149,10 +164,10 @@ public class ReportService {
             Accumulator acc = entry.getValue();
             BigDecimal netSales = acc.salesTotal.subtract(acc.discountTotal);
             BigDecimal grossProfit = netSales.subtract(acc.costOfGoodsSold)
-                    .subtract(acc.damagedLoss).subtract(acc.expensesTotal);
+                    .subtract(acc.damagedLoss).subtract(acc.shortageLoss).subtract(acc.expensesTotal);
             result.add(new FinancialPeriodDto(
                     entry.getKey(), acc.salesCount, acc.salesTotal, acc.discountTotal,
-                    acc.costOfGoodsSold, acc.damagedLoss, acc.expensesTotal, grossProfit, acc.purchasesTotal
+                    acc.costOfGoodsSold, acc.damagedLoss, acc.shortageLoss, acc.expensesTotal, grossProfit, acc.purchasesTotal
             ));
         }
         result.sort((a, b) -> a.period().compareTo(b.period()));
@@ -500,6 +515,7 @@ public class ReportService {
         BigDecimal discountTotal = BigDecimal.ZERO;
         BigDecimal costOfGoodsSold = BigDecimal.ZERO;
         BigDecimal damagedLoss = BigDecimal.ZERO;
+        BigDecimal shortageLoss = BigDecimal.ZERO;
         BigDecimal expensesTotal = BigDecimal.ZERO;
         BigDecimal purchasesTotal = BigDecimal.ZERO;
     }
