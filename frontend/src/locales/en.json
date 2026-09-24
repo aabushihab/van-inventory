@@ -422,7 +422,10 @@
     "investingActivities": "Net Investing Activities",
     "financingActivities": "Net Financing Activities",
     "netChange": "Net Change for Period",
-    "shortageLoss": "Waived driver shortages"
+    "shortageLoss": "Driver shortages (net of recovered)",
+    "taxPayableNet": "Net tax payable (negative = credit)",
+    "supplierCredits": "Supplier credits (overpaid)",
+    "customerCredits": "Refunds owed to customers"
   },
   "users": {
     "fullName": "Full Name",

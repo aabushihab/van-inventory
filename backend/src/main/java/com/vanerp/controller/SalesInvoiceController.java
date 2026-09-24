@@ -104,6 +104,12 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public ResponseEntity<SalesInvoiceDto> create(@AuthenticationPrincipal UserPrincipal principal,
                                                    @Valid @RequestBody SalesInvoiceCreateRequest request) {
+        // كاش السائق يدخل صندوق سيارته دائماً مهما أُرسل من الواجهة
+        Long vanCash = vanAccessService.restrictedCashAccountId(principal.getUser());
+        if (vanCash != null && !"CHECK".equalsIgnoreCase(request.paymentMethod())) {
+            request = new SalesInvoiceCreateRequest(request.customerId(), request.warehouseId(), request.branchId(), request.items(),
+                    request.paidAmount(), "CASH", vanCash, request.notes(), request.dueDate(), null);
+        }
         return ResponseEntity.ok(salesInvoiceService.create(request, principal.getUser()));
     }
 

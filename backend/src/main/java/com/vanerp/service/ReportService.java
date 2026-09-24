@@ -17,6 +17,7 @@ import com.vanerp.model.PurchaseReturn;
 import com.vanerp.model.PurchaseReturnItem;
 import com.vanerp.model.SalesInvoice;
 import com.vanerp.model.SalesInvoiceItem;
+import com.vanerp.model.PurchaseInvoiceItem;
 import com.vanerp.model.SalesReturn;
 import com.vanerp.model.SalesReturnItem;
 import com.vanerp.dto.CashFlowStatementDto;
@@ -141,16 +142,22 @@ public class ReportService {
             acc.damagedLoss = acc.damagedLoss.add(lostValue);
         }
 
-        // عجز السائقين المُسامَح به خسارة فعلية بسعر التكلفة (بضاعة خرجت بلا مقابل ولم تُسترد)، تُنسب لفترة
-        // تسجيل العجز. العجز المخصوم من الراتب أو المدفوع نقداً مُسترد فلا يُعد خسارة، والمستحق لم يُحسم بعد.
-        for (VanShortage shortage : vanShortageRepository.findByStatusAndCreatedAtBetween(ShortageStatus.WAIVED, start, end)) {
+        // عجز السائقين (صافي): يوم تسجيل العجز تُحسب كلفته الفعلية (البضاعة بسعر التكلفة، الكاش بقيمته) لأنها
+        // خرجت فعلاً من المخزون/الصندوق، ويوم حسمه يُطرح منه ما استُرد (دفعه السائق نقداً أو خُصم من راتبه).
+        // المُسامَح يبقى خسارة كاملة. الخصم من الراتب يُضاف للمصاريف (الراتب الكامل) لأن مصروف الراتب المدفوع
+        // مسجَّل صافياً بعد الخصم - فالمحصلة: الربح يعكس بالضبط حركة النقد والمخزون.
+        for (VanShortage shortage : vanShortageRepository.findByCreatedAtBetween(start, end)) {
             String period = shortage.getCreatedAt().format(formatter);
             Accumulator acc = byPeriod.computeIfAbsent(period, p -> new Accumulator());
-            if ("CASH".equals(shortage.getShortageType())) {
-                acc.shortageLoss = acc.shortageLoss.add(shortage.getTotalValue());
-            }
-            for (VanShortageItem item : shortage.getItems()) {
-                acc.shortageLoss = acc.shortageLoss.add(item.getProduct().getPurchasePrice().multiply(item.getQuantity()));
+            acc.shortageLoss = acc.shortageLoss.add(shortageCost(shortage));
+        }
+        for (VanShortage shortage : vanShortageRepository.findBySettledAtBetween(start, end)) {
+            if (shortage.getStatus() != ShortageStatus.PAID && shortage.getStatus() != ShortageStatus.SALARY_DEDUCTED) continue;
+            String period = shortage.getSettledAt().format(formatter);
+            Accumulator acc = byPeriod.computeIfAbsent(period, p -> new Accumulator());
+            acc.shortageLoss = acc.shortageLoss.subtract(shortage.getTotalValue());
+            if (shortage.getStatus() == ShortageStatus.SALARY_DEDUCTED) {
+                acc.expensesTotal = acc.expensesTotal.add(shortage.getTotalValue());
             }
         }
 
@@ -187,14 +194,51 @@ public class ReportService {
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.plusDays(1).atStartOfDay();
 
+        BigDecimal[] tax = netTax(start, end);
+        return new TaxPayableSummaryDto(tax[0], tax[1], tax[0].subtract(tax[1]));
+    }
+
+    /** [ضريبة محصّلة, ضريبة مدفوعة] خلال فترة، بعد خصم حصة الضريبة من مرتجعات البيع/الشراء (تُنسب لفترة الفاتورة الأصلية). */
+    private BigDecimal[] netTax(LocalDateTime start, LocalDateTime end) {
         BigDecimal taxCollected = salesInvoiceRepository.findConfirmedWithItemsBetween(start, end).stream()
                 .map(SalesInvoice::getTaxTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (SalesReturn salesReturn : salesReturnRepository.findByInvoiceCreatedAtBetween(start, end)) {
+            for (SalesReturnItem item : salesReturn.getItems()) {
+                SalesInvoiceItem line = item.getSalesInvoiceItem();
+                taxCollected = taxCollected.subtract(lineTaxPortion(line.getQuantity(), line.getUnitPrice(), line.getDiscount(),
+                        line.getTaxRate(), item.getQuantity()));
+            }
+        }
         BigDecimal taxPaid = purchaseInvoiceRepository.findActiveWithSupplierBetween(start, end).stream()
                 .map(PurchaseInvoice::getTaxTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (PurchaseReturn purchaseReturn : purchaseReturnRepository.findByInvoiceCreatedAtBetween(start, end)) {
+            for (PurchaseReturnItem item : purchaseReturn.getItems()) {
+                PurchaseInvoiceItem line = item.getPurchaseInvoiceItem();
+                taxPaid = taxPaid.subtract(lineTaxPortion(line.getQuantity(), line.getUnitPrice(), line.getDiscount(),
+                        line.getTaxRate(), item.getQuantity()));
+            }
+        }
+        return new BigDecimal[]{taxCollected, taxPaid};
+    }
 
-        return new TaxPayableSummaryDto(taxCollected, taxPaid, taxCollected.subtract(taxPaid));
+    private static BigDecimal lineTaxPortion(BigDecimal qty, BigDecimal unitPrice, BigDecimal discount, BigDecimal taxRate,
+                                             BigDecimal returnedQty) {
+        if (taxRate == null || taxRate.signum() == 0 || qty == null || qty.signum() == 0) return BigDecimal.ZERO;
+        BigDecimal base = unitPrice.multiply(qty).subtract(discount != null ? discount : BigDecimal.ZERO);
+        BigDecimal lineTax = base.multiply(taxRate).divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP);
+        return lineTax.multiply(returnedQty).divide(qty, 3, java.math.RoundingMode.HALF_UP);
+    }
+
+    /** كلفة العجز الفعلية: البضاعة بسعر التكلفة الحالي (نفس أساس تقييم المخزون)، والكاش بقيمته. */
+    private static BigDecimal shortageCost(VanShortage shortage) {
+        if ("CASH".equals(shortage.getShortageType())) return shortage.getTotalValue();
+        BigDecimal cost = BigDecimal.ZERO;
+        for (VanShortageItem item : shortage.getItems()) {
+            cost = cost.add(item.getProduct().getPurchasePrice().multiply(item.getQuantity()));
+        }
+        return cost;
     }
 
     /**
@@ -215,17 +259,20 @@ public class ReportService {
         BigDecimal accountsPayable = payablesAging().stream()
                 .map(AgingBucketDto::total).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalAssets = cashAndBank.add(inventoryValue).add(accountsReceivable).add(fixedAssetsValue);
-        BigDecimal totalLiabilities = accountsPayable;
+        BigDecimal[] tax = netTax(LocalDate.of(2000, 1, 1).atStartOfDay(), LocalDateTime.now().plusYears(1));
+        BigDecimal taxPayable = tax[0].subtract(tax[1]);
+
+        BigDecimal supplierCredits = purchaseInvoiceRepository.sumCreditOwed();
+        BigDecimal customerCredits = salesInvoiceRepository.sumCreditOwed();
+
+        BigDecimal totalAssets = cashAndBank.add(inventoryValue).add(accountsReceivable).add(supplierCredits).add(fixedAssetsValue);
+        BigDecimal totalLiabilities = accountsPayable.add(customerCredits).add(taxPayable);
         BigDecimal equity = totalAssets.subtract(totalLiabilities);
 
-        return new BalanceSheetDto(cashAndBank, inventoryValue, accountsReceivable, fixedAssetsValue, totalAssets,
-                accountsPayable, totalLiabilities, equity);
+        return new BalanceSheetDto(cashAndBank, inventoryValue, accountsReceivable, supplierCredits, fixedAssetsValue, totalAssets,
+                accountsPayable, customerCredits, taxPayable, totalLiabilities, equity);
     }
 
-    private static final java.util.Set<AccountSourceType> OPERATING_SOURCES = java.util.Set.of(
-            AccountSourceType.SALES_PAYMENT, AccountSourceType.PURCHASE_PAYMENT, AccountSourceType.EXPENSE,
-            AccountSourceType.CHECK_CLEARED, AccountSourceType.MANUAL);
     private static final java.util.Set<AccountSourceType> INVESTING_SOURCES = java.util.Set.of(
             AccountSourceType.FIXED_ASSET_PURCHASE, AccountSourceType.FIXED_ASSET_SALE);
     private static final java.util.Set<AccountSourceType> FINANCING_SOURCES = java.util.Set.of(
@@ -239,7 +286,11 @@ public class ReportService {
     @Transactional(readOnly = true)
     public CashFlowStatementDto cashFlowStatement(LocalDate from, LocalDate to) {
         List<AccountTransaction> inRange = accountTransactionRepository.findByTransactionDateBetween(from, to);
-        BigDecimal operatingNet = netForSources(inRange, OPERATING_SOURCES);
+        BigDecimal operatingNet = inRange.stream()
+                .filter(t -> t.getSourceType() != AccountSourceType.TRANSFER
+                        && !INVESTING_SOURCES.contains(t.getSourceType()) && !FINANCING_SOURCES.contains(t.getSourceType()))
+                .map(t -> t.getDirection() == TxDirection.IN ? t.getAmount() : t.getAmount().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal investingNet = netForSources(inRange, INVESTING_SOURCES);
         BigDecimal financingNet = netForSources(inRange, FINANCING_SOURCES);
         BigDecimal netChange = operatingNet.add(investingNet).add(financingNet);

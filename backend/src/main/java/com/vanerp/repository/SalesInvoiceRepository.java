@@ -102,4 +102,13 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
         """)
     List<SalesInvoice> findByWarehouseBetween(@Param("warehouseId") Long warehouseId,
                                               @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /** مجموع المبالغ المستحق إرجاعها للطرف الآخر (دفع أكثر من صافي الفاتورة بعد المرتجعات، أو فاتورة ملغاة مدفوعة). */
+    @Query(value = """
+        SELECT COALESCE(SUM(CASE WHEN i.status = 'CANCELLED' THEN GREATEST(i.paid_amount, 0)
+                                 ELSE GREATEST(i.paid_amount + COALESCE(r.ret, 0) - i.grand_total, 0) END), 0)
+        FROM sales_invoices i
+        LEFT JOIN (SELECT sales_invoice_id, SUM(total_value) AS ret FROM sales_returns GROUP BY sales_invoice_id) r ON r.sales_invoice_id = i.id
+        """, nativeQuery = true)
+    java.math.BigDecimal sumCreditOwed();
 }

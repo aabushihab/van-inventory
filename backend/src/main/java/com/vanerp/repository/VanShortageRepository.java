@@ -37,4 +37,8 @@ public interface VanShortageRepository extends JpaRepository<VanShortage, Long> 
     List<VanShortage> findByStatusAndDriverIdAndSalaryYear(ShortageStatus status, Long driverId, Integer salaryYear);
 
     List<VanShortage> findByStatusAndCreatedAtBetween(ShortageStatus status, LocalDateTime from, LocalDateTime to);
+
+    List<VanShortage> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+    List<VanShortage> findBySettledAtBetween(LocalDateTime from, LocalDateTime to);
 }

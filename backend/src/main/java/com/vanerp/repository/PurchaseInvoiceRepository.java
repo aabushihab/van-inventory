@@ -63,4 +63,13 @@ public interface PurchaseInvoiceRepository extends JpaRepository<PurchaseInvoice
         ORDER BY p.dueDate ASC
         """)
     List<PurchaseInvoice> findOverdue(@Param("today") java.time.LocalDate today);
+
+    /** مجموع المبالغ المستحق إرجاعها للطرف الآخر (دفع أكثر من صافي الفاتورة بعد المرتجعات، أو فاتورة ملغاة مدفوعة). */
+    @Query(value = """
+        SELECT COALESCE(SUM(CASE WHEN i.status = 'CANCELLED' THEN GREATEST(i.paid_amount, 0)
+                                 ELSE GREATEST(i.paid_amount + COALESCE(r.ret, 0) - i.grand_total, 0) END), 0)
+        FROM purchase_invoices i
+        LEFT JOIN (SELECT purchase_invoice_id, SUM(total_value) AS ret FROM purchase_returns GROUP BY purchase_invoice_id) r ON r.purchase_invoice_id = i.id
+        """, nativeQuery = true)
+    java.math.BigDecimal sumCreditOwed();
 }

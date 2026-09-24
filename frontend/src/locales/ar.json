@@ -422,7 +422,10 @@
     "investingActivities": "صافي النشاط الاستثماري",
     "financingActivities": "صافي النشاط التمويلي",
     "netChange": "صافي التغيّر بالفترة",
-    "shortageLoss": "عجز سائقين مُسامح"
+    "shortageLoss": "عجز سائقين (صافي بعد المسترد)",
+    "taxPayableNet": "ضريبة مستحقة (صافي، السالب = رصيد لصالحك)",
+    "supplierCredits": "أرصدة لنا عند الموردين (دفعنا أكثر من المستحق)",
+    "customerCredits": "مبالغ مستحقة الإرجاع للعملاء"
   },
   "users": {
     "fullName": "الاسم الكامل",

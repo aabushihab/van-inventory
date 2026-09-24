@@ -629,6 +629,10 @@ export default function ReportsPage() {
                     <TableCell align="left">{fmt(balanceSheet.accountsReceivable)}</TableCell>
                   </TableRow>
                   <TableRow>
+                    <TableCell>{t('reports.supplierCredits')}</TableCell>
+                    <TableCell align="left">{fmt(balanceSheet.supplierCredits)}</TableCell>
+                  </TableRow>
+                  <TableRow>
                     <TableCell>{t('reports.fixedAssetsValue')}</TableCell>
                     <TableCell align="left">{fmt(balanceSheet.fixedAssetsValue)}</TableCell>
                   </TableRow>
@@ -646,6 +650,14 @@ export default function ReportsPage() {
                   <TableRow>
                     <TableCell>{t('reports.accountsPayable')}</TableCell>
                     <TableCell align="left">{fmt(balanceSheet.accountsPayable)}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>{t('reports.customerCredits')}</TableCell>
+                    <TableCell align="left">{fmt(balanceSheet.customerCredits)}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>{t('reports.taxPayableNet')}</TableCell>
+                    <TableCell align="left">{fmt(balanceSheet.taxPayable)}</TableCell>
                   </TableRow>
                   <TableRow sx={{ '& td': { fontWeight: 800, borderTop: '1px solid #cbd5e1' } }}>
                     <TableCell>{t('reports.totalLiabilities')}</TableCell>
