@@ -47,3 +47,76 @@ input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* ================= مشهد شاشة الدخول (DeliveryScene) ================= */
+.ds-scene { width: 100%; max-width: 500px; height: auto; display: block; overflow: visible; }
+.ds-scene .ds-sun { transform-origin: 60px 60px; animation: ds-spin 40s linear infinite; }
+.ds-scene .ds-cloud-slow { animation: ds-cloud 42s linear infinite; }
+.ds-scene .ds-cloud-fast { animation: ds-cloud 28s linear infinite; }
+.ds-scene .ds-birds { animation: ds-birds 20s linear infinite; }
+.ds-scene .ds-route { animation: ds-dash 1.6s linear infinite; }
+.ds-scene .ds-road { animation: ds-dash-road 1s linear infinite; }
+.ds-scene .ds-pin { transform-box: fill-box; transform-origin: center bottom; animation: ds-pin 2.4s ease-in-out infinite; }
+.ds-scene .ds-tree { transform-origin: 229px 268px; animation: ds-sway 4s ease-in-out infinite; }
+.ds-scene .ds-window { animation: ds-glow 2.6s ease-in-out infinite; }
+.ds-scene .ds-light { animation: ds-glow 0.9s ease-in-out infinite; }
+.ds-scene .ds-truck { animation: ds-drive 11s infinite; }
+.ds-scene .ds-bounce { animation: ds-bounce 0.45s ease-in-out infinite; }
+.ds-scene .ds-wheel { transform-box: fill-box; transform-origin: center; animation: ds-wheel 11s infinite; }
+.ds-scene .ds-smoke { transform-box: fill-box; transform-origin: center; animation: ds-smoke 1.1s ease-out infinite; }
+.ds-scene .ds-parcel { animation: ds-parcel 11s infinite; opacity: 0; }
+
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+@keyframes ds-cloud { from { transform: translateX(-160px); } to { transform: translateX(520px); } }
+@keyframes ds-birds {
+  0% { transform: translate(500px, 70px); } 50% { transform: translate(220px, 55px); } 100% { transform: translate(-80px, 72px); }
+}
+@keyframes ds-dash { to { stroke-dashoffset: -24; } }
+@keyframes ds-dash-road { to { stroke-dashoffset: 40; } }
+@keyframes ds-pin { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes ds-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes ds-glow { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.8px); } }
+@keyframes ds-smoke {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0.7; }
+  100% { transform: translate(-22px, -16px) scale(1.6); opacity: 0; }
+}
+/* تطلع من يسار المشهد، توقف عند البقالة (38%-62%)، وبعدين تكمل وتطلع من اليمين */
+@keyframes ds-drive {
+  0% { transform: translateX(-200px); animation-timing-function: cubic-bezier(.2,.6,.35,1); }
+  38% { transform: translateX(188px); animation-timing-function: linear; }
+  62% { transform: translateX(188px); animation-timing-function: cubic-bezier(.55,0,.8,.4); }
+  100% { transform: translateX(520px); }
+}
+@keyframes ds-wheel {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.2,.6,.35,1); }
+  38% { transform: rotate(1400deg); animation-timing-function: linear; }
+  62% { transform: rotate(1400deg); animation-timing-function: cubic-bezier(.55,0,.8,.4); }
+  100% { transform: rotate(2590deg); }
+}
+@keyframes ds-parcel {
+  0%, 40% { transform: translate(300px, 204px); opacity: 0; }
+  44% { transform: translate(300px, 196px); opacity: 1; }
+  50% { transform: translate(352px, 168px) rotate(90deg); opacity: 1; }
+  57% { transform: translate(405px, 258px) rotate(180deg); opacity: 1; }
+  61%, 100% { transform: translate(405px, 258px) rotate(180deg); opacity: 0; }
+}
+
+/* خلفية لوحة الدخول: تدرّج يتحرك + أشكال طافية */
+.login-panel { background-size: 220% 220% !important; animation: login-panel 18s ease-in-out infinite; }
+@keyframes login-panel { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.login-float { position: absolute; pointer-events: none; animation: login-float 7s ease-in-out infinite; }
+@keyframes login-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-18px) rotate(8deg); }
+}
+.login-blob { position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none; animation: login-blob 14s ease-in-out infinite; }
+@keyframes login-blob {
+  0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -20px) scale(1.15); }
+}
+.login-twinkle { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fde68a; pointer-events: none;
+  box-shadow: 0 0 10px 2px rgba(253,230,138,.7); animation: login-twinkle 3s ease-in-out infinite; }
+@keyframes login-twinkle { 0%, 100% { opacity: .15; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.2); } }
+.login-card-in { animation: login-card-in .6s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes login-card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+

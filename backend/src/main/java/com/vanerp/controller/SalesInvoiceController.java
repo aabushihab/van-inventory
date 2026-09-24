@@ -133,7 +133,8 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesReturnDto recordReturn(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                         @Valid @RequestBody SalesReturnRequest request) {
-        vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
+        // المرتجعات من صلاحية الإدارة فقط - السائق لا يسجّل إرجاعاً
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.recordReturn(id, request, principal.getUser());
     }
 

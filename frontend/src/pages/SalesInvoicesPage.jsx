@@ -571,7 +571,7 @@ export default function SalesInvoicesPage() {
                         <IconButton size="small" onClick={() => openEdit(inv)}><EditIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
+                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
                       <Tooltip title={t('invoice.return')}>
                         <IconButton size="small" color="warning" onClick={() => openReturn(inv)}><AssignmentReturnIcon fontSize="small" /></IconButton>
                       </Tooltip>
