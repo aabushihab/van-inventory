@@ -217,6 +217,7 @@ export const fiscalClosingApi = {
   list: () => client.get('/fiscal-closings'),
   latest: () => client.get('/fiscal-closings/latest'),
   close: (data) => client.post('/fiscal-closings', data),
+  undo: (id) => client.delete(`/fiscal-closings/${id}`),
 };
 
 export const stocktakeApi = {

@@ -582,7 +582,9 @@
     "closingDate": "Closing Date",
     "closedAt": "Closed At",
     "warning": "Warning: after closing, no account transaction, stocktake completion, or edit/cancel/return of a sales or purchase invoice can be dated on or before the closing date. This action cannot be undone.",
-    "confirmClose": "Are you sure you want to close the fiscal period through {{date}}? This action cannot be undone."
+    "confirmClose": "Are you sure you want to close the fiscal period through {{date}}? This action cannot be undone.",
+    "undo": "Undo closing",
+    "confirmUndo": "The closing of {{date}} will be removed and the period reopened. Continue?"
   },
   "quote": {
     "create": "Create Quote",

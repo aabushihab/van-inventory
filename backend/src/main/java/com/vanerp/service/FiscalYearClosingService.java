@@ -33,6 +33,10 @@ public class FiscalYearClosingService {
 
     @Transactional
     public FiscalYearClosingDto close(FiscalYearClosingRequest request, User actingUser) {
+        // إقفال اليوم أو المستقبل يوقف كل حركات اليوم (مبيعات بدفعات، تحصيل، تسليم كاش...) - يُسمح فقط بتاريخ سابق
+        if (!request.closingDate().isBefore(LocalDate.now())) {
+            throw ApiException.badRequest("تاريخ الإقفال يجب أن يكون قبل اليوم - إقفال اليوم يوقف كل حركات اليوم الجارية");
+        }
         latestClosingDate().ifPresent(existing -> {
             if (!request.closingDate().isAfter(existing)) {
                 throw ApiException.badRequest("تاريخ الإقفال الجديد يجب أن يكون بعد آخر إقفال سابق (" + existing + ")");
@@ -42,6 +46,17 @@ public class FiscalYearClosingService {
                 .closingDate(request.closingDate()).notes(request.notes()).closedBy(actingUser)
                 .build();
         return toDto(fiscalYearClosingRepository.save(closing));
+    }
+
+    /** إلغاء آخر إقفال فقط (تصحيح إقفال بالخطأ) - يعيد فتح الفترة حتى الإقفال الذي قبله. */
+    @Transactional
+    public void undoLatest(Long id) {
+        FiscalYearClosing latest = fiscalYearClosingRepository.findTopByOrderByClosingDateDesc()
+                .orElseThrow(() -> ApiException.notFound("لا يوجد إقفال لإلغائه"));
+        if (!latest.getId().equals(id)) {
+            throw ApiException.badRequest("يمكن إلغاء آخر إقفال فقط");
+        }
+        fiscalYearClosingRepository.delete(latest);
     }
 
     private FiscalYearClosingDto toDto(FiscalYearClosing c) {

@@ -46,8 +46,24 @@ export default function FiscalClosingPage() {
 
   useEffect(() => { load(); }, []);
 
+  /** آخر يوم في الشهر السابق - الإقفال الطبيعي بعد انتهاء الشهر (إقفال اليوم يوقف حركات اليوم). */
+  function lastMonthEndIso() {
+    const d = new Date(); d.setDate(0);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  async function undoClosing(h) {
+    if (!window.confirm(t('fiscalClosing.confirmUndo', { date: h.closingDate }))) return;
+    try {
+      await fiscalClosingApi.undo(h.id);
+      await load();
+    } catch (e) {
+      setError(getErrorMessage(e, t('common.error')));
+    }
+  }
+
   function openDialog() {
-    setForm({ closingDate: todayIso(), notes: '' });
+    setForm({ closingDate: lastMonthEndIso(), notes: '' });
     setDialogError('');
     setDialogOpen(true);
   }
@@ -108,15 +124,23 @@ export default function FiscalClosingPage() {
                 <TableCell>{t('common.notes')}</TableCell>
                 <TableCell>{t('expenses.recordedBy')}</TableCell>
                 <TableCell>{t('fiscalClosing.closedAt')}</TableCell>
+                {canManage && <TableCell />}
               </TableRow>
             </TableHead>
             <TableBody>
-              {history.map((h) => (
+              {history.map((h, idx) => (
                 <TableRow key={h.id} hover>
                   <TableCell>{h.closingDate}</TableCell>
                   <TableCell>{h.notes || '-'}</TableCell>
                   <TableCell>{h.closedByName || '-'}</TableCell>
                   <TableCell>{new Date(h.closedAt).toLocaleString()}</TableCell>
+                  {canManage && (
+                    <TableCell>
+                      {idx === 0 && (
+                        <Button size="small" color="error" onClick={() => undoClosing(h)}>{t('fiscalClosing.undo')}</Button>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

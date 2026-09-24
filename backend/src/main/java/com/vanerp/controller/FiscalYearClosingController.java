@@ -33,6 +33,14 @@ public class FiscalYearClosingController {
         return fiscalYearClosingService.latestClosingDate().orElse(null);
     }
 
+    /** إلغاء آخر إقفال (تصحيح إقفال بالخطأ). */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('FISCAL_CLOSING_MANAGE')")
+    public ResponseEntity<Void> undo(@PathVariable Long id) {
+        fiscalYearClosingService.undoLatest(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('FISCAL_CLOSING_MANAGE')")
     public ResponseEntity<FiscalYearClosingDto> close(@AuthenticationPrincipal UserPrincipal principal,
