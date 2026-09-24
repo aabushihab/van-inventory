@@ -44,6 +44,10 @@ public class Notification {
     @JoinColumn(name = "related_purchase_invoice_id")
     private PurchaseInvoice relatedPurchaseInvoice;
 
+    /** مفتاح فريد للحدث لمنع تكرار نفس التنبيه (مثلاً EXPIRY_SOON:12:2026-10-01). */
+    @Column(name = "alert_key", length = 150)
+    private String alertKey;
+
     @Column(name = "is_read", nullable = false)
     @Builder.Default
     private boolean read = false;

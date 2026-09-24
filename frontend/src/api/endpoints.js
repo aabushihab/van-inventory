@@ -126,6 +126,9 @@ export const purchaseQuoteApi = {
 export const companySettingsApi = {
   get: () => client.get('/settings/company'),
   update: (data) => client.put('/settings/company', data),
+  alerts: () => client.get('/settings/company/alerts'),
+  updateAlerts: (data) => client.put('/settings/company/alerts', data),
+  runAlerts: () => client.post('/settings/company/alerts/run'),
 };
 
 export const salesInvoiceApi = {

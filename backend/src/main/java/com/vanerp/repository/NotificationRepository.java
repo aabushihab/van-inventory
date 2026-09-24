@@ -9,6 +9,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findAllByOrderByCreatedAtDesc(Pageable pageable);
     long countByReadFalse();
 
+    boolean existsByAlertKey(String alertKey);
+
     boolean existsByRelatedProductIdAndRelatedWarehouseIdAndReadFalse(Long productId, Long warehouseId);
 
     boolean existsByRelatedSalesInvoiceIdAndReadFalse(Long salesInvoiceId);

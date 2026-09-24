@@ -251,7 +251,13 @@
     "uploadImage": "Upload Image",
     "imageTooLarge": "Image is too large (max 15 MB)",
     "priceBelowCostWarning": "Warning: sale price is below purchase price (selling at a loss)",
-    "allCategories": "All Categories"
+    "allCategories": "All Categories",
+    "expiryDate": "Expiry date",
+    "expiryAlertDays": "Alert me before (days)",
+    "expiryAlertDaysDefault": "Default",
+    "expiryAlertDaysHint": "Empty = default from alert settings",
+    "expiresIn": "Expires in {{days}} days",
+    "expiredAgo": "Expired {{days}} days ago"
   },
   "stock": {
     "adjust": "Add Stock",
@@ -691,5 +697,20 @@
     "featureVans": "Van Loading & Settlement",
     "showPassword": "Show password",
     "hidePassword": "Hide password"
+  },
+  "alertSettings": {
+    "title": "Alert Settings",
+    "expirySection": "Product expiry",
+    "expiryEnabled": "Enable expiry alerts",
+    "defaultExpiryDays": "Alert before expiry (days) - default",
+    "defaultExpiryHint": "Used for products without their own number of days on the Products screen.",
+    "vanSection": "Distribution vans",
+    "vanEnabled": "Enable van alerts",
+    "noLoadDays": "Alert if a van hasn't been loaded for (days)",
+    "noUnloadDays": "Alert if goods stay on a van without unloading for (days)",
+    "schedule": "Automatic checks: expiry every day at 7 AM (and on system start), vans every day at 8 PM. Each alert appears once and isn't repeated (van alerts once per day).",
+    "runNow": "Check now",
+    "runResult": "Checked: {{expiry}} new expiry alerts, {{vans}} new van alerts.",
+    "saved": "Settings saved"
   }
 }

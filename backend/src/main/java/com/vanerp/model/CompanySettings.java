@@ -45,6 +45,30 @@ public class CompanySettings {
     @Column(columnDefinition = "TEXT")
     private String logo;
 
+    // ---------- إعدادات التنبيهات ----------
+    @Column(name = "expiry_alerts_enabled", nullable = false)
+    @Builder.Default
+    private boolean expiryAlertsEnabled = true;
+
+    /** عدد الأيام الافتراضي للتنبيه قبل الانتهاء (للأصناف التي لم يُحدَّد لها عدد خاص). */
+    @Column(name = "default_expiry_alert_days", nullable = false)
+    @Builder.Default
+    private int defaultExpiryAlertDays = 30;
+
+    @Column(name = "van_alerts_enabled", nullable = false)
+    @Builder.Default
+    private boolean vanAlertsEnabled = true;
+
+    /** تنبيه إن لم تُحمَّل السيارة منذ هذا العدد من الأيام. */
+    @Column(name = "van_no_load_alert_days", nullable = false)
+    @Builder.Default
+    private int vanNoLoadAlertDays = 1;
+
+    /** تنبيه إن بقيت بضاعة على السيارة دون تنزيل منذ هذا العدد من الأيام. */
+    @Column(name = "van_no_unload_alert_days", nullable = false)
+    @Builder.Default
+    private int vanNoUnloadAlertDays = 3;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

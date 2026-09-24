@@ -27,6 +27,8 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
     private final StockItemRepository stockItemRepository;
+    private final CompanySettingsService companySettingsService;
+    private final AlertService alertService;
 
     @Transactional(readOnly = true)
     public Page<ProductDto> search(String q, Long categoryId, boolean activeOnly, Pageable pageable) {
@@ -81,10 +83,14 @@ public class ProductService {
                 .taxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO)
                 .minStockThreshold(request.minStockThreshold() != null ? request.minStockThreshold() : BigDecimal.ZERO)
                 .imageUrl(request.imageUrl())
+                .expiryDate(request.expiryDate())
+                .expiryAlertDays(request.expiryAlertDays())
                 .active(request.active() == null || request.active())
                 .build();
 
-        return toDto(productRepository.save(product));
+        product = productRepository.save(product);
+        alertService.checkProductExpiry(product);
+        return toDto(product);
     }
 
     @Transactional
@@ -118,10 +124,14 @@ public class ProductService {
         product.setTaxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO);
         product.setMinStockThreshold(request.minStockThreshold() != null ? request.minStockThreshold() : BigDecimal.ZERO);
         product.setImageUrl(request.imageUrl());
+        product.setExpiryDate(request.expiryDate());
+        product.setExpiryAlertDays(request.expiryAlertDays());
         if (request.active() != null) product.setActive(request.active());
         product.setUpdatedAt(LocalDateTime.now());
 
-        return toDto(productRepository.save(product));
+        product = productRepository.save(product);
+        alertService.checkProductExpiry(product);
+        return toDto(product);
     }
 
     @Transactional
@@ -137,6 +147,15 @@ public class ProductService {
 
     private String blankToNull(String s) {
         return (s == null || s.isBlank()) ? null : s;
+    }
+
+    private String expiryStatus(Product p) {
+        if (p.getExpiryDate() == null) return null;
+        long days = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), p.getExpiryDate());
+        if (days < 0) return "EXPIRED";
+        int alertDays = p.getExpiryAlertDays() != null ? p.getExpiryAlertDays()
+                : companySettingsService.getOrCreate().getDefaultExpiryAlertDays();
+        return days <= alertDays ? "SOON" : "OK";
     }
 
     private ProductDto toDto(Product p) {
@@ -155,7 +174,10 @@ public class ProductService {
                 p.getUnit().getId(), p.getUnit().getName(),
                 p.getUnitsPerCarton(),
                 p.getPurchasePrice(), p.getSalePrice(), p.getTaxRate(), p.getMinStockThreshold(),
-                p.getImageUrl(), p.isActive(), totalStock
+                p.getImageUrl(), p.getExpiryDate(), p.getExpiryAlertDays(),
+                expiryStatus(p), p.getExpiryDate() != null
+                        ? java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), p.getExpiryDate()) : null,
+                p.isActive(), totalStock
         );
     }
 }

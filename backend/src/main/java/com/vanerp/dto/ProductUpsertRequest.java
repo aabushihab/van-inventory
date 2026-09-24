@@ -3,7 +3,10 @@ package com.vanerp.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import jakarta.validation.constraints.Min;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record ProductUpsertRequest(
         @NotBlank String sku,
@@ -18,5 +21,7 @@ public record ProductUpsertRequest(
         BigDecimal taxRate,
         BigDecimal minStockThreshold,
         String imageUrl,
+        LocalDate expiryDate,
+        @Min(value = 0, message = "أيام التنبيه لا يمكن أن تكون سالبة") Integer expiryAlertDays,
         Boolean active
 ) {}

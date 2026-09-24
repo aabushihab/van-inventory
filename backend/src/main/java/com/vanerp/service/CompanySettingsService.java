@@ -44,6 +44,26 @@ public class CompanySettingsService {
     }
 
     @Transactional
+    public com.vanerp.dto.AlertSettingsDto getAlertSettings() {
+        CompanySettings s = getOrCreate();
+        return new com.vanerp.dto.AlertSettingsDto(s.isExpiryAlertsEnabled(), s.getDefaultExpiryAlertDays(),
+                s.isVanAlertsEnabled(), s.getVanNoLoadAlertDays(), s.getVanNoUnloadAlertDays());
+    }
+
+    @Transactional
+    public com.vanerp.dto.AlertSettingsDto updateAlertSettings(com.vanerp.dto.AlertSettingsDto request) {
+        CompanySettings s = getOrCreate();
+        s.setExpiryAlertsEnabled(request.expiryAlertsEnabled());
+        s.setDefaultExpiryAlertDays(request.defaultExpiryAlertDays());
+        s.setVanAlertsEnabled(request.vanAlertsEnabled());
+        s.setVanNoLoadAlertDays(request.vanNoLoadAlertDays());
+        s.setVanNoUnloadAlertDays(request.vanNoUnloadAlertDays());
+        s.setUpdatedAt(LocalDateTime.now());
+        companySettingsRepository.save(s);
+        return getAlertSettings();
+    }
+
+    @Transactional
     public CompanySettingsDto get() {
         return toDto(getOrCreate());
     }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -58,6 +59,14 @@ public class Product {
     @Column(name = "min_stock_threshold", nullable = false, precision = 14, scale = 3)
     @Builder.Default
     private BigDecimal minStockThreshold = BigDecimal.ZERO;
+
+    /** تاريخ انتهاء الصنف (اختياري). */
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
+    /** كم يوماً قبل الانتهاء يُنبَّه - فارغ = القيمة الافتراضية من إعدادات التنبيهات. */
+    @Column(name = "expiry_alert_days")
+    private Integer expiryAlertDays;
 
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;

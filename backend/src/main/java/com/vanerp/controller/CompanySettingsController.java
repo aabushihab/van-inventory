@@ -14,10 +14,27 @@ import org.springframework.web.bind.annotation.*;
 public class CompanySettingsController {
 
     private final CompanySettingsService companySettingsService;
+    private final com.vanerp.service.AlertService alertService;
 
     @GetMapping
     public CompanySettingsDto get() {
         return companySettingsService.get();
+    }
+
+    @GetMapping("/alerts")
+    public com.vanerp.dto.AlertSettingsDto alertSettings() {
+        return companySettingsService.getAlertSettings();
+    }
+
+    @PutMapping("/alerts")
+    public com.vanerp.dto.AlertSettingsDto updateAlertSettings(@Valid @RequestBody com.vanerp.dto.AlertSettingsDto request) {
+        return companySettingsService.updateAlertSettings(request);
+    }
+
+    /** تشغيل فحص التنبيهات الآن (انتهاء الأصناف + السيارات) بدل انتظار موعده اليومي. يعيد عدد التنبيهات الجديدة. */
+    @PostMapping("/alerts/run")
+    public java.util.Map<String, Integer> runAlerts() {
+        return java.util.Map.of("expiry", alertService.checkAllExpiry(), "vans", alertService.checkVans());
     }
 
     @PutMapping

@@ -23,4 +23,19 @@ public interface VanLoadRepository extends JpaRepository<VanLoad, Long> {
                          @Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    /** وقت آخر سند مؤكد من نوع معيّن للسيارة (null إن لم يوجد). */
+    @Query("""
+        SELECT MAX(l.createdAt) FROM VanLoad l
+        WHERE l.van.id = :vanId AND l.loadType = :loadType AND l.status = com.vanerp.model.VanLoadStatus.CONFIRMED
+        """)
+    LocalDateTime lastOf(@Param("vanId") Long vanId, @Param("loadType") VanLoadType loadType);
+
+    /** أول تحميل مؤكد للسيارة بعد لحظة معيّنة (منذ متى البضاعة على السيارة دون تنزيل). */
+    @Query("""
+        SELECT MIN(l.createdAt) FROM VanLoad l
+        WHERE l.van.id = :vanId AND l.loadType = com.vanerp.model.VanLoadType.LOAD
+          AND l.status = com.vanerp.model.VanLoadStatus.CONFIRMED AND l.createdAt > :after
+        """)
+    LocalDateTime firstLoadAfter(@Param("vanId") Long vanId, @Param("after") LocalDateTime after);
 }

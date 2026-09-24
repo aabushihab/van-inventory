@@ -20,8 +20,11 @@ const emptyProduct = {
   sku: '', barcode: '', name: '', nameEn: '', categoryId: '', unitId: '',
   unitsPerCarton: '',
   purchasePrice: '0', salePrice: '0', taxRate: '16', minStockThreshold: '0',
-  imageUrl: '', active: true,
+  imageUrl: '', expiryDate: '', expiryAlertDays: '', active: true,
 };
+
+/** لون وتسمية حالة الانتهاء: منتهي (أحمر)، قريب (برتقالي)، سليم. */
+const EXPIRY_COLORS = { EXPIRED: 'error', SOON: 'warning', OK: 'success' };
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
@@ -85,6 +88,7 @@ export default function ProductsPage() {
       ...emptyProduct, ...row,
       categoryId: row.categoryId || '', unitId: row.unitId || '',
       unitsPerCarton: row.unitsPerCarton ?? '',
+      expiryDate: row.expiryDate || '', expiryAlertDays: row.expiryAlertDays ?? '',
     });
     setFieldErrors({});
     setDialogOpen(true);
@@ -104,6 +108,8 @@ export default function ProductsPage() {
         salePrice: Number(form.salePrice || 0),
         taxRate: Number(form.taxRate || 0),
         minStockThreshold: Number(form.minStockThreshold || 0),
+        expiryDate: form.expiryDate || null,
+        expiryAlertDays: form.expiryAlertDays === '' ? null : Number(form.expiryAlertDays),
       };
       if (editing) {
         await productApi.update(editing.id, payload);
@@ -184,6 +190,7 @@ export default function ProductsPage() {
                 <TableCell>{t('products.purchasePrice')}</TableCell>
                 <TableCell>{t('products.salePrice')}</TableCell>
                 <TableCell>{t('products.totalStock')}</TableCell>
+                <TableCell>{t('products.expiryDate')}</TableCell>
                 <TableCell>{t('common.status')}</TableCell>
                 {canManage && <TableCell align="center">{t('common.actions')}</TableCell>}
               </TableRow>
@@ -210,6 +217,17 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell>
                     <Chip size="small" label={p.totalStock} color={Number(p.totalStock) <= Number(p.minStockThreshold) && Number(p.minStockThreshold) > 0 ? 'warning' : 'default'} />
+                  </TableCell>
+                  <TableCell>
+                    {p.expiryDate ? (
+                      <Tooltip title={p.expiryStatus === 'EXPIRED'
+                        ? t('products.expiredAgo', { days: Math.abs(p.daysToExpiry) })
+                        : t('products.expiresIn', { days: p.daysToExpiry })}>
+                        <Chip size="small" variant={p.expiryStatus === 'OK' ? 'outlined' : 'filled'}
+                          color={EXPIRY_COLORS[p.expiryStatus] || 'default'}
+                          label={p.expiryDate} />
+                      </Tooltip>
+                    ) : '-'}
                   </TableCell>
                   <TableCell>
                     <Chip size="small" label={p.active ? t('common.active') : t('common.inactive')} color={p.active ? 'success' : 'default'} />
@@ -292,6 +310,20 @@ export default function ProductsPage() {
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.minStock')} value={form.minStockThreshold} onChange={(e) => setForm({ ...form, minStockThreshold: e.target.value })} />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField fullWidth type="date" label={t('products.expiryDate')} value={form.expiryDate || ''}
+                onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }} />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField fullWidth type="number" label={t('products.expiryAlertDays')} value={form.expiryAlertDays}
+                disabled={!form.expiryDate}
+                onChange={(e) => setForm({ ...form, expiryAlertDays: e.target.value })}
+                placeholder={t('products.expiryAlertDaysDefault')}
+                helperText={form.expiryDate ? t('products.expiryAlertDaysHint') : ''}
+                error={!!fieldErrors.expiryAlertDays}
+                slotProps={{ htmlInput: { min: 0 }, inputLabel: { shrink: true } }} />
             </Grid>
             <Grid size={{ xs: 12, sm: 8 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

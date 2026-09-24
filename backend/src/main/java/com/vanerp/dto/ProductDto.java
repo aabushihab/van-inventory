@@ -1,6 +1,7 @@
 package com.vanerp.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record ProductDto(
         Long id,
@@ -18,6 +19,11 @@ public record ProductDto(
         BigDecimal taxRate,
         BigDecimal minStockThreshold,
         String imageUrl,
+        LocalDate expiryDate,
+        Integer expiryAlertDays,
+        /** EXPIRED | SOON | OK | null (بدون تاريخ انتهاء) */
+        String expiryStatus,
+        Long daysToExpiry,
         boolean active,
         BigDecimal totalStock
 ) {}
