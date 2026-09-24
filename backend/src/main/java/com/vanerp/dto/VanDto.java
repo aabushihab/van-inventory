@@ -22,5 +22,6 @@ public record VanDto(
         BigDecimal stockQuantity,
         BigDecimal stockValue,
         long todayInvoiceCount,
-        BigDecimal todaySalesTotal
+        BigDecimal todaySalesTotal,
+        BigDecimal pendingShortageValue
 ) {}

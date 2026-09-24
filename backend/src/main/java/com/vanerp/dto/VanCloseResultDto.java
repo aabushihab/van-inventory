@@ -8,5 +8,7 @@ public record VanCloseResultDto(
         BigDecimal shortageValue,
         BigDecimal surplusValue,
         List<VanCloseLineDto> lines,
-        VanLoadDto unloadVoucher
+        VanLoadDto unloadVoucher,
+        String pricing,
+        Long shortageId
 ) {}

@@ -12,7 +12,7 @@ import PhoneIcon from '@mui/icons-material/PhoneOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import { useTranslation } from 'react-i18next';
-import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi } from '../api/endpoints';
+import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi, companySettingsApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import ErrorAlert from '../components/ErrorAlert';
 import PageGuide from '../components/PageGuide';
@@ -56,6 +56,8 @@ export default function VansPage({ onLoad }) {
   const [closeRows, setCloseRows] = useState([]);
   const [closeWarehouseId, setCloseWarehouseId] = useState('');
   const [closeNotes, setCloseNotes] = useState('');
+  const [closePricing, setClosePricing] = useState('SALE');
+  const [defaultPricing, setDefaultPricing] = useState('SALE');
   const [closeResult, setCloseResult] = useState(null);
 
   async function load() {
@@ -79,6 +81,10 @@ export default function VansPage({ onLoad }) {
       setMainWarehouses(mains);
       setCloseWarehouseId((mains.find((w) => w.isDefault) || mains[0])?.id || '');
     }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    companySettingsApi.alerts().then(({ data }) => setDefaultPricing(data.shortagePricing || 'SALE')).catch(() => {});
   }, []);
 
   function loadDrivers() {
@@ -145,6 +151,7 @@ export default function VansPage({ onLoad }) {
     setError('');
     setCloseResult(null);
     setCloseNotes('');
+    setClosePricing(defaultPricing);
     setCloseVan(row);
     const { data } = await stockApi.byWarehouse(row.warehouseId);
     setCloseRows(data.filter((s) => Number(s.quantity) !== 0)
@@ -158,6 +165,7 @@ export default function VansPage({ onLoad }) {
       const { data } = await vanApi.close(closeVan.id, {
         warehouseId: closeWarehouseId,
         notes: closeNotes,
+        pricing: closePricing,
         counts: closeRows.map((r) => ({ productId: r.productId, countedQuantity: Number(r.counted || 0) })),
       });
       setCloseResult(data);
@@ -242,6 +250,10 @@ export default function VansPage({ onLoad }) {
                           <Typography variant="caption" color="text.secondary">{t('vans.todayInvoices', { count: r.todayInvoiceCount })}</Typography>
                         </Box>
                       </Box>
+                      {Number(r.pendingShortageValue) > 0 && (
+                        <Chip size="small" color="error" variant="outlined" sx={{ alignSelf: 'flex-start' }}
+                          label={`${t('shortages.pendingOn')}: ${fmt(r.pendingShortageValue)}`} />
+                      )}
                     </Box>
                   </CardActionArea>
                   <Divider />
@@ -374,8 +386,9 @@ export default function VansPage({ onLoad }) {
                 {t('vans.closeDone')}
                 {closeResult.unloadVoucher && ` — ${t('vanLoads.number')}: ${closeResult.unloadVoucher.loadNumber}`}
                 <br />
-                {t('vans.shortageValue')}: <b>{fmt(closeResult.shortageValue)}</b>
+                {t('vans.shortageValue')} ({closeResult.pricing === 'COST' ? t('shortages.pricingCost') : t('shortages.pricingSale')}): <b>{fmt(closeResult.shortageValue)}</b>
                 {' · '}{t('vans.surplusValue')}: <b>{fmt(closeResult.surplusValue)}</b>
+                {closeResult.shortageId && <><br />{t('shortages.recordedHint')}</>}
               </Alert>
               <Table size="small">
                 <TableHead>
@@ -405,10 +418,17 @@ export default function VansPage({ onLoad }) {
           ) : (
             <Box>
               <Alert severity="info" sx={{ mb: 2 }}>{t('vans.closeHint')}</Alert>
-              <TextField select fullWidth required label={t('vanLoads.toWarehouse')} value={closeWarehouseId}
-                onChange={(e) => setCloseWarehouseId(e.target.value)} sx={{ mb: 2 }}>
-                {mainWarehouses.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
-              </TextField>
+              <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                <TextField select required label={t('vanLoads.toWarehouse')} value={closeWarehouseId} sx={{ flex: 2, minWidth: 220 }}
+                  onChange={(e) => setCloseWarehouseId(e.target.value)}>
+                  {mainWarehouses.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
+                </TextField>
+                <TextField select label={t('shortages.pricing')} value={closePricing} sx={{ flex: 1, minWidth: 180 }}
+                  onChange={(e) => setClosePricing(e.target.value)} helperText={t('shortages.pricingHint')}>
+                  <MenuItem value="SALE">{t('shortages.pricingSale')}</MenuItem>
+                  <MenuItem value="COST">{t('shortages.pricingCost')}</MenuItem>
+                </TextField>
+              </Box>
               <Table size="small">
                 <TableHead>
                   <TableRow>

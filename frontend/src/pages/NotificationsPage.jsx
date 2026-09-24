@@ -10,6 +10,7 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import EventBusyIcon from '@mui/icons-material/EventBusyOutlined';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottomOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
+import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import { useTranslation } from 'react-i18next';
 import { notificationApi } from '../api/endpoints';
 
@@ -73,8 +74,9 @@ export default function NotificationsPage() {
                   {n.type === 'EXPIRY_SOON' && <HourglassBottomIcon color="warning" sx={{ me: 2 }} />}
                   {n.type === 'EXPIRED' && <EventBusyIcon color="error" sx={{ me: 2 }} />}
                   {['VAN_NOT_LOADED', 'VAN_NOT_UNLOADED'].includes(n.type) && <LocalShippingIcon color="info" sx={{ me: 2 }} />}
+                  {n.type === 'VAN_SHORTAGE' && <ReportProblemIcon color="error" sx={{ me: 2 }} />}
                   {!['LOW_STOCK', 'OVERDUE_SALES_INVOICE', 'OVERDUE_PURCHASE_INVOICE', 'EXPIRY_SOON', 'EXPIRED',
-                    'VAN_NOT_LOADED', 'VAN_NOT_UNLOADED'].includes(n.type) && <InfoOutlinedIcon sx={{ me: 2 }} />}
+                    'VAN_NOT_LOADED', 'VAN_NOT_UNLOADED', 'VAN_SHORTAGE'].includes(n.type) && <InfoOutlinedIcon sx={{ me: 2 }} />}
                   <ListItemText
                     primary={n.title}
                     secondary={`${n.message} — ${new Date(n.createdAt).toLocaleString()}`}

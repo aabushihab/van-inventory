@@ -69,6 +69,16 @@ public class CompanySettings {
     @Builder.Default
     private int vanNoUnloadAlertDays = 3;
 
+    /** تسعير عجز السائقين الافتراضي: SALE = سعر البيع، COST = سعر التكلفة. */
+    @Column(name = "shortage_pricing", nullable = false, length = 10)
+    @Builder.Default
+    private String shortagePricing = "SALE";
+
+    /** تنبيه عند تسجيل عجز قيمته تساوي أو تزيد عن هذا المبلغ (0 = كل عجز). */
+    @Column(name = "shortage_alert_threshold", nullable = false, precision = 14, scale = 3)
+    @Builder.Default
+    private java.math.BigDecimal shortageAlertThreshold = java.math.BigDecimal.ZERO;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

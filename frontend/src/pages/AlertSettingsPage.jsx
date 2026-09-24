@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
-  Box, Paper, Typography, Button, TextField, Alert, CircularProgress, FormControlLabel, Switch, Divider,
+  Box, Paper, Typography, Button, TextField, Alert, CircularProgress, FormControlLabel, Switch, Divider, MenuItem,
 } from '@mui/material';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottomOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
+import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import { useTranslation } from 'react-i18next';
 import { companySettingsApi } from '../api/endpoints';
 import ErrorAlert from '../components/ErrorAlert';
@@ -31,6 +32,7 @@ export default function AlertSettingsPage() {
         defaultExpiryAlertDays: Number(form.defaultExpiryAlertDays || 0),
         vanNoLoadAlertDays: Number(form.vanNoLoadAlertDays || 0),
         vanNoUnloadAlertDays: Number(form.vanNoUnloadAlertDays || 0),
+        shortageAlertThreshold: Number(form.shortageAlertThreshold || 0),
       });
       setForm(data);
       setSuccess(t('alertSettings.saved'));
@@ -88,6 +90,21 @@ export default function AlertSettingsPage() {
           control={<Switch checked={form.vanAlertsEnabled} onChange={(e) => setForm({ ...form, vanAlertsEnabled: e.target.checked })} />} />
         <TextField fullWidth sx={{ mt: 2 }} label={t('alertSettings.noLoadDays')} disabled={!form.vanAlertsEnabled} {...num('vanNoLoadAlertDays')} />
         <TextField fullWidth sx={{ mt: 2 }} label={t('alertSettings.noUnloadDays')} disabled={!form.vanAlertsEnabled} {...num('vanNoUnloadAlertDays')} />
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <ReportProblemIcon color="error" />
+          <Typography variant="subtitle1" fontWeight={800}>{t('shortages.title')}</Typography>
+        </Box>
+        <TextField select fullWidth sx={{ mt: 1 }} label={t('alertSettings.shortagePricing')} value={form.shortagePricing || 'SALE'}
+          onChange={(e) => setForm({ ...form, shortagePricing: e.target.value })} helperText={t('alertSettings.shortagePricingHint')}>
+          <MenuItem value="SALE">{t('shortages.pricingSale')}</MenuItem>
+          <MenuItem value="COST">{t('shortages.pricingCost')}</MenuItem>
+        </TextField>
+        <TextField fullWidth sx={{ mt: 2 }} type="number" label={t('alertSettings.shortageThreshold')}
+          value={form.shortageAlertThreshold ?? 0} onChange={(e) => setForm({ ...form, shortageAlertThreshold: e.target.value })}
+          helperText={t('alertSettings.shortageThresholdHint')} slotProps={{ htmlInput: { min: 0, step: 'any' } }} />
       </Paper>
 
       <Alert severity="info" sx={{ mb: 2 }}>{t('alertSettings.schedule')}</Alert>

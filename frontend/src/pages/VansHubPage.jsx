@@ -3,13 +3,15 @@ import { Box, Tabs, Tab, Paper } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import MoveUpIcon from '@mui/icons-material/MoveUpOutlined';
 import SummarizeIcon from '@mui/icons-material/SummarizeOutlined';
+import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import VansPage from './VansPage';
 import VanLoadsPage from './VanLoadsPage';
 import VanSettlementPage from './VanSettlementPage';
+import VanShortagesPage from './VanShortagesPage';
 
-const TABS = ['list', 'loads', 'report'];
+const TABS = ['list', 'loads', 'report', 'shortages'];
 
 /** شاشة واحدة لكل ما يخص سيارات التوزيع: السيارات، التحميل والتنزيل، وتقرير السائقين. */
 export default function VansHubPage() {
@@ -30,6 +32,7 @@ export default function VansHubPage() {
           <Tab icon={<LocalShippingIcon />} iconPosition="start" label={t('vans.tabList')} />
           <Tab icon={<MoveUpIcon />} iconPosition="start" label={t('vans.tabLoads')} />
           <Tab icon={<SummarizeIcon />} iconPosition="start" label={t('vans.tabReport')} />
+          <Tab icon={<ReportProblemIcon />} iconPosition="start" label={t('shortages.title')} />
         </Tabs>
       </Paper>
 
@@ -40,6 +43,7 @@ export default function VansHubPage() {
       )}
       {tab === 1 && <VanLoadsPage preset={loadPreset} onPresetHandled={() => setLoadPreset(null)} />}
       {tab === 2 && <VanSettlementPage />}
+      {tab === 3 && <VanShortagesPage />}
     </Box>
   );
 }

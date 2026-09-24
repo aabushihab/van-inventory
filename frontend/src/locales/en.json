@@ -719,6 +719,50 @@
     "schedule": "Automatic checks: expiry every day at 7 AM (and on system start), vans every day at 8 PM. Each alert appears once and isn't repeated (van alerts once per day).",
     "runNow": "Check now",
     "runResult": "Checked: {{expiry}} new expiry alerts, {{vans}} new van alerts.",
-    "saved": "Settings saved"
+    "saved": "Settings saved",
+    "shortagePricing": "Default shortage pricing",
+    "shortagePricingHint": "Can be changed in the count window for each count",
+    "shortageThreshold": "Alert me for shortages from",
+    "shortageThresholdHint": "0 = alert for any shortage"
+  },
+  "shortages": {
+    "title": "Driver Shortages",
+    "none": "No shortages",
+    "pendingOn": "Pending shortage",
+    "counts": "{{pending}} pending of {{total}} · total {{value}}",
+    "allStatuses": "All statuses",
+    "filteredByDriver": "Filtered by driver",
+    "items": "Items",
+    "value": "Shortage value",
+    "pricing": "Price shortage at",
+    "pricingSale": "Sale price",
+    "pricingCost": "Cost price",
+    "pricingHint": "Used to value any shortage in this count",
+    "settlement": "Settlement",
+    "details": "Shortage details",
+    "missingQty": "Missing qty",
+    "settle": "Settle",
+    "reopen": "Reopen (correction)",
+    "confirmReopen": "The shortage will return to pending; a cash payment entry will be removed. Continue?",
+    "methodSalary": "Deduct from driver's salary",
+    "methodPaid": "Driver paid in cash",
+    "methodWaived": "Waive",
+    "account": "Receiving cash box / account",
+    "waiveReason": "Reason for waiving",
+    "deductedFrom": "Deducted from {{month}} salary",
+    "paidTo": "Paid to",
+    "salaryDeductionColumn": "Shortage deduction",
+    "recordedHint": "The shortage was recorded against the driver - settle it from the \"Driver Shortages\" tab.",
+    "status": {
+      "PENDING": "Pending",
+      "SALARY_DEDUCTED": "Salary deducted",
+      "PAID": "Paid",
+      "WAIVED": "Waived"
+    },
+    "guide": [
+      "Every van count with missing goods is recorded here against the van's driver, priced as chosen at count time (sale or cost).",
+      "Settle by deducting from a month's salary (shown on the Employees screen), cash payment (goes to the cash box), or waiving with a reason.",
+      "Click a driver's card to see only their shortages. A wrong settlement can be reopened."
+    ]
   }
 }

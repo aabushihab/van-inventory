@@ -12,5 +12,7 @@ import java.util.List;
 public record VanCloseRequest(
         @NotNull(message = "المخزن مطلوب") Long warehouseId,
         String notes,
+        /** SALE أو COST لتسعير العجز - فارغ = الافتراضي من إعدادات التنبيهات. */
+        String pricing,
         @Valid List<VanCountLine> counts
 ) {}

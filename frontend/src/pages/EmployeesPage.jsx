@@ -11,7 +11,7 @@ import PrintIcon from '@mui/icons-material/PrintOutlined';
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
 import { useTranslation } from 'react-i18next';
 import CrudPage from '../components/CrudPage';
-import { employeeApi, expenseApi, accountApi, fetchAndOpenPdf } from '../api/endpoints';
+import { employeeApi, expenseApi, accountApi, fetchAndOpenPdf, vanShortageApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
 import { compressImage } from '../utils/imageCompress';
@@ -63,6 +63,8 @@ export default function EmployeesPage() {
   const [listYear, setListYear] = useState(currentYear);
   const [listMonth, setListMonth] = useState(currentMonth);
   const [yearlyPaidSummary, setYearlyPaidSummary] = useState({});
+  // خصومات عجز السائقين على راتب الشهر المعروض
+  const [shortageDeductions, setShortageDeductions] = useState({});
   const [statementEmployee, setStatementEmployee] = useState(null);
   const [statementYear, setStatementYear] = useState(currentYear);
   const [statementHistory, setStatementHistory] = useState([]);
@@ -77,6 +79,7 @@ export default function EmployeesPage() {
     expenseApi.salaryPaidSummary({ from, to }).then(({ data }) => setPaidSummary(data)).catch(() => {});
     expenseApi.salaryPaidSummary({ from: `${listYear}-01-01`, to: `${listYear}-12-31` })
       .then(({ data }) => setYearlyPaidSummary(data)).catch(() => {});
+    vanShortageApi.salaryDeductions(listYear, listMonth).then(({ data }) => setShortageDeductions(data)).catch(() => setShortageDeductions({}));
   }
 
   useEffect(() => { refreshSummaries(); }, [listYear, listMonth]);
@@ -248,9 +251,14 @@ export default function EmployeesPage() {
             render: (row) => fmt(paidSummary[row.id] || 0),
           },
           {
+            key: 'shortageDeduction', label: t('shortages.salaryDeductionColumn'),
+            render: (row) => (Number(shortageDeductions[row.id] || 0) > 0
+              ? <Box component="span" sx={{ color: 'error.main', fontWeight: 600 }}>{fmt(shortageDeductions[row.id])}</Box> : '-'),
+          },
+          {
             key: 'remainingThisMonth', label: t('employees.remaining'),
             render: (row) => {
-              const r = Number(row.monthlySalary || 0) - Number(paidSummary[row.id] || 0);
+              const r = Number(row.monthlySalary || 0) - Number(paidSummary[row.id] || 0) - Number(shortageDeductions[row.id] || 0);
               return <Box component="span" sx={{ color: r > 0 ? 'error.main' : 'success.main', fontWeight: 600 }}>{fmt(r)}</Box>;
             },
           },

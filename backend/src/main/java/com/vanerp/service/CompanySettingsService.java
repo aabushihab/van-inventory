@@ -47,7 +47,8 @@ public class CompanySettingsService {
     public com.vanerp.dto.AlertSettingsDto getAlertSettings() {
         CompanySettings s = getOrCreate();
         return new com.vanerp.dto.AlertSettingsDto(s.isExpiryAlertsEnabled(), s.getDefaultExpiryAlertDays(),
-                s.isVanAlertsEnabled(), s.getVanNoLoadAlertDays(), s.getVanNoUnloadAlertDays());
+                s.isVanAlertsEnabled(), s.getVanNoLoadAlertDays(), s.getVanNoUnloadAlertDays(),
+                s.getShortagePricing(), s.getShortageAlertThreshold());
     }
 
     @Transactional
@@ -58,6 +59,8 @@ public class CompanySettingsService {
         s.setVanAlertsEnabled(request.vanAlertsEnabled());
         s.setVanNoLoadAlertDays(request.vanNoLoadAlertDays());
         s.setVanNoUnloadAlertDays(request.vanNoUnloadAlertDays());
+        if (request.shortagePricing() != null) s.setShortagePricing(request.shortagePricing());
+        if (request.shortageAlertThreshold() != null) s.setShortageAlertThreshold(request.shortageAlertThreshold());
         s.setUpdatedAt(LocalDateTime.now());
         companySettingsRepository.save(s);
         return getAlertSettings();

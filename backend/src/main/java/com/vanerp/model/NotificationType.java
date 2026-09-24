@@ -8,6 +8,7 @@ public enum NotificationType {
     EXPIRED,
     VAN_NOT_LOADED,
     VAN_NOT_UNLOADED,
+    VAN_SHORTAGE,
     SYSTEM,
     INFO
 }

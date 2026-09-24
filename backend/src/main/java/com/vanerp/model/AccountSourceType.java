@@ -10,5 +10,6 @@ public enum AccountSourceType {
     MANUAL,
     TRANSFER,
     FIXED_ASSET_PURCHASE,
-    FIXED_ASSET_SALE
+    FIXED_ASSET_SALE,
+    VAN_SHORTAGE
 }

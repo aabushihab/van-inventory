@@ -257,6 +257,15 @@ export const vanApi = {
   cancelLoad: (id) => client.post(`/vans/loads/${id}/cancel`),
 };
 
+export const vanShortageApi = {
+  list: (params) => client.get('/van-shortages', { params: cleanParams(params) }),
+  summary: () => client.get('/van-shortages/summary'),
+  get: (id) => client.get(`/van-shortages/${id}`),
+  settle: (id, data) => client.post(`/van-shortages/${id}/settle`, data),
+  reopen: (id) => client.post(`/van-shortages/${id}/reopen`),
+  salaryDeductions: (year, month) => client.get('/van-shortages/salary-deductions', { params: { year, month } }),
+};
+
 export const userApi = {
   list: () => client.get('/users'),
   listPage: (params) => client.get('/users/page', { params }),

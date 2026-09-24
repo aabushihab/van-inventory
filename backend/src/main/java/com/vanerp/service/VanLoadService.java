@@ -34,6 +34,7 @@ public class VanLoadService {
     private final StockItemRepository stockItemRepository;
     private final StockService stockService;
     private final VanAccessService vanAccessService;
+    private final VanShortageService vanShortageService;
 
     @Transactional(readOnly = true)
     public Page<VanLoadDto> search(Long vanId, String loadType, LocalDate from, LocalDate to, Pageable pageable) {
@@ -111,6 +112,8 @@ public class VanLoadService {
             }
         }
 
+        String pricing = vanShortageService.resolvePricing(request.pricing());
+        Map<Product, BigDecimal> shortages = new LinkedHashMap<>();
         String note = "جرد سيارة " + van.getName() + (request.notes() != null && !request.notes().isBlank() ? " - " + request.notes() : "");
         List<VanCloseLineDto> lines = new ArrayList<>();
         BigDecimal shortage = BigDecimal.ZERO, surplus = BigDecimal.ZERO;
@@ -119,24 +122,29 @@ public class VanLoadService {
             BigDecimal actual = counted.getOrDefault(si.getProduct().getId(), system);
             BigDecimal variance = actual.subtract(system);
             if (system.signum() == 0 && actual.signum() == 0) continue;
-            BigDecimal value = variance.multiply(si.getProduct().getSalePrice());
+            BigDecimal value = variance.multiply(vanShortageService.unitPrice(si.getProduct(), pricing));
             if (variance.signum() != 0) {
                 stockService.applyMovement(si.getProduct(), vanWarehouse, variance,
                         variance.signum() > 0 ? MovementType.ADJUSTMENT_IN : MovementType.ADJUSTMENT_OUT,
                         "VAN_STOCKTAKE", van.getId(), note, actingUser);
-                if (variance.signum() < 0) shortage = shortage.add(value.negate());
+                if (variance.signum() < 0) {
+                    shortage = shortage.add(value.negate());
+                    shortages.put(si.getProduct(), variance.negate());
+                }
                 else surplus = surplus.add(value);
             }
             lines.add(new VanCloseLineDto(si.getProduct().getId(), si.getProduct().getName(), si.getProduct().getSku(),
                     system, actual, variance, value));
         }
 
+        VanShortage recorded = vanShortageService.record(van, shortages, pricing, request.notes(), actingUser);
+
         boolean hasRemaining = stockItemRepository.findByWarehouseId(vanWarehouse.getId()).stream()
                 .anyMatch(si -> si.getQuantity().signum() > 0);
         VanLoadDto voucher = hasRemaining
                 ? unloadAll(vanId, new VanUnloadAllRequest(request.warehouseId(), request.notes()), actingUser)
                 : null;
-        return new VanCloseResultDto(shortage, surplus, lines, voucher);
+        return new VanCloseResultDto(shortage, surplus, lines, voucher, pricing, recorded != null ? recorded.getId() : null);
     }
 
     /** سيارة المستخدم الحالي وحمولتها، لشاشة "سيارتي" عند المندوب. */
