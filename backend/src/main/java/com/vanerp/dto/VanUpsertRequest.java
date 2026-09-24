@@ -10,8 +10,7 @@ public record VanUpsertRequest(
         @NotBlank(message = "رقم اللوحة مطلوب")
         @Pattern(regexp = "^\\d{2}-\\d{1,7}$", message = "رقم اللوحة يجب أن يكون رمزاً من خانتين ثم - ثم رقم السيارة (مثال: 12-34567)")
         String plateNumber,
-        String driverName,
-        String driverPhone,
+        @NotNull(message = "السائق مطلوب") Long driverId,
         Long salesmanId,
         @NotNull(message = "الفرع مطلوب") Long branchId,
         String notes,

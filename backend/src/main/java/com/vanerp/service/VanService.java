@@ -28,6 +28,8 @@ public class VanService {
     private final StockMovementRepository stockMovementRepository;
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final ProductRepository productRepository;
+    private final AccountRepository accountRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Transactional(readOnly = true)
     public List<VanDto> findAll() {
@@ -48,6 +50,7 @@ public class VanService {
         Branch branch = branchRepository.findById(request.branchId())
                 .orElseThrow(() -> ApiException.notFound("الفرع غير موجود"));
         boolean active = request.active() == null || request.active();
+        Employee driver = resolveDriver(request.driverId());
 
         Warehouse warehouse = warehouseRepository.save(Warehouse.builder()
                 .branch(branch)
@@ -63,10 +66,13 @@ public class VanService {
                 .code(request.code().trim())
                 .name(request.name().trim())
                 .plateNumber(request.plateNumber().trim())
-                .driverName(request.driverName())
-                .driverPhone(request.driverPhone())
+                .driver(driver)
+                .driverName(driver.getName())
+                .driverPhone(driver.getPhone())
                 .salesman(resolveSalesman(request.salesmanId()))
                 .warehouse(warehouse)
+                .cashAccount(accountRepository.save(Account.builder()
+                        .name(vanCashName(request)).type(AccountType.CASH).branch(branch).active(active).build()))
                 .notes(request.notes())
                 .active(active)
                 .build();
@@ -83,8 +89,10 @@ public class VanService {
         van.setCode(request.code().trim());
         van.setName(request.name().trim());
         van.setPlateNumber(request.plateNumber().trim());
-        van.setDriverName(request.driverName());
-        van.setDriverPhone(request.driverPhone());
+        Employee driver = resolveDriver(request.driverId());
+        van.setDriver(driver);
+        van.setDriverName(driver.getName());
+        van.setDriverPhone(driver.getPhone());
         van.setSalesman(resolveSalesman(request.salesmanId()));
         van.setNotes(request.notes());
         if (request.active() != null) van.setActive(request.active());
@@ -96,6 +104,16 @@ public class VanService {
         warehouse.setLocation(request.plateNumber());
         warehouse.setActive(van.isActive());
         warehouseRepository.save(warehouse);
+
+        Account cash = van.getCashAccount();
+        if (cash == null) {
+            cash = Account.builder().type(AccountType.CASH).build();
+            van.setCashAccount(cash);
+        }
+        cash.setName(vanCashName(request));
+        cash.setBranch(branch);
+        cash.setActive(van.isActive());
+        accountRepository.save(cash);
 
         return toDto(vanRepository.save(van));
     }
@@ -114,8 +132,10 @@ public class VanService {
             vanRepository.save(van);
             return;
         }
+        Account cash = van.getCashAccount();
         vanRepository.delete(van);
         vanRepository.flush();
+        if (cash != null) accountRepository.delete(cash);
         stockItemRepository.deleteAll(stockItemRepository.findByWarehouseId(warehouse.getId()));
         warehouseRepository.delete(warehouse);
     }
@@ -197,6 +217,10 @@ public class VanService {
                 throw ApiException.conflict("رقم اللوحة مسجّل لسيارة أخرى");
             }
             boolean willBeActive = request.active() == null || request.active();
+            if (willBeActive && other.isActive() && other.getDriver() != null
+                    && other.getDriver().getId().equals(request.driverId())) {
+                throw ApiException.conflict("هذا السائق مربوط مسبقاً بالسيارة " + other.getName());
+            }
             if (willBeActive && other.isActive() && request.salesmanId() != null && other.getSalesman() != null
                     && other.getSalesman().getId().equals(request.salesmanId())) {
                 throw ApiException.conflict("هذا المندوب مربوط مسبقاً بالسيارة " + other.getName());
@@ -208,9 +232,23 @@ public class VanService {
         return vanRepository.findById(id).orElseThrow(() -> ApiException.notFound("السيارة غير موجودة"));
     }
 
+    private Employee resolveDriver(Long driverId) {
+        Employee driver = employeeRepository.findById(driverId)
+                .orElseThrow(() -> ApiException.notFound("السائق غير موجود"));
+        if (!EmployeePosition.DRIVER.name().equals(driver.getPosition())) {
+            throw ApiException.badRequest("الموظف المختار ليست وظيفته سائق");
+        }
+        if (!driver.isActive()) throw ApiException.badRequest("السائق المختار غير فعّال");
+        return driver;
+    }
+
     private User resolveSalesman(Long salesmanId) {
         if (salesmanId == null) return null;
         return userRepository.findById(salesmanId).orElseThrow(() -> ApiException.notFound("المندوب غير موجود"));
+    }
+
+    private String vanCashName(VanUpsertRequest request) {
+        return "صندوق سيارة " + request.code().trim();
     }
 
     private String vanWarehouseName(VanUpsertRequest request) {
@@ -224,10 +262,16 @@ public class VanService {
             qty = qty.add(si.getQuantity());
             value = value.add(si.getQuantity().multiply(si.getProduct().getSalePrice()));
         }
-        return new VanDto(v.getId(), v.getCode(), v.getName(), v.getPlateNumber(), v.getDriverName(), v.getDriverPhone(),
+        Employee d = v.getDriver();
+        return new VanDto(v.getId(), v.getCode(), v.getName(), v.getPlateNumber(),
+                d != null ? d.getId() : null,
+                d != null ? d.getName() : v.getDriverName(),
+                d != null ? d.getPhone() : v.getDriverPhone(),
                 v.getSalesman() != null ? v.getSalesman().getId() : null,
                 v.getSalesman() != null ? v.getSalesman().getFullName() : null,
                 v.getWarehouse().getId(), v.getWarehouse().getName(), v.getWarehouse().getBranch().getId(),
+                v.getCashAccount() != null ? v.getCashAccount().getId() : null,
+                v.getCashAccount() != null ? v.getCashAccount().getName() : null,
                 v.getNotes(), v.isActive(), qty, value);
     }
 

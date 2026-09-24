@@ -170,6 +170,7 @@ export const auditLogApi = {
 };
 
 export const employeeApi = {
+  drivers: () => client.get('/employees/drivers'),
   list: () => client.get('/employees'),
   create: (data) => client.post('/employees', data),
   update: (id, data) => client.put(`/employees/${id}`, data),
@@ -228,14 +229,6 @@ export const checkApi = {
   create: (data) => client.post('/checks', data),
   updateStatus: (id, data) => client.put(`/checks/${id}/status`, data),
   remove: (id) => client.delete(`/checks/${id}`),
-};
-
-export const backupApi = {
-  list: () => client.get('/backups'),
-  runNow: () => client.post('/backups/run'),
-  downloadUrl: (fileName) => `/backups/${encodeURIComponent(fileName)}/download`,
-  restore: (fileName) => client.post(`/backups/${encodeURIComponent(fileName)}/restore`),
-  resetScriptUrl: () => '/backups/reset-script',
 };
 
 export const notificationApi = {

@@ -10,7 +10,7 @@ import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { vanApi, branchApi, userApi, warehouseApi, stockApi } from '../api/endpoints';
+import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import ErrorAlert from '../components/ErrorAlert';
 import PageGuide from '../components/PageGuide';
@@ -20,7 +20,7 @@ import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 export const PLATE_REGEX = /^\d{2}-\d{1,7}$/;
 
 const emptyForm = {
-  code: '', name: '', plateNumber: '', driverName: '', driverPhone: '',
+  code: '', name: '', plateNumber: '', driverId: '',
   salesmanId: '', branchId: '', notes: '', active: true,
 };
 
@@ -38,6 +38,7 @@ export default function VansPage() {
   const [error, setError] = useState('');
   const [branches, setBranches] = useState([]);
   const [users, setUsers] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [mainWarehouses, setMainWarehouses] = useState([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -78,7 +79,12 @@ export default function VansPage() {
     }).catch(() => {});
   }, []);
 
+  function loadDrivers() {
+    employeeApi.drivers().then(({ data }) => setDrivers(data)).catch(() => setDrivers([]));
+  }
+
   function openCreate() {
+    loadDrivers();
     setEditing(null);
     setForm({ ...emptyForm, branchId: branches[0]?.id || '' });
     setFieldErrors({});
@@ -87,12 +93,12 @@ export default function VansPage() {
   }
 
   function openEdit(row) {
+    loadDrivers();
     setEditing(row);
     setForm({
       ...emptyForm, ...row,
       salesmanId: row.salesmanId || '', branchId: row.branchId || '',
-      plateNumber: row.plateNumber || '', driverName: row.driverName || '',
-      driverPhone: row.driverPhone || '', notes: row.notes || '',
+      plateNumber: row.plateNumber || '', driverId: row.driverId || '', notes: row.notes || '',
     });
     setFieldErrors({});
     setError('');
@@ -269,13 +275,15 @@ export default function VansPage() {
                 {branches.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField fullWidth label={t('vans.driverName')} value={form.driverName}
-                onChange={(e) => setForm({ ...form, driverName: e.target.value })} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField fullWidth label={t('vans.driverPhone')} value={form.driverPhone}
-                onChange={(e) => setForm({ ...form, driverPhone: e.target.value })} />
+            <Grid size={12}>
+              <TextField fullWidth select required label={t('vans.driver')} value={form.driverId}
+                onChange={(e) => setForm({ ...form, driverId: e.target.value })}
+                error={!!fieldErrors.driverId || drivers.length === 0}
+                helperText={fieldErrors.driverId || (drivers.length === 0 ? t('vans.noDrivers') : t('vans.driverHint'))}>
+                {drivers.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>{d.name}{d.phone ? ` — ${d.phone}` : ''}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid size={12}>
               <TextField fullWidth select label={t('vans.salesmanUser')} value={form.salesmanId}
@@ -301,7 +309,7 @@ export default function VansPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={save} disabled={saving || plateInvalid}>
+          <Button variant="contained" onClick={save} disabled={saving || plateInvalid || !form.driverId}>
             {saving ? <CircularProgress size={20} /> : t('common.save')}
           </Button>
         </DialogActions>

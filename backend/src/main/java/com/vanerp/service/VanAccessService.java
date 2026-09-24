@@ -45,6 +45,11 @@ public class VanAccessService {
         if (!ok) {
             throw ApiException.forbidden("مندوب المبيعات يبيع فقط من البضاعة المحمّلة على سيارته");
         }
+        Van van = findVanOf(user).get();
+        if (request.accountId() != null && van.getCashAccount() != null
+                && !van.getCashAccount().getId().equals(request.accountId())) {
+            throw ApiException.forbidden("المبالغ المحصّلة من المندوب تُسجَّل في صندوق سيارته فقط");
+        }
     }
 
     private boolean hasPermission(User user, String code) {

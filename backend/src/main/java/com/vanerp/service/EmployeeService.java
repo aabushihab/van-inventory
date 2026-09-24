@@ -3,6 +3,7 @@ package com.vanerp.service;
 import com.vanerp.dto.EmployeeDto;
 import com.vanerp.exception.ApiException;
 import com.vanerp.model.Employee;
+import com.vanerp.model.EmployeePosition;
 import com.vanerp.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,13 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public List<EmployeeDto> findAll() {
         return employeeRepository.findAllByOrderByNameAsc().stream().map(this::toDto).toList();
+    }
+
+    /** الموظفون الفعّالون الذين وظيفتهم سائق - لاختيار سائق سيارة التوزيع. */
+    @Transactional(readOnly = true)
+    public List<EmployeeDto> findActiveDrivers() {
+        return employeeRepository.findByPositionAndActiveTrueOrderByNameAsc(EmployeePosition.DRIVER.name())
+                .stream().map(this::toDto).toList();
     }
 
     @Transactional

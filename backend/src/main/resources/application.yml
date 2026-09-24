@@ -56,15 +56,6 @@ app:
   audit-log:
     retention-days: ${AUDIT_LOG_RETENTION_DAYS:30}   # يُحتفظ بالسجلات شهراً ثم تُحذف تلقائياً
     purge-cron: ${AUDIT_LOG_PURGE_CRON:0 0 3 * * *}  # كل يوم الساعة 3 صباحاً
-  backup:
-    enabled: ${BACKUP_ENABLED:true}
-    cron: ${BACKUP_CRON:0 0 22 * * *}    # نسخة احتياطية يومية الساعة 10 مساءً
-    # يُفضَّل مسار مطلق خارج مجلد المشروع (خاصة إن احتوى مسار المشروع أحرفاً غير إنجليزية،
-    # لأن pg_dump كأداة خارجية على ويندوز قد لا يقرأها بشكل صحيح كوسيط سطر أوامر)
-    directory: ${BACKUP_DIR:${user.home}/van-erp-backups}
-    retention-days: ${BACKUP_RETENTION_DAYS:30}
-    pg-dump-path: ${PG_DUMP_PATH:pg_dump}
-    pg-restore-path: ${PG_RESTORE_PATH:pg_restore}
   company:
     name: ${COMPANY_NAME:شركة التوزيع}
     name-en: ${COMPANY_NAME_EN:Distribution Company}
@@ -72,6 +63,11 @@ app:
     phone: ${COMPANY_PHONE:}
     address: ${COMPANY_ADDRESS:}
     currency: ${COMPANY_CURRENCY:JOD}
+
+management:
+  health:
+    mail:
+      enabled: false   # SMTP اختياري - لا يجعل فحص صحة النظام DOWN عند عدم ضبطه
 
 springdoc:
   swagger-ui:

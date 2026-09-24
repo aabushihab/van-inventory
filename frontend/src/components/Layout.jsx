@@ -23,7 +23,6 @@ import RequestQuoteIcon from '@mui/icons-material/RequestQuoteOutlined';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import BusinessIcon from '@mui/icons-material/BusinessOutlined';
 import HistoryIcon from '@mui/icons-material/HistoryOutlined';
-import BackupIcon from '@mui/icons-material/BackupOutlined';
 import MoneyOffIcon from '@mui/icons-material/MoneyOffOutlined';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import RequestPageIcon from '@mui/icons-material/RequestPageOutlined';
@@ -72,7 +71,6 @@ const NAV_ITEMS = [
   { to: '/fiscal-closing', key: 'fiscalClosing', icon: LockOutlinedIcon, permission: 'FISCAL_CLOSING_VIEW' },
   { to: '/company-settings', key: 'companySettings', icon: BusinessIcon, permission: 'ROLE_MANAGE' },
   { to: '/audit-logs', key: 'auditLogs', icon: HistoryIcon, permission: 'ROLE_MANAGE' },
-  { to: '/backups', key: 'backups', icon: BackupIcon, permission: 'ROLE_MANAGE' },
 ];
 
 export default function Layout() {

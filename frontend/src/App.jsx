@@ -32,7 +32,6 @@ import FixedAssetsPage from './pages/FixedAssetsPage';
 import FiscalClosingPage from './pages/FiscalClosingPage';
 import CompanySettingsPage from './pages/CompanySettingsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
-import BackupsPage from './pages/BackupsPage';
 import VansPage from './pages/VansPage';
 import VanLoadsPage from './pages/VanLoadsPage';
 import VanSettlementPage from './pages/VanSettlementPage';
@@ -97,7 +96,6 @@ export default function App() {
                 <Route path="fiscal-closing" element={<ProtectedRoute permission="FISCAL_CLOSING_VIEW"><FiscalClosingPage /></ProtectedRoute>} />
                 <Route path="company-settings" element={<ProtectedRoute permission="ROLE_MANAGE"><CompanySettingsPage /></ProtectedRoute>} />
                 <Route path="audit-logs" element={<ProtectedRoute permission="ROLE_MANAGE"><AuditLogsPage /></ProtectedRoute>} />
-                <Route path="backups" element={<ProtectedRoute permission="ROLE_MANAGE"><BackupsPage /></ProtectedRoute>} />
               </Route>
             </Routes>
           </AuthProvider>

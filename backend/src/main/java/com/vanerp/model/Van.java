@@ -28,6 +28,11 @@ public class Van {
     @Column(name = "plate_number", length = 30)
     private String plateNumber;
 
+    /** السائق: موظف وظيفته سائق. اسمه وهاتفه يُنسخان إلى driver_name/driver_phone للعرض والسجلات. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_employee_id")
+    private Employee driver;
+
     @Column(name = "driver_name", length = 120)
     private String driverName;
 
@@ -42,6 +47,11 @@ public class Van {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "warehouse_id", nullable = false, unique = true)
     private Warehouse warehouse;
+
+    /** صندوق السيارة النقدي: تُسجَّل فيه مبالغ مبيعات المندوب المحصّلة. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_account_id")
+    private Account cashAccount;
 
     @Column(length = 500)
     private String notes;

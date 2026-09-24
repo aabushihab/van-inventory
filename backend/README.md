@@ -69,6 +69,6 @@ src/main/java/com/vanerp/
 ├── controller/         REST Controllers
 ├── dto/                كائنات نقل البيانات
 ├── pdf/                توليد فواتير PDF
-└── scheduler/          مهام مجدولة (نقص المخزون، النسخ الاحتياطي...)
+└── scheduler/          مهام مجدولة (نقص المخزون، الفواتير المتأخرة...)
 src/main/resources/db/migration/   ملفات Flyway
 ```

@@ -39,6 +39,9 @@ function emptyPayForm() {
   return { category: 'رواتب', amount: '', paymentDate: todayIso(), notes: '', receiptImage: '', accountId: '' };
 }
 
+/** وظائف الموظفين - نفس القائمة المعتمدة في الخلفية. */
+export const EMPLOYEE_POSITIONS = ['DRIVER', 'SALESMAN', 'WAREHOUSE_KEEPER', 'ACCOUNTANT', 'CASHIER', 'MANAGER', 'WORKER', 'OTHER'];
+
 export default function EmployeesPage() {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
@@ -234,10 +237,10 @@ export default function EmployeesPage() {
       <CrudPage
         title={t('employees.title')}
         canManage={hasPermission('EMPLOYEE_MANAGE')}
-        emptyModel={{ name: '', position: '', monthlySalary: '', phone: '', active: true }}
+        emptyModel={{ name: '', position: 'DRIVER', monthlySalary: '', phone: '', active: true }}
         columns={[
           { key: 'name', label: t('common.name') },
-          { key: 'position', label: t('employees.position'), render: (row) => row.position || '-' },
+          { key: 'position', label: t('employees.position'), render: (row) => (row.position ? t(`employees.positions.${row.position}`) : '-') },
           { key: 'monthlySalary', label: t('employees.monthlySalary'), render: (row) => fmt(row.monthlySalary) },
           {
             key: 'paidThisMonth',
@@ -260,7 +263,10 @@ export default function EmployeesPage() {
         ]}
         fields={[
           { key: 'name', label: t('common.name'), required: true },
-          { key: 'position', label: t('employees.position') },
+          {
+            key: 'position', label: t('employees.position'), type: 'select', required: true,
+            options: EMPLOYEE_POSITIONS.map((p) => ({ value: p, label: t(`employees.positions.${p}`) })),
+          },
           { key: 'monthlySalary', label: t('employees.monthlySalary'), type: 'number', required: true },
           { key: 'phone', label: t('common.phone') },
           { key: 'active', label: t('common.active'), type: 'boolean' },

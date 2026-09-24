@@ -59,6 +59,7 @@ export default function SalesInvoicesPage() {
   const [warehouseId, setWarehouseId] = useState('');
   // مندوب مربوط بسيارة: يبيع فقط من حمولة سيارته وبحدود الكميات المتوفرة عليها
   const [vanStock, setVanStock] = useState(null);
+  const [vanCashAccountId, setVanCashAccountId] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
@@ -132,6 +133,7 @@ export default function SalesInvoicesPage() {
         if (my?.restricted && my.van) {
           const stock = Object.fromEntries(my.stock.map((s) => [s.productId, Number(s.quantity)]));
           setVanStock(stock);
+          setVanCashAccountId(my.van.cashAccountId || '');
           setWarehouses(whs.filter((w) => w.id === my.van.warehouseId));
           setWarehouseId(my.van.warehouseId);
           setProducts(prods.content.filter((p) => stock[p.id] !== undefined));
@@ -143,7 +145,10 @@ export default function SalesInvoicesPage() {
       });
     customerApi.list().then(({ data }) => setCustomers(data));
     categoryApi.list().then(({ data }) => setCategories(data));
-    accountApi.list().then(({ data }) => setAccounts(data));
+    Promise.all([accountApi.list(), vanApi.my().catch(() => ({ data: null }))]).then(([{ data }, { data: my }]) => {
+      // المندوب يحصّل في صندوق سيارته فقط
+      setAccounts(my?.restricted && my.van?.cashAccountId ? data.filter((a) => a.id === my.van.cashAccountId) : data);
+    });
   }, []);
 
   function openCreate(prefillCustomerId) {
@@ -153,7 +158,7 @@ export default function SalesInvoicesPage() {
     setCustomerName('');
     setPaymentMethod('CASH');
     setPaidAmount('');
-    setCreateAccountId('');
+    setCreateAccountId(vanCashAccountId || '');
     setDueDate('');
     setNotes('');
     setError('');

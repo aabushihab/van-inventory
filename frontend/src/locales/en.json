@@ -32,7 +32,6 @@
     "fiscalClosing": "Fiscal Closing",
     "companySettings": "Company Settings",
     "auditLogs": "Audit Log",
-    "backups": "Backups",
     "logout": "Logout"
   },
   "common": {
@@ -136,7 +135,7 @@
       "Load goods from the \"Van Loading\" screen, then sell from the van with a sales invoice using the van's warehouse.",
       "At the end of the route use \"Unload Everything\" to return what is left, then review the van settlement."
     ],
-    "plateFormat": "2-digit code, then -, then the van number, e.g. 12-34567",
+    "plateFormat": "2-digit code, then -, then the van number, e.g. ⁦12-34567⁩",
     "salesmanUser": "Salesman (selling user)",
     "salesmanHint": "The linked user can only sell from this van's load, within its quantities",
     "closeVan": "Count Van & Return Remaining",
@@ -148,7 +147,10 @@
     "countedQty": "Counted Qty",
     "variance": "Difference",
     "varianceValue": "Difference Value",
-    "confirmClose": "Confirm Count & Return"
+    "confirmClose": "Confirm Count & Return",
+    "driver": "Driver",
+    "driverHint": "Lists active employees whose position is \"Driver\"",
+    "noDrivers": "No employees with the Driver position - add them first from the Employees screen"
   },
   "vanLoads": {
     "title": "Van Loading & Unloading",
@@ -418,7 +420,17 @@
     "payAppliesToSelectedMonth": "This payment will be deducted from {{month}}'s salary, regardless of the actual transaction date below",
     "transactionDate": "Actual Transaction Date",
     "statement": "Employee Statement",
-    "yearTotal": "{{year}} Total"
+    "yearTotal": "{{year}} Total",
+    "positions": {
+      "DRIVER": "Driver",
+      "SALESMAN": "Salesman",
+      "WAREHOUSE_KEEPER": "Warehouse Keeper",
+      "ACCOUNTANT": "Accountant",
+      "CASHIER": "Cashier",
+      "MANAGER": "Manager",
+      "WORKER": "Worker",
+      "OTHER": "Other"
+    }
   },
   "accounts": {
     "title": "Cash & Bank Accounts",
@@ -566,28 +578,6 @@
     "purgeConfirm": "This will permanently delete all audit log entries older than 30 days. Continue?",
     "purged": "{{count}} log entries deleted"
   },
-  "backup": {
-    "title": "Backups",
-    "runNow": "Backup Now",
-    "fileName": "File Name",
-    "downloadResetScript": "Download Data Reset Script",
-    "resetScriptNote": "A ready-made SQL script that deletes all system data (except units) in a safe order - manual use only, never runs automatically; run it yourself against the database with great care.",
-    "size": "Size",
-    "createdAt": "Created At",
-    "download": "Download",
-    "note": "A backup is created automatically every day at 10 PM and kept for 30 days",
-    "success": "Backup created successfully",
-    "restore": "Restore",
-    "restoreTitle": "Restore Backup",
-    "restoreWarning": "Warning: this will completely replace all current data in the system with this backup's data. A safety backup of the current state will be taken automatically before starting, but anything entered after this backup's date will be lost.",
-    "restoreConfirmPrompt": "To confirm, type the file name exactly:",
-    "restoreConfirmButton": "Yes, replace all current data",
-    "restoreSuccess": "Backup restored successfully",
-    "enterPin": "This screen is password protected",
-    "pinLabel": "Password",
-    "unlock": "Unlock",
-    "wrongPin": "Incorrect password"
-  },
   "pageGuide": {
     "title": "How to use this screen",
     "accounts": {
@@ -617,7 +607,7 @@
     "fiscalClosing": {
       "warning": "This action cannot be undone: after closing, you won't be able to record or edit any financial transaction, complete a stocktake, or edit/cancel/return any sales or purchase invoice dated on or before the closing date.",
       "points": [
-        "Only use this after you're sure you've finished all your entries for a given period (month/year end) and taken a backup.",
+        "Only use this after you're sure you've finished all your entries for a given period (month/year end).",
         "The goal: protect your closed figures (e.g. ones already submitted externally) from being accidentally changed later."
       ]
     },
@@ -656,5 +646,14 @@
     "refresh": "Refresh",
     "sell": "Sell from Van",
     "empty": "No goods on the van right now"
+  },
+  "login": {
+    "headline": "Your warehouses, sales and distribution vans in one place",
+    "tagline": "Load your vans, sell on the road, and know exactly what each van carries and what came back to the warehouse.",
+    "featureWarehouses": "Warehouses & Stocktake",
+    "featureSales": "Sales & Invoices",
+    "featureVans": "Van Loading & Settlement",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   }
 }

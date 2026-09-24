@@ -23,6 +23,12 @@ public class EmployeeController {
         return employeeService.findAll();
     }
 
+    @GetMapping("/drivers")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') or hasAuthority('VAN_MANAGE')")
+    public List<EmployeeDto> drivers() {
+        return employeeService.findActiveDrivers();
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('EMPLOYEE_MANAGE')")
     public ResponseEntity<EmployeeDto> create(@Valid @RequestBody EmployeeDto dto) {
