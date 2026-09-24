@@ -36,7 +36,10 @@
     "sales": "Sales",
     "purchases": "Purchases",
     "usersAndRoles": "Users & Permissions",
-    "stockAndDamaged": "Stock & Damaged"
+    "stockAndDamaged": "Stock & Damaged",
+    "stockHub": "Stock",
+    "finance": "Finance",
+    "settings": "Settings"
   },
   "common": {
     "save": "Save",

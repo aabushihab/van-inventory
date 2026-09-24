@@ -8,27 +8,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import ProductsPage from './pages/ProductsPage';
-import CatalogPage from './pages/CatalogPage';
-import StockHubPage from './pages/StockHubPage';
-import BranchesPage from './pages/BranchesPage';
 import PurchasesHubPage from './pages/PurchasesHubPage';
 import SalesHubPage from './pages/SalesHubPage';
 import PartiesPage from './pages/PartiesPage';
-import UsersHubPage from './pages/UsersHubPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ReportsPage from './pages/ReportsPage';
-import BalancesPage from './pages/BalancesPage';
-import ExpensesPage from './pages/ExpensesPage';
 import EmployeesPage from './pages/EmployeesPage';
-import AccountsPage from './pages/AccountsPage';
-import ChecksPage from './pages/ChecksPage';
-import StocktakePage from './pages/StocktakePage';
-import FixedAssetsPage from './pages/FixedAssetsPage';
-import FiscalClosingPage from './pages/FiscalClosingPage';
-import CompanySettingsPage from './pages/CompanySettingsPage';
-import AuditLogsPage from './pages/AuditLogsPage';
 import VansHubPage from './pages/VansHubPage';
+import { ProductsHub, StockHub, FinanceHub, SettingsHub } from './pages/hubs';
+import { TabRedirect } from './components/TabbedHub';
 import MyVanPage from './pages/MyVanPage';
 import { createEmotionCache, buildTheme } from './theme';
 
@@ -68,34 +56,36 @@ export default function App() {
                 }
               >
                 <Route index element={<HomeRoute />} />
-                <Route path="products" element={<ProtectedRoute permission="PRODUCT_VIEW"><ProductsPage /></ProtectedRoute>} />
-                <Route path="catalog" element={<ProtectedRoute permission="PRODUCT_VIEW"><CatalogPage /></ProtectedRoute>} />
-                <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockHubPage /></ProtectedRoute>} />
-                <Route path="damaged" element={<Navigate to="/stock?tab=damaged" replace />} />
+                <Route path="products" element={<ProtectedRoute permission="PRODUCT_VIEW"><ProductsHub /></ProtectedRoute>} />
+                <Route path="catalog" element={<TabRedirect to="/products?tab=catalog" />} />
+                <Route path="stock" element={<ProtectedRoute><StockHub /></ProtectedRoute>} />
+                <Route path="damaged" element={<TabRedirect to="/stock?tab=damaged" />} />
+                <Route path="stocktake" element={<TabRedirect to="/stock?tab=stocktake" />} />
                 <Route path="my-van" element={<ProtectedRoute><MyVanPage /></ProtectedRoute>} />
                 <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansHubPage /></ProtectedRoute>} />
-                <Route path="van-loads" element={<Navigate to="/vans?tab=loads" replace />} />
-                <Route path="van-settlement" element={<Navigate to="/vans?tab=report" replace />} />
-                <Route path="branches" element={<ProtectedRoute permission="WAREHOUSE_MANAGE"><BranchesPage /></ProtectedRoute>} />
+                <Route path="van-loads" element={<TabRedirect to="/vans?tab=loads" />} />
+                <Route path="van-settlement" element={<TabRedirect to="/vans?tab=report" />} />
                 <Route path="purchase-invoices" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchasesHubPage /></ProtectedRoute>} />
+                <Route path="purchase-quotes" element={<TabRedirect to="/purchase-invoices?tab=quotes" />} />
                 <Route path="sales-invoices" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesHubPage /></ProtectedRoute>} />
-                <Route path="sales-quotes" element={<Navigate to="/sales-invoices?tab=quotes" replace />} />
-                <Route path="purchase-quotes" element={<Navigate to="/purchase-invoices?tab=quotes" replace />} />
+                <Route path="sales-quotes" element={<TabRedirect to="/sales-invoices?tab=quotes" />} />
                 <Route path="parties" element={<ProtectedRoute permission="CUSTOMER_MANAGE"><PartiesPage /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute><UsersHubPage /></ProtectedRoute>} />
-                <Route path="roles" element={<Navigate to="/users?tab=roles" replace />} />
-                <Route path="notifications" element={<ProtectedRoute permission="NOTIFICATION_VIEW"><NotificationsPage /></ProtectedRoute>} />
-                <Route path="reports" element={<ProtectedRoute permission="REPORTS_VIEW"><ReportsPage /></ProtectedRoute>} />
-                <Route path="balances" element={<ProtectedRoute permission="REPORTS_VIEW"><BalancesPage /></ProtectedRoute>} />
-                <Route path="expenses" element={<ProtectedRoute permission="EXPENSE_VIEW"><ExpensesPage /></ProtectedRoute>} />
                 <Route path="employees" element={<ProtectedRoute permission="EMPLOYEE_VIEW"><EmployeesPage /></ProtectedRoute>} />
-                <Route path="accounts" element={<ProtectedRoute permission="ACCOUNTS_VIEW"><AccountsPage /></ProtectedRoute>} />
-                <Route path="checks" element={<ProtectedRoute permission="CHECKS_VIEW"><ChecksPage /></ProtectedRoute>} />
-                <Route path="stocktake" element={<ProtectedRoute permission="STOCKTAKE_VIEW"><StocktakePage /></ProtectedRoute>} />
-                <Route path="fixed-assets" element={<ProtectedRoute permission="FIXED_ASSETS_VIEW"><FixedAssetsPage /></ProtectedRoute>} />
-                <Route path="fiscal-closing" element={<ProtectedRoute permission="FISCAL_CLOSING_VIEW"><FiscalClosingPage /></ProtectedRoute>} />
-                <Route path="company-settings" element={<ProtectedRoute permission="ROLE_MANAGE"><CompanySettingsPage /></ProtectedRoute>} />
-                <Route path="audit-logs" element={<ProtectedRoute permission="ROLE_MANAGE"><AuditLogsPage /></ProtectedRoute>} />
+                <Route path="finance" element={<ProtectedRoute><FinanceHub /></ProtectedRoute>} />
+                <Route path="accounts" element={<TabRedirect to="/finance?tab=accounts" />} />
+                <Route path="checks" element={<TabRedirect to="/finance?tab=checks" />} />
+                <Route path="expenses" element={<TabRedirect to="/finance?tab=expenses" />} />
+                <Route path="balances" element={<TabRedirect to="/finance?tab=balances" />} />
+                <Route path="fixed-assets" element={<TabRedirect to="/finance?tab=fixed-assets" />} />
+                <Route path="fiscal-closing" element={<TabRedirect to="/finance?tab=fiscal-closing" />} />
+                <Route path="reports" element={<ProtectedRoute permission="REPORTS_VIEW"><ReportsPage /></ProtectedRoute>} />
+                <Route path="notifications" element={<ProtectedRoute permission="NOTIFICATION_VIEW"><NotificationsPage /></ProtectedRoute>} />
+                <Route path="settings" element={<ProtectedRoute><SettingsHub /></ProtectedRoute>} />
+                <Route path="company-settings" element={<TabRedirect to="/settings?tab=company" />} />
+                <Route path="branches" element={<TabRedirect to="/settings?tab=branches" />} />
+                <Route path="users" element={<TabRedirect to="/settings?tab=users" />} />
+                <Route path="roles" element={<TabRedirect to="/settings?tab=roles" />} />
+                <Route path="audit-logs" element={<TabRedirect to="/settings?tab=audit" />} />
               </Route>
             </Routes>
           </AuthProvider>

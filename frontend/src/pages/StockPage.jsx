@@ -58,7 +58,7 @@ export default function StockPage() {
 
   useEffect(() => {
     if (location.state?.prefillLowOnly) {
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

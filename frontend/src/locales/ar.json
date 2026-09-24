@@ -36,7 +36,10 @@
     "sales": "المبيعات",
     "purchases": "المشتريات",
     "usersAndRoles": "المستخدمون والصلاحيات",
-    "stockAndDamaged": "المخزون والتوالف"
+    "stockAndDamaged": "المخزون والتوالف",
+    "stockHub": "المخزون",
+    "finance": "المالية",
+    "settings": "الإعدادات"
   },
   "common": {
     "save": "حفظ",

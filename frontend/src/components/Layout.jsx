@@ -8,32 +8,23 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/DashboardOutlined';
 import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
-import CategoryIcon from '@mui/icons-material/CategoryOutlined';
 import WarehouseIcon from '@mui/icons-material/WarehouseOutlined';
-import StoreIcon from '@mui/icons-material/StorefrontOutlined';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import ReceiptIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleAltOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
-import SecurityIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import NotificationsIcon from '@mui/icons-material/NotificationsOutlined';
 import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import BusinessIcon from '@mui/icons-material/BusinessOutlined';
-import HistoryIcon from '@mui/icons-material/HistoryOutlined';
-import MoneyOffIcon from '@mui/icons-material/MoneyOffOutlined';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
-import RequestPageIcon from '@mui/icons-material/RequestPageOutlined';
-import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import LockResetIcon from '@mui/icons-material/LockResetOutlined';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { notificationApi, publicApi, authApi } from '../api/endpoints';
 import { VAN_MODE_PATHS } from './ProtectedRoute';
+import { HUB_PERMISSIONS } from '../pages/hubs';
 import LiveClock from './LiveClock';
 
 const drawerWidth = 260;
@@ -41,27 +32,16 @@ const drawerWidth = 260;
 const NAV_ITEMS = [
   { to: '/', key: 'dashboard', icon: DashboardIcon, permission: 'DASHBOARD_VIEW' },
   { to: '/products', key: 'products', icon: InventoryIcon, permission: 'PRODUCT_VIEW' },
-  { to: '/catalog', key: 'catalog', icon: CategoryIcon, permission: 'PRODUCT_VIEW' },
-  { to: '/stock', key: 'stockAndDamaged', icon: WarehouseIcon, permission: 'STOCK_VIEW' },
+  { to: '/stock', key: 'stockHub', icon: WarehouseIcon, permission: HUB_PERMISSIONS.stock },
   { to: '/my-van', key: 'myVan', icon: LocalShippingIcon, permission: 'SALES_INVOICE_CREATE', vanOnly: true },
   { to: '/vans', key: 'vans', icon: LocalShippingIcon, permission: 'VAN_VIEW' },
-  { to: '/branches', key: 'branches', icon: StoreIcon, permission: 'WAREHOUSE_MANAGE' },
   { to: '/purchase-invoices', key: 'purchases', icon: ShoppingCartIcon, permission: 'PURCHASE_INVOICE_VIEW' },
   { to: '/sales-invoices', key: 'sales', icon: ReceiptIcon, permission: 'SALES_INVOICE_VIEW' },
   { to: '/parties', key: 'parties', icon: PeopleIcon, permission: 'CUSTOMER_MANAGE' },
-  { to: '/users', key: 'usersAndRoles', icon: SecurityIcon, permission: ['USER_MANAGE', 'ROLE_MANAGE'] },
-  { to: '/notifications', key: 'notifications', icon: NotificationsIcon, permission: 'NOTIFICATION_VIEW' },
-  { to: '/reports', key: 'reports', icon: AssessmentIcon, permission: 'REPORTS_VIEW' },
-  { to: '/balances', key: 'balances', icon: AccountBalanceWalletIcon, permission: 'REPORTS_VIEW' },
-  { to: '/expenses', key: 'expenses', icon: MoneyOffIcon, permission: 'EXPENSE_VIEW' },
   { to: '/employees', key: 'employees', icon: BadgeIcon, permission: 'EMPLOYEE_VIEW' },
-  { to: '/accounts', key: 'accounts', icon: AccountBalanceIcon, permission: 'ACCOUNTS_VIEW' },
-  { to: '/checks', key: 'checks', icon: RequestPageIcon, permission: 'CHECKS_VIEW' },
-  { to: '/stocktake', key: 'stocktake', icon: FactCheckIcon, permission: 'STOCKTAKE_VIEW' },
-  { to: '/fixed-assets', key: 'fixedAssets', icon: PrecisionManufacturingIcon, permission: 'FIXED_ASSETS_VIEW' },
-  { to: '/fiscal-closing', key: 'fiscalClosing', icon: LockOutlinedIcon, permission: 'FISCAL_CLOSING_VIEW' },
-  { to: '/company-settings', key: 'companySettings', icon: BusinessIcon, permission: 'ROLE_MANAGE' },
-  { to: '/audit-logs', key: 'auditLogs', icon: HistoryIcon, permission: 'ROLE_MANAGE' },
+  { to: '/finance', key: 'finance', icon: AccountBalanceIcon, permission: HUB_PERMISSIONS.finance },
+  { to: '/reports', key: 'reports', icon: AssessmentIcon, permission: 'REPORTS_VIEW' },
+  { to: '/settings', key: 'settings', icon: SettingsIcon, permission: HUB_PERMISSIONS.settings },
 ];
 
 export default function Layout() {

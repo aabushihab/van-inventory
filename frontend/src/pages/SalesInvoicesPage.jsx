@@ -174,10 +174,10 @@ export default function SalesInvoicesPage() {
   useEffect(() => {
     if (location.state?.openCreate) {
       openCreate();
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     } else if (location.state?.prefillCustomerId) {
       openCreate(location.state.prefillCustomerId);
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     } else if (location.state?.prefillFrom || location.state?.prefillTo) {
       const nextFrom = location.state.prefillFrom || '';
       const nextTo = location.state.prefillTo || '';
@@ -185,7 +185,7 @@ export default function SalesInvoicesPage() {
       setFilterTo(nextTo);
       setPage(0);
       load({ page: 0, from: nextFrom, to: nextTo });
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);

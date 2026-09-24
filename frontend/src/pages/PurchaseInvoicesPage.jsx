@@ -146,7 +146,7 @@ export default function PurchaseInvoicesPage() {
   useEffect(() => {
     if (location.state?.prefillSupplierId) {
       openCreate(location.state.prefillSupplierId);
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);

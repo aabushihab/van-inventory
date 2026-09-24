@@ -16,7 +16,7 @@ export default function BranchesPage() {
 
   useEffect(() => {
     if (location.state?.initialTab !== undefined) {
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
