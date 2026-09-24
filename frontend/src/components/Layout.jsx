@@ -29,12 +29,15 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import RequestPageIcon from '@mui/icons-material/RequestPageOutlined';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
+import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
+import MoveUpIcon from '@mui/icons-material/MoveUpOutlined';
+import SummarizeIcon from '@mui/icons-material/SummarizeOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import LockResetIcon from '@mui/icons-material/LockResetOutlined';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { notificationApi, publicApi, authApi } from '../api/endpoints';
+import { notificationApi, publicApi, authApi, vanApi } from '../api/endpoints';
 import LiveClock from './LiveClock';
 
 const drawerWidth = 260;
@@ -45,6 +48,10 @@ const NAV_ITEMS = [
   { to: '/catalog', key: 'catalog', icon: CategoryIcon, permission: 'PRODUCT_VIEW' },
   { to: '/stock', key: 'stock', icon: WarehouseIcon, permission: 'STOCK_VIEW' },
   { to: '/damaged', key: 'damaged', icon: BrokenImageIcon, permission: 'STOCK_VIEW' },
+  { to: '/my-van', key: 'myVan', icon: LocalShippingIcon, permission: 'SALES_INVOICE_CREATE', vanOnly: true },
+  { to: '/vans', key: 'vans', icon: LocalShippingIcon, permission: 'VAN_VIEW' },
+  { to: '/van-loads', key: 'vanLoads', icon: MoveUpIcon, permission: 'VAN_VIEW' },
+  { to: '/van-settlement', key: 'vanSettlement', icon: SummarizeIcon, permission: 'VAN_VIEW' },
   { to: '/branches', key: 'branches', icon: StoreIcon, permission: 'WAREHOUSE_MANAGE' },
   { to: '/purchase-invoices', key: 'purchaseInvoices', icon: ShoppingCartIcon, permission: 'PURCHASE_INVOICE_VIEW' },
   { to: '/purchase-quotes', key: 'purchaseQuotes', icon: RequestQuoteIcon, permission: 'PURCHASE_INVOICE_VIEW' },
@@ -78,6 +85,7 @@ export default function Layout() {
   const [unread, setUnread] = useState(0);
   const [companyName, setCompanyName] = useState('');
   const [companyLogo, setCompanyLogo] = useState('');
+  const [hasVan, setHasVan] = useState(false);
 
   const [pwdOpen, setPwdOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -132,7 +140,11 @@ export default function Layout() {
     return () => { active = false; clearInterval(interval); };
   }, [location.pathname]);
 
-  const visibleItems = NAV_ITEMS.filter((item) => hasPermission(item.permission));
+  useEffect(() => {
+    vanApi.my().then(({ data }) => setHasVan(!!data?.van)).catch(() => setHasVan(false));
+  }, [user?.id]);
+
+  const visibleItems = NAV_ITEMS.filter((item) => hasPermission(item.permission) && (!item.vanOnly || hasVan));
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

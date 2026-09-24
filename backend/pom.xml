@@ -11,11 +11,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.ceramicerp</groupId>
-    <artifactId>ceramic-erp-backend</artifactId>
+    <groupId>com.vanerp</groupId>
+    <artifactId>van-erp-backend</artifactId>
     <version>1.2.0</version>
-    <name>ceramic-erp-backend</name>
-    <description>نظام إدارة محلات السيراميك والبورسلان والحمامات - Ceramic/Porcelain/Bathroom Shop ERP</description>
+    <name>van-erp-backend</name>
+    <description>نظام المخازن والمبيعات وتحميل سيارات التوزيع - Warehouse, Sales &amp; Van Distribution ERP</description>
 
     <properties>
         <java.version>21</java.version>
@@ -138,7 +138,7 @@
     </dependencies>
 
     <build>
-        <finalName>ceramic-erp-backend</finalName>
+        <finalName>van-erp-backend</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

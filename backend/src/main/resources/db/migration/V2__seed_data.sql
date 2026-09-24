@@ -79,7 +79,7 @@ VALUES (
     'admin',
     '$2b$10$V72c6wE0abWcDN6erH.Ch.ssl7lw.SXbT4Ustd33ik/qPG2LkH1lC',
     'مدير النظام',
-    'admin@ceramic-erp.local',
+    'admin@van-erp.local',
     (SELECT id FROM roles WHERE name = 'ADMIN'),
     (SELECT id FROM branches WHERE name_en = 'Main Branch'),
     'ar',
@@ -88,17 +88,16 @@ VALUES (
 
 -- ---------- وحدات القياس (Units of measure) ----------
 INSERT INTO units (code, name, name_en) VALUES
-    ('BOX',  'كرتونة', 'Box'),
-    ('SQM',  'متر مربع', 'Square Meter'),
-    ('PCS',  'قطعة', 'Piece'),
-    ('SET',  'طقم', 'Set'),
-    ('ML',   'متر طولي', 'Linear Meter');
+    ('PCS',  'حبة', 'Piece'),
+    ('CTN',  'كرتونة', 'Carton'),
+    ('PACK', 'باكيت', 'Pack'),
+    ('KG',   'كيلو', 'Kilogram'),
+    ('LTR',  'لتر', 'Liter');
 
 -- ---------- تصنيفات أساسية (Base categories) ----------
 INSERT INTO categories (name, name_en) VALUES
-    ('سيراميك أرضيات', 'Floor Ceramic'),
-    ('سيراميك جدران', 'Wall Ceramic'),
-    ('بورسلان', 'Porcelain'),
-    ('أدوات صحية', 'Sanitary Ware'),
-    ('مغاسل وخلاطات', 'Sinks & Faucets'),
-    ('إكسسوارات حمامات', 'Bathroom Accessories');
+    ('مواد غذائية', 'Food'),
+    ('مشروبات', 'Beverages'),
+    ('منظفات', 'Detergents'),
+    ('عناية شخصية', 'Personal Care'),
+    ('متفرقات', 'Miscellaneous');

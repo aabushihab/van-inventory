@@ -18,7 +18,7 @@ import { compressImage } from '../utils/imageCompress';
 
 const emptyProduct = {
   sku: '', barcode: '', name: '', nameEn: '', categoryId: '', unitId: '',
-  size: '', color: '', originCountry: '', piecesPerBox: '', areaPerBox: '',
+  unitsPerCarton: '',
   purchasePrice: '0', salePrice: '0', taxRate: '16', minStockThreshold: '0',
   imageUrl: '', active: true,
 };
@@ -84,7 +84,7 @@ export default function ProductsPage() {
     setForm({
       ...emptyProduct, ...row,
       categoryId: row.categoryId || '', unitId: row.unitId || '',
-      piecesPerBox: row.piecesPerBox ?? '', areaPerBox: row.areaPerBox ?? '',
+      unitsPerCarton: row.unitsPerCarton ?? '',
     });
     setFieldErrors({});
     setDialogOpen(true);
@@ -99,8 +99,7 @@ export default function ProductsPage() {
         ...form,
         categoryId: form.categoryId || null,
         unitId: form.unitId,
-        piecesPerBox: form.piecesPerBox === '' ? null : Number(form.piecesPerBox),
-        areaPerBox: form.areaPerBox === '' ? null : Number(form.areaPerBox),
+        unitsPerCarton: form.unitsPerCarton === '' ? null : Number(form.unitsPerCarton),
         purchasePrice: Number(form.purchasePrice || 0),
         salePrice: Number(form.salePrice || 0),
         taxRate: Number(form.taxRate || 0),
@@ -271,19 +270,7 @@ export default function ProductsPage() {
               </TextField>
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField fullWidth label={t('products.size')} value={form.size || ''} onChange={(e) => setForm({ ...form, size: e.target.value })} />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField fullWidth label={t('products.color')} value={form.color || ''} onChange={(e) => setForm({ ...form, color: e.target.value })} />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField fullWidth label={t('products.origin')} value={form.originCountry || ''} onChange={(e) => setForm({ ...form, originCountry: e.target.value })} />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField fullWidth type="number" label={t('products.piecesPerBox')} value={form.piecesPerBox} onChange={(e) => setForm({ ...form, piecesPerBox: e.target.value })} />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField fullWidth type="number" label={t('products.areaPerBox')} value={form.areaPerBox} onChange={(e) => setForm({ ...form, areaPerBox: e.target.value })} />
+              <TextField fullWidth type="number" label={t('products.unitsPerCarton')} value={form.unitsPerCarton} onChange={(e) => setForm({ ...form, unitsPerCarton: e.target.value })} />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.purchasePrice')} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}

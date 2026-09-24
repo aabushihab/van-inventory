@@ -12,6 +12,8 @@ DELETE FROM sales_return_items;
 DELETE FROM purchase_invoice_payments;
 DELETE FROM sales_invoice_payments;
 DELETE FROM stock_movements;
+DELETE FROM van_load_items;
+DELETE FROM van_loads;
 
 DELETE FROM purchase_returns;
 DELETE FROM sales_returns;
@@ -34,6 +36,7 @@ DELETE FROM role_permissions;
 DELETE FROM products;
 DELETE FROM customers;
 DELETE FROM suppliers;
+DELETE FROM vans;
 DELETE FROM warehouses;
 DELETE FROM categories;
 DELETE FROM branches;

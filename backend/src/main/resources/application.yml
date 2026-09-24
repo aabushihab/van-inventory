@@ -1,12 +1,12 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8090}
 
 spring:
   application:
-    name: ceramic-erp-backend
+    name: van-erp-backend
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shop_erp}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:van_distribution}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -49,7 +49,7 @@ app:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}          # 24h
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}   # 7d
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5180,http://localhost:5173,http://localhost:3000}
   low-stock:
     check-cron: ${LOW_STOCK_CRON:0 0 * * * *}    # every hour
     notify-email-enabled: ${LOW_STOCK_EMAIL_ENABLED:false}
@@ -61,13 +61,13 @@ app:
     cron: ${BACKUP_CRON:0 0 22 * * *}    # نسخة احتياطية يومية الساعة 10 مساءً
     # يُفضَّل مسار مطلق خارج مجلد المشروع (خاصة إن احتوى مسار المشروع أحرفاً غير إنجليزية،
     # لأن pg_dump كأداة خارجية على ويندوز قد لا يقرأها بشكل صحيح كوسيط سطر أوامر)
-    directory: ${BACKUP_DIR:${user.home}/ceramic-erp-backups}
+    directory: ${BACKUP_DIR:${user.home}/van-erp-backups}
     retention-days: ${BACKUP_RETENTION_DAYS:30}
     pg-dump-path: ${PG_DUMP_PATH:pg_dump}
     pg-restore-path: ${PG_RESTORE_PATH:pg_restore}
   company:
-    name: ${COMPANY_NAME:محلات السيراميك والبورسلان}
-    name-en: ${COMPANY_NAME_EN:Ceramic & Porcelain Shop}
+    name: ${COMPANY_NAME:شركة التوزيع}
+    name-en: ${COMPANY_NAME_EN:Distribution Company}
     tax-number: ${COMPANY_TAX_NUMBER:}
     phone: ${COMPANY_PHONE:}
     address: ${COMPANY_ADDRESS:}
@@ -81,5 +81,5 @@ springdoc:
 
 logging:
   level:
-    com.ceramicerp: INFO
+    com.vanerp: INFO
     org.springframework.security: WARN

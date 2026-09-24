@@ -64,15 +64,15 @@
     <th:block th:each="row : ${model.items}">
     <tr>
         <td class="name-cell" th:text="${row.name}">منتج</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.quantity, 2)}">1</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.unitPrice, 2)}">0</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.lineTotal, 2)}">0</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.quantity, 2)}">1</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.unitPrice, 2)}">0</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.lineTotal, 2)}">0</td>
     </tr>
     <tr th:if="${row.returnedQuantity != null and row.returnedQuantity.signum() > 0}">
         <td colspan="4" style="text-align:right;color:#000;font-weight:bold">
             <span th:if="${row.returnedQuantity.compareTo(row.quantity) >= 0}">↳ مرتجع بالكامل</span>
             <span th:unless="${row.returnedQuantity.compareTo(row.quantity) >= 0}"
-                  th:text="'↳ مرتجع جزئياً: ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.returnedQuantity, 2)}">↳ مرتجع جزئياً</span>
+                  th:text="'↳ مرتجع جزئياً: ' + ${T(com.vanerp.pdf.PdfNumberFormat).num(row.returnedQuantity, 2)}">↳ مرتجع جزئياً</span>
         </td>
     </tr>
     </th:block>
@@ -84,35 +84,35 @@
 <table class="totals">
     <tr>
         <td class="label">المجموع الفرعي</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.subtotal, 2)}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.subtotal, 2)}">0</td>
     </tr>
     <tr th:if="${model.discountTotal != null and model.discountTotal.signum() != 0}">
         <td class="label">الخصم</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.discountTotal, 2)}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.discountTotal, 2)}">0</td>
     </tr>
     <tr th:if="${model.taxTotal != null and model.taxTotal.signum() != 0}">
         <td class="label">الضريبة</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.taxTotal, 2)}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.taxTotal, 2)}">0</td>
     </tr>
     <tr class="grand">
         <td class="label">الإجمالي</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.grandTotal, 2)} + ' ' + ${model.currency}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.grandTotal, 2)} + ' ' + ${model.currency}">0</td>
     </tr>
     <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}">
         <td class="label">قيمة المرتجع</td>
-        <td class="value num" th:text="'- ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.returnedTotal, 2)}">0</td>
+        <td class="value num" th:text="'- ' + ${T(com.vanerp.pdf.PdfNumberFormat).num(model.returnedTotal, 2)}">0</td>
     </tr>
     <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}" class="grand">
         <td class="label">الصافي بعد الإرجاع</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.netTotal, 2)} + ' ' + ${model.currency}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.netTotal, 2)} + ' ' + ${model.currency}">0</td>
     </tr>
     <tr>
         <td class="label">المدفوع</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.paidAmount, 2)}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.paidAmount, 2)}">0</td>
     </tr>
     <tr>
         <td class="label">المتبقي</td>
-        <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.dueAmount, 2)}">0</td>
+        <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.dueAmount, 2)}">0</td>
     </tr>
 </table>
 

@@ -1,6 +1,6 @@
 -- =====================================================================
--- نظام إدارة محلات السيراميك والبورسلان والحمامات - المخطط الأساسي
--- Ceramic / Porcelain / Bathroom Shop ERP - Initial Schema
+-- نظام المخازن والمبيعات وتحميل سيارات التوزيع - المخطط الأساسي
+-- Warehouse, Sales & Van Distribution ERP - Initial Schema
 -- =====================================================================
 
 -- ---------- الصلاحيات والأدوار (Permissions & Roles / RBAC) ----------
@@ -81,7 +81,6 @@ CREATE TABLE categories (
 );
 
 -- ---------- المنتجات (Products) ----------
--- خصائص خاصة بمنتجات السيراميك/البورسلان: المقاس، اللون، عدد القطع بالكرتونة، المساحة بالكرتونة
 CREATE TABLE products (
     id                 BIGSERIAL PRIMARY KEY,
     sku                VARCHAR(60) NOT NULL UNIQUE,
@@ -90,11 +89,7 @@ CREATE TABLE products (
     name_en            VARCHAR(200),
     category_id        BIGINT REFERENCES categories(id) ON DELETE SET NULL,
     unit_id            BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
-    size               VARCHAR(40),         -- e.g. 60x60, 30x60 سم
-    color              VARCHAR(60),
-    origin_country     VARCHAR(60),
-    pieces_per_box     NUMERIC(12,2),
-    area_per_box       NUMERIC(12,3),       -- م² لكل كرتونة
+    units_per_carton   NUMERIC(12,2),       -- عدد الحبات في الكرتونة
     purchase_price     NUMERIC(14,3) NOT NULL DEFAULT 0,
     sale_price         NUMERIC(14,3) NOT NULL DEFAULT 0,
     tax_rate           NUMERIC(5,2) NOT NULL DEFAULT 0,   -- نسبة الضريبة %

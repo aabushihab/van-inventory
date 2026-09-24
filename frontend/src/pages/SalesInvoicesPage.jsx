@@ -17,7 +17,7 @@ import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { useTranslation } from 'react-i18next';
 import {
-  salesInvoiceApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
+  salesInvoiceApi, vanApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
 } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import PartyAutocomplete from '../components/PartyAutocomplete';
@@ -57,6 +57,8 @@ export default function SalesInvoicesPage() {
   const [saving, setSaving] = useState(false);
 
   const [warehouseId, setWarehouseId] = useState('');
+  // مندوب مربوط بسيارة: يبيع فقط من حمولة سيارته وبحدود الكميات المتوفرة عليها
+  const [vanStock, setVanStock] = useState(null);
   const [customerId, setCustomerId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
@@ -125,9 +127,21 @@ export default function SalesInvoicesPage() {
   useEffect(() => { load(); }, [page, size]);
 
   useEffect(() => {
-    warehouseApi.list().then(({ data }) => { setWarehouses(data); if (data.length) setWarehouseId(data[0].id); });
+    Promise.all([warehouseApi.list(), vanApi.my().catch(() => ({ data: null })), productApi.search({ size: 500 })])
+      .then(([{ data: whs }, { data: my }, { data: prods }]) => {
+        if (my?.restricted && my.van) {
+          const stock = Object.fromEntries(my.stock.map((s) => [s.productId, Number(s.quantity)]));
+          setVanStock(stock);
+          setWarehouses(whs.filter((w) => w.id === my.van.warehouseId));
+          setWarehouseId(my.van.warehouseId);
+          setProducts(prods.content.filter((p) => stock[p.id] !== undefined));
+        } else {
+          setWarehouses(whs);
+          if (whs.length) setWarehouseId(whs[0].id);
+          setProducts(prods.content);
+        }
+      });
     customerApi.list().then(({ data }) => setCustomers(data));
-    productApi.search({ size: 500 }).then(({ data }) => setProducts(data.content));
     categoryApi.list().then(({ data }) => setCategories(data));
     accountApi.list().then(({ data }) => setAccounts(data));
   }, []);
@@ -148,7 +162,10 @@ export default function SalesInvoicesPage() {
   }
 
   useEffect(() => {
-    if (location.state?.prefillCustomerId) {
+    if (location.state?.openCreate) {
+      openCreate();
+      navigate(location.pathname, { replace: true, state: {} });
+    } else if (location.state?.prefillCustomerId) {
       openCreate(location.state.prefillCustomerId);
       navigate(location.pathname, { replace: true, state: {} });
     } else if (location.state?.prefillFrom || location.state?.prefillTo) {
@@ -253,6 +270,9 @@ export default function SalesInvoicesPage() {
     if (!warehouseId || !branchId) { setError('اختر المخزن'); return; }
     const validItems = items.filter((it) => it.productId && Number(it.quantity) > 0);
     if (validItems.length === 0) { setError('أضف صنفاً واحداً على الأقل'); return; }
+    if (vanStock && !editingInvoice && validItems.some((it) => Number(it.quantity) > (vanStock[it.productId] ?? 0))) {
+      setError(t('vanLoads.exceedsAvailable')); return;
+    }
     if (Number(paidAmount || 0) > grandTotal) { setError(t('invoice.paidExceedsTotal')); return; }
     if (Number(paidAmount || 0) > 0 && !createAccountId) { setError(t('invoice.accountRequired')); return; }
 
@@ -572,7 +592,9 @@ export default function SalesInvoicesPage() {
                     </TextField>
                   </TableCell>
                   <TableCell>
-                    <TextField size="small" type="number" value={it.quantity} onChange={(e) => updateItem(idx, { quantity: e.target.value })} />
+                    <TextField size="small" type="number" value={it.quantity} onChange={(e) => updateItem(idx, { quantity: e.target.value })}
+                      error={!!vanStock && !!it.productId && Number(it.quantity) > (vanStock[it.productId] ?? 0)}
+                      helperText={vanStock && it.productId ? `${t('vanLoads.available')}: ${(vanStock[it.productId] ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 })}` : ''} />
                   </TableCell>
                   <TableCell>
                     <TextField size="small" type="number" value={it.unitPrice} onChange={(e) => updateItem(idx, { unitPrice: e.target.value })}

@@ -33,6 +33,10 @@ import FiscalClosingPage from './pages/FiscalClosingPage';
 import CompanySettingsPage from './pages/CompanySettingsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import BackupsPage from './pages/BackupsPage';
+import VansPage from './pages/VansPage';
+import VanLoadsPage from './pages/VanLoadsPage';
+import VanSettlementPage from './pages/VanSettlementPage';
+import MyVanPage from './pages/MyVanPage';
 import { createEmotionCache, buildTheme } from './theme';
 
 export default function App() {
@@ -69,6 +73,10 @@ export default function App() {
                 <Route path="catalog" element={<ProtectedRoute permission="PRODUCT_VIEW"><CatalogPage /></ProtectedRoute>} />
                 <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockPage /></ProtectedRoute>} />
                 <Route path="damaged" element={<ProtectedRoute permission="STOCK_VIEW"><DamagedGoodsPage /></ProtectedRoute>} />
+                <Route path="my-van" element={<MyVanPage />} />
+                <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansPage /></ProtectedRoute>} />
+                <Route path="van-loads" element={<ProtectedRoute permission="VAN_VIEW"><VanLoadsPage /></ProtectedRoute>} />
+                <Route path="van-settlement" element={<ProtectedRoute permission="VAN_VIEW"><VanSettlementPage /></ProtectedRoute>} />
                 <Route path="branches" element={<ProtectedRoute permission="WAREHOUSE_MANAGE"><BranchesPage /></ProtectedRoute>} />
                 <Route path="purchase-invoices" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchaseInvoicesPage /></ProtectedRoute>} />
                 <Route path="sales-invoices" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesInvoicesPage /></ProtectedRoute>} />

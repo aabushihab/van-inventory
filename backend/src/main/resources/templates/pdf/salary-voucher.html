@@ -83,7 +83,7 @@
 </div>
 
 <div class="amount-box">
-    <div class="amount-value" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.amount, 3)} + ' ' + ${model.currency}">0.000</div>
+    <div class="amount-value" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.amount, 3)} + ' ' + ${model.currency}">0.000</div>
     <div class="amount-label">المبلغ المستلم</div>
 </div>
 

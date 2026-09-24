@@ -245,6 +245,22 @@ export const notificationApi = {
   markAllRead: () => client.post('/notifications/read-all'),
 };
 
+export const vanApi = {
+  list: () => client.get('/vans'),
+  my: () => client.get('/vans/my'),
+  get: (id) => client.get(`/vans/${id}`),
+  create: (data) => client.post('/vans', data),
+  update: (id, data) => client.put(`/vans/${id}`, data),
+  remove: (id) => client.delete(`/vans/${id}`),
+  settlement: (id, params) => client.get(`/vans/${id}/settlement`, { params: cleanParams(params) }),
+  unloadAll: (id, data) => client.post(`/vans/${id}/unload-all`, data),
+  close: (id, data) => client.post(`/vans/${id}/close`, data),
+  loads: (params) => client.get('/vans/loads', { params: cleanParams(params) }),
+  getLoad: (id) => client.get(`/vans/loads/${id}`),
+  createLoad: (data) => client.post('/vans/loads', data),
+  cancelLoad: (id) => client.post(`/vans/loads/${id}/cancel`),
+};
+
 export const userApi = {
   list: () => client.get('/users'),
   listPage: (params) => client.get('/users/page', { params }),

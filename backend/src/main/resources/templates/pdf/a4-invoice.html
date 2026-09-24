@@ -126,15 +126,15 @@
                  th:if="${row.returnedQuantity != null and row.returnedQuantity.signum() > 0}">
                 <span th:if="${row.returnedQuantity.compareTo(row.quantity) >= 0}">مرتجع بالكامل</span>
                 <span th:unless="${row.returnedQuantity.compareTo(row.quantity) >= 0}"
-                      th:text="'مرتجع جزئياً: ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.returnedQuantity, 3)}">مرتجع جزئياً</span>
+                      th:text="'مرتجع جزئياً: ' + ${T(com.vanerp.pdf.PdfNumberFormat).num(row.returnedQuantity, 3)}">مرتجع جزئياً</span>
             </div>
         </td>
         <td th:text="${row.unit}">قطعة</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.quantity, 3)}">1</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.unitPrice, 3)}">0.000</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.discount, 3)}">0.000</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.taxRate, 2)}">0</td>
-        <td class="num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(row.lineTotal, 3)}">0.000</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.quantity, 3)}">1</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.unitPrice, 3)}">0.000</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.discount, 3)}">0.000</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.taxRate, 2)}">0</td>
+        <td class="num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(row.lineTotal, 3)}">0.000</td>
     </tr>
     </tbody>
 </table>
@@ -150,35 +150,35 @@
         <table class="sums-table">
             <tr>
                 <td class="label">المجموع الفرعي</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.subtotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.subtotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr>
                 <td class="label">إجمالي الخصم</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.discountTotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.discountTotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr>
                 <td class="label">إجمالي الضريبة</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.taxTotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.taxTotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr class="grand">
                 <td class="label">الإجمالي الكلي</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.grandTotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.grandTotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}" style="color:#dc2626">
                 <td class="label" style="color:#dc2626">قيمة المرتجع</td>
-                <td class="value num" style="color:#dc2626" th:text="'- ' + ${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.returnedTotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" style="color:#dc2626" th:text="'- ' + ${T(com.vanerp.pdf.PdfNumberFormat).num(model.returnedTotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr th:if="${model.returnedTotal != null and model.returnedTotal.signum() > 0}" class="grand">
                 <td class="label">الصافي بعد الإرجاع</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.netTotal, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.netTotal, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr>
                 <td class="label">المبلغ المدفوع</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.paidAmount, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.paidAmount, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
             <tr>
                 <td class="label">المتبقي</td>
-                <td class="value num" th:text="${T(com.ceramicerp.pdf.PdfNumberFormat).num(model.dueAmount, 3)} + ' ' + ${model.currency}">0.000</td>
+                <td class="value num" th:text="${T(com.vanerp.pdf.PdfNumberFormat).num(model.dueAmount, 3)} + ' ' + ${model.currency}">0.000</td>
             </tr>
         </table>
     </div>

@@ -1,130 +1,74 @@
-# نظام إدارة محلات السيراميك والبورسلان — الخلفية (Backend)
+# نظام المخازن والمبيعات وتحميل سيارات التوزيع — الخلفية (Backend)
 
-باك-إند مبني بـ **Spring Boot 3 (Java 21)** و **PostgreSQL** لإدارة محل/محلات سيراميك، بورسلان، وأدوات صحية:
-مستخدمون وصلاحيات (RBAC)، منتجات، فروع ومخازن متعددة، فواتير شراء وبيع مع طباعة PDF (A4 وإيصال حراري 58/80mm)،
-حركات مخزون كاملة، وتنبيهات تلقائية عند نقصان المخزون.
+باك-إند مبني بـ **Spring Boot 3 (Java 21)** و **PostgreSQL** لإدارة شركة توزيع:
+مخازن متعددة، منتجات، فواتير شراء وبيع مع طباعة PDF، **سيارات توزيع** (تحميل، تنزيل، بيع من السيارة، جرد وتسوية)،
+مستخدمون وصلاحيات (RBAC)، وتنبيهات نقص المخزون.
 
-## المكوّنات التقنية (Tech Stack)
+## المتطلبات
 
-- Java 21 + Spring Boot 3.3
-- Spring Security + JWT (مصادقة عديمة الحالة stateless)
-- Spring Data JPA + PostgreSQL
-- Flyway لإدارة نسخ قاعدة البيانات (Migrations)
-- Thymeleaf + openhtmltopdf لتوليد فواتير PDF بالعربية (RTL) باستخدام خط Noto Naskh Arabic المضمّن في `src/main/resources/fonts`
-- جدولة (Scheduled Job) لفحص المخزون كل ساعة وإطلاق تنبيهات + بريد إلكتروني اختياري
-
-## المتطلبات (Prerequisites)
-
-- JDK 21
+- JDK 21 أو أحدث
 - Maven 3.9+
-- PostgreSQL 14+ (محلي أو عبر Docker)
+- PostgreSQL 14+
 
-> **ملاحظة مهمة عن البناء (Build):** هذا المشروع تم تجهيزه في بيئة سحابية بدون وصول مباشر لمستودع Maven
-> المركزي (Maven Central)، لذلك لم يتم تشغيل `mvn compile` فعلياً للتحقق من نجاح البناء. تم التحقق يدوياً من
-> صحة كل التبعيات (إصداراتها ومساراتها الصحيحة عبر التوثيق الرسمي)، لكن يُنصح بتشغيل:
-> ```
-> mvn clean install
-> ```
-> فور فتح المشروع على جهازك (الذي يملك اتصال إنترنت طبيعي) للتأكد من عدم وجود أي خطأ طفيف قبل الاعتماد عليه في الإنتاج.
+## قاعدة البيانات
 
-## إعداد قاعدة البيانات (Database Setup)
+| العنصر | القيمة الافتراضية |
+|---|---|
+| اسم قاعدة البيانات | `van_distribution` |
+| المستخدم | `postgres` |
+| المنفذ | `5432` |
 
-### الخيار 1: تستخدم PostgreSQL مثبت لديك محلياً (موصى به حسب إعدادك)
+أنشئها مرة واحدة (Flyway ينشئ الجداول تلقائياً عند أول تشغيل):
 
-الإعدادات الافتراضية في `src/main/resources/application.yml` مضبوطة على:
-- Host: `localhost`, Port: `5432`
-- Username: `postgres`
-- Password: `postgres` (غيّرها إن كانت كلمة مرورك الفعلية مختلفة عبر متغير البيئة `DB_PASSWORD`)
-- اسم قاعدة البيانات: `foreeky_ceramic`
-
-قبل أول تشغيل، أنشئ قاعدة البيانات مرة واحدة فقط (Flyway ينشئ الجداول تلقائياً لكنه لا ينشئ قاعدة البيانات نفسها):
-
-```bash
-psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE foreeky_ceramic;"
-```
-
-أو نفّذ الملف الجاهز:
 ```bash
 psql -U postgres -h localhost -p 5432 -f create-database.sql
 ```
 
-### الخيار 2: عبر Docker Compose
+## التشغيل
 
 ```bash
-docker compose up -d
-```
-سينشئ قاعدة بيانات Postgres باسم `foreeky_ceramic` تلقائياً + واجهة pgAdmin على المنفذ `5050`.
-
-## تشغيل التطبيق (Run)
-
-```bash
-mvn spring-boot:run
+DB_PASSWORD=<كلمة مرور postgres> mvn spring-boot:run
 ```
 
-سيعمل الخادم على `http://localhost:8080`. عند أول تشغيل، تُنفَّذ ملفات Flyway في `src/main/resources/db/migration`
-تلقائياً لإنشاء الجداول وزرع بيانات أولية:
+يعمل الخادم على `http://localhost:8090` (قابل للتغيير عبر `SERVER_PORT`).
 
-- **مستخدم مدير النظام الافتراضي:** `admin` / `Admin@123` (غيّرها فوراً من شاشة تسجيل الدخول → تغيير كلمة المرور)
-- 4 أدوار جاهزة: مدير النظام (ADMIN)، مدير فرع (BRANCH_MANAGER)، أمين مخزن (WAREHOUSE_KEEPER)، كاشير (CASHIER)
-- فرع ومخزن افتراضيان، وحدات قياس (كرتونة، م²، قطعة...)، وتصنيفات سيراميك أساسية
+- **مستخدم المدير الافتراضي:** `admin` / `Admin@123` (غيّرها فوراً)
+- أدوار جاهزة: مدير النظام، مدير فرع، أمين مخزن، كاشير، **مندوب مبيعات (SALESMAN)**
 
-## متغيرات البيئة (Environment Variables)
+## سيارات التوزيع
 
-| المتغير | الوصف | القيمة الافتراضية |
+| العملية | الشرح |
+|---|---|
+| إضافة سيارة | رمز، اسم، **رقم لوحة بصيغة `12-34567`** (خانتين - رقم)، سائق، ومندوب (مستخدم نظام). يُنشأ لكل سيارة مخزن خاص بها تلقائياً (نوع `VAN`). |
+| تحميل (`LOAD`) | نقل أصناف من مخزن رئيسي إلى مخزن السيارة، مع التحقق من الكميات المتوفرة. |
+| البيع من السيارة | فاتورة بيع عادية من مخزن السيارة. المندوب المربوط بسيارة **لا يستطيع البيع إلا من حمولة سيارته وبحدود كمياتها** (مفروض على الخادم). |
+| تنزيل (`UNLOAD`) | إرجاع أصناف من السيارة للمخزن الرئيسي، أو "تنزيل كل الحمولة". |
+| جرد السيارة وإغلاقها | المدير يُدخل الكميات الفعلية؛ الفروقات تُسجَّل عجزاً/زيادة (مرجع `VAN_STOCKTAKE`) ثم يُرجَع كل المتبقي للمستودع. |
+| تسوية السيارة | لكل صنف: أول المدة + محمّل − مباع + مرتجع − منزّل ± أخرى = المتبقي، مع إجمالي المبيعات والمحصّل والآجل. |
+
+واجهات الـ API تحت `/api/vans` (انظر `VanController`). الصلاحيات: `VAN_VIEW`، `VAN_MANAGE`، `VAN_LOAD`.
+
+## متغيرات البيئة
+
+| المتغير | الوصف | الافتراضي |
 |---|---|---|
-| `DB_HOST` / `DB_PORT` / `DB_NAME` | اتصال قاعدة البيانات | `localhost` / `5432` / `foreeky_ceramic` |
+| `SERVER_PORT` | منفذ الخادم | `8090` |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | اتصال قاعدة البيانات | `localhost` / `5432` / `van_distribution` |
 | `DB_USER` / `DB_PASSWORD` | مستخدم/كلمة مرور قاعدة البيانات | `postgres` / `postgres` |
-| `JWT_SECRET` | مفتاح توقيع JWT (**غيّره في الإنتاج**) | قيمة افتراضية طويلة |
-| `JWT_EXPIRATION_MS` | مدة صلاحية Access Token | 24 ساعة |
-| `CORS_ALLOWED_ORIGINS` | نطاقات الواجهة الأمامية المسموحة | `http://localhost:5173,http://localhost:3000` |
-| `LOW_STOCK_CRON` | جدولة فحص نقصان المخزون | كل ساعة |
-| `LOW_STOCK_EMAIL_ENABLED` | تفعيل إرسال بريد تنبيه نقصان المخزون | `false` |
-| `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | إعدادات SMTP لإرسال التنبيهات بالبريد | - |
-| `COMPANY_NAME` / `COMPANY_NAME_EN` / `COMPANY_PHONE` / `COMPANY_ADDRESS` / `COMPANY_TAX_NUMBER` / `COMPANY_CURRENCY` | بيانات المحل التي تظهر على الفواتير | - |
+| `JWT_SECRET` | مفتاح توقيع JWT (**غيّره في الإنتاج**) | قيمة افتراضية |
+| `COMPANY_NAME` / `COMPANY_NAME_EN` / `COMPANY_CURRENCY` | بيانات الشركة على الفواتير | `شركة التوزيع` / `Distribution Company` / `JOD` |
 
-## توثيق الـ API
-
-بعد تشغيل الخادم: `http://localhost:8080/swagger-ui.html`
-
-## الصلاحيات (Permissions) الأساسية
-
-`USER_MANAGE`, `ROLE_MANAGE`, `BRANCH_MANAGE`, `WAREHOUSE_MANAGE`, `CATEGORY_MANAGE`, `PRODUCT_VIEW`,
-`PRODUCT_MANAGE`, `STOCK_VIEW`, `STOCK_ADJUST`, `STOCK_TRANSFER`, `SUPPLIER_MANAGE`, `CUSTOMER_MANAGE`,
-`PURCHASE_INVOICE_VIEW`, `PURCHASE_INVOICE_CREATE`, `SALES_INVOICE_VIEW`, `SALES_INVOICE_CREATE`,
-`SALES_INVOICE_PRINT`, `NOTIFICATION_VIEW`, `REPORTS_VIEW`, `DASHBOARD_VIEW`.
-
-يمكن إنشاء/تعديل أدوار جديدة وتخصيص أي مجموعة صلاحيات لها من شاشة "الأدوار والصلاحيات" في الواجهة.
-
-## طباعة الفواتير (Invoice Printing)
-
-- `GET /api/sales-invoices/{id}/print/a4` → فاتورة A4 (PDF) مناسبة للطباعة العادية أو الإرسال بالبريد.
-- `GET /api/sales-invoices/{id}/print/thermal?width=80` → إيصال حراري (58 أو 80mm) كملف PDF (متوافق مع أغلب
-  طابعات الإيصالات الحرارية التي تدعم طباعة PDF مباشرة).
-- نفس المسارات متوفرة تحت `/api/purchase-invoices/{id}/print/...` لفواتير الشراء.
-
-## تنبيهات نقصان المخزون (Low Stock Alerts)
-
-لكل منتج حقل `minStockThreshold` (حد التنبيه). عند وصول الكمية المتوفرة في أي مخزن لهذا الحد أو أقل:
-1. يُنشأ تنبيه داخل النظام فوراً (يظهر في شاشة "التنبيهات" وفي جرس الإشعارات).
-2. مهمة مجدولة (كل ساعة افتراضياً، قابلة للتغيير عبر `LOW_STOCK_CRON`) تعيد فحص كل المخازن وترسل بريداً إلكترونياً
-   ملخصاً لكل من يملك صلاحية `NOTIFICATION_VIEW` ولديه بريد إلكتروني مسجّل، إذا تم تفعيل `LOW_STOCK_EMAIL_ENABLED`.
-
-## هيكل المشروع (Project Structure)
+## هيكل المشروع
 
 ```
-src/main/java/com/ceramicerp/
-├── config/        إعدادات الأمان و CORS
-├── security/      JWT، UserDetails، الفلاتر
-├── model/         كيانات JPA
-├── repository/    مستودعات Spring Data
-├── service/       منطق الأعمال
-├── controller/    REST Controllers
-├── dto/           كائنات نقل البيانات
-├── pdf/           توليد فواتير PDF
-├── scheduler/      مهمة فحص نقصان المخزون
-└── exception/     معالجة الأخطاء الموحدة
-src/main/resources/
-├── db/migration/  ملفات Flyway (المخطط + البيانات الأولية)
-├── templates/pdf/ قوالب الفواتير (Thymeleaf)
-└── fonts/         خطوط عربية مضمّنة لتوليد PDF
+src/main/java/com/vanerp/
+├── config/ security/   الأمان و JWT
+├── model/              كيانات JPA (منها Van, VanLoad, VanLoadItem)
+├── repository/         مستودعات Spring Data
+├── service/            منطق الأعمال (VanService, VanLoadService, VanAccessService ...)
+├── controller/         REST Controllers
+├── dto/                كائنات نقل البيانات
+├── pdf/                توليد فواتير PDF
+└── scheduler/          مهام مجدولة (نقص المخزون، النسخ الاحتياطي...)
+src/main/resources/db/migration/   ملفات Flyway
 ```
