@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -38,6 +38,12 @@ import VanSettlementPage from './pages/VanSettlementPage';
 import MyVanPage from './pages/MyVanPage';
 import { createEmotionCache, buildTheme } from './theme';
 
+/** الصفحة الرئيسية: المندوب يذهب مباشرة لشاشة سيارتي، والباقي للوحة التحكم. */
+function HomeRoute() {
+  const { vanMode } = useAuth();
+  return vanMode ? <Navigate to="/my-van" replace /> : <Dashboard />;
+}
+
 export default function App() {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState(i18n.language === 'ar' ? 'rtl' : 'ltr');
@@ -67,12 +73,12 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Dashboard />} />
+                <Route index element={<HomeRoute />} />
                 <Route path="products" element={<ProtectedRoute permission="PRODUCT_VIEW"><ProductsPage /></ProtectedRoute>} />
                 <Route path="catalog" element={<ProtectedRoute permission="PRODUCT_VIEW"><CatalogPage /></ProtectedRoute>} />
                 <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockPage /></ProtectedRoute>} />
                 <Route path="damaged" element={<ProtectedRoute permission="STOCK_VIEW"><DamagedGoodsPage /></ProtectedRoute>} />
-                <Route path="my-van" element={<MyVanPage />} />
+                <Route path="my-van" element={<ProtectedRoute><MyVanPage /></ProtectedRoute>} />
                 <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansPage /></ProtectedRoute>} />
                 <Route path="van-loads" element={<ProtectedRoute permission="VAN_VIEW"><VanLoadsPage /></ProtectedRoute>} />
                 <Route path="van-settlement" element={<ProtectedRoute permission="VAN_VIEW"><VanSettlementPage /></ProtectedRoute>} />

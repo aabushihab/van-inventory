@@ -1,9 +1,13 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
 
+/** الشاشات المتاحة للمندوب المقيّد بسيارته. */
+export const VAN_MODE_PATHS = ['/my-van', '/sales-invoices'];
+
 export default function ProtectedRoute({ children, permission }) {
-  const { user, loading, hasPermission } = useAuth();
+  const { user, loading, hasPermission, vanMode } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -15,6 +19,10 @@ export default function ProtectedRoute({ children, permission }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (vanMode && location.pathname !== '/' && !VAN_MODE_PATHS.includes(location.pathname)) {
+    return <Navigate to="/my-van" replace />;
   }
 
   if (permission && !hasPermission(permission)) {

@@ -28,7 +28,7 @@ public class VanController {
     // ---------- السيارات (Vans) ----------
 
     @GetMapping
-    @PreAuthorize("hasAuthority('VAN_VIEW') or hasAuthority('SALES_INVOICE_CREATE')")
+    @PreAuthorize("hasAuthority('VAN_VIEW')")
     public List<VanDto> findAll() {
         return vanService.findAll();
     }

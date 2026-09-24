@@ -52,6 +52,29 @@ public class VanAccessService {
         }
     }
 
+    /** مخزن سيارة المندوب المقيّد، أو null لغير المقيّدين (يرون كل الفواتير). */
+    @Transactional(readOnly = true)
+    public Long restrictedWarehouseId(User user) {
+        return isRestrictedSalesman(user) ? findVanOf(user).get().getWarehouse().getId() : null;
+    }
+
+    /** المندوب المقيّد يرى ويطبع فواتير سيارته فقط. */
+    @Transactional(readOnly = true)
+    public void assertCanView(User user, Long invoiceWarehouseId) {
+        Long own = restrictedWarehouseId(user);
+        if (own != null && !own.equals(invoiceWarehouseId)) {
+            throw ApiException.forbidden("هذه الفاتورة ليست من سيارتك");
+        }
+    }
+
+    /** عمليات التعديل/الإلغاء/الإرجاع/الدفعات والتقارير الشاملة ليست متاحة للمندوب - البيع فقط. */
+    @Transactional(readOnly = true)
+    public void assertNotRestricted(User user) {
+        if (isRestrictedSalesman(user)) {
+            throw ApiException.forbidden("مندوب المبيعات يستطيع إنشاء فواتير البيع من سيارته فقط");
+        }
+    }
+
     private boolean hasPermission(User user, String code) {
         return user.getRole() != null && user.getRole().getPermissions().stream()
                 .anyMatch(p -> code.equals(p.getCode()));

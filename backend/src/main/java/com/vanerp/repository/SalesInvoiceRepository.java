@@ -18,6 +18,7 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
         SELECT s FROM SalesInvoice s
         LEFT JOIN s.customer c
         WHERE (:customerId IS NULL OR c.id = :customerId)
+          AND (:warehouseId IS NULL OR s.warehouse.id = :warehouseId)
           AND (:status IS NULL OR s.status = :status)
           AND s.createdAt >= :from
           AND s.createdAt < :to
@@ -25,7 +26,8 @@ public interface SalesInvoiceRepository extends JpaRepository<SalesInvoice, Long
                           OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
         ORDER BY s.createdAt DESC
         """)
-    Page<SalesInvoice> search(@Param("customerId") Long customerId, @Param("status") InvoiceStatus status,
+    Page<SalesInvoice> search(@Param("customerId") Long customerId, @Param("warehouseId") Long warehouseId,
+                               @Param("status") InvoiceStatus status,
                                @Param("from") LocalDateTime from,
                                @Param("to") LocalDateTime to, @Param("q") String q, Pageable pageable);
 

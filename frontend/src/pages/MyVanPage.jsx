@@ -6,8 +6,13 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { vanApi } from '../api/endpoints';
+import { vanApi, salesInvoiceApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 
@@ -19,10 +24,23 @@ export default function MyVanPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [todaySales, setTodaySales] = useState(null);
 
   function load() {
     setLoading(true);
     vanApi.my().then(({ data: d }) => setData(d)).finally(() => setLoading(false));
+    // مبيعات اليوم (الخادم يحصرها بفواتير سيارة المندوب)
+    if (hasPermission('SALES_INVOICE_VIEW')) {
+      const today = todayIso();
+      salesInvoiceApi.list({ from: today, to: today, size: 500 }).then(({ data: page }) => {
+        const invoices = page.content.filter((inv) => inv.status !== 'CANCELLED');
+        setTodaySales({
+          count: invoices.length,
+          total: invoices.reduce((sum, inv) => sum + Number(inv.grandTotal || 0), 0),
+          paid: invoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
+        });
+      }).catch(() => setTodaySales(null));
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -70,6 +88,30 @@ export default function MyVanPage() {
         </Grid>
       </Grid>
 
+      {todaySales && (
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 4 }}>
+            <Paper variant="outlined" sx={{ p: 2, cursor: 'pointer' }} onClick={() => navigate('/sales-invoices')}>
+              <Typography variant="body2" color="text.secondary">{t('myVan.todayInvoices')}</Typography>
+              <Typography variant="h5" fontWeight={800}>{todaySales.count}</Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 4 }}>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">{t('myVan.todaySales')}</Typography>
+              <Typography variant="h5" fontWeight={800} color="success.main">{fmt(todaySales.total)}</Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 4 }}>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">{t('myVan.todayCollected')}</Typography>
+              <Typography variant="h5" fontWeight={800} color="primary.main">{fmt(todaySales.paid)}</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>{t('vans.vanStockTitle')}</Typography>
       <TextField size="small" placeholder={t('common.search')} value={q} onChange={(e) => setQ(e.target.value)} sx={{ mb: 1, minWidth: 260 }}
         slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
       <Paper variant="outlined">

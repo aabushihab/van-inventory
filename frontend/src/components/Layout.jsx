@@ -36,7 +36,8 @@ import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import LockResetIcon from '@mui/icons-material/LockResetOutlined';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { notificationApi, publicApi, authApi, vanApi } from '../api/endpoints';
+import { notificationApi, publicApi, authApi } from '../api/endpoints';
+import { VAN_MODE_PATHS } from './ProtectedRoute';
 import LiveClock from './LiveClock';
 
 const drawerWidth = 260;
@@ -75,7 +76,7 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { t, i18n } = useTranslation();
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, vanMode } = useAuth();
   const location = useLocation();
   const isSmall = useMediaQuery('(max-width:900px)');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -83,7 +84,6 @@ export default function Layout() {
   const [unread, setUnread] = useState(0);
   const [companyName, setCompanyName] = useState('');
   const [companyLogo, setCompanyLogo] = useState('');
-  const [hasVan, setHasVan] = useState(false);
 
   const [pwdOpen, setPwdOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -138,11 +138,9 @@ export default function Layout() {
     return () => { active = false; clearInterval(interval); };
   }, [location.pathname]);
 
-  useEffect(() => {
-    vanApi.my().then(({ data }) => setHasVan(!!data?.van)).catch(() => setHasVan(false));
-  }, [user?.id]);
-
-  const visibleItems = NAV_ITEMS.filter((item) => hasPermission(item.permission) && (!item.vanOnly || hasVan));
+  const visibleItems = vanMode
+    ? NAV_ITEMS.filter((item) => VAN_MODE_PATHS.includes(item.to))
+    : NAV_ITEMS.filter((item) => hasPermission(item.permission) && !item.vanOnly);
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

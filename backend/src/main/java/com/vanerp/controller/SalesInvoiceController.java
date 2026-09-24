@@ -15,6 +15,7 @@ import com.vanerp.pdf.PdfInvoiceService;
 import com.vanerp.security.UserPrincipal;
 import com.vanerp.service.ExcelExportService;
 import com.vanerp.service.SalesInvoiceService;
+import com.vanerp.service.VanAccessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,16 +41,22 @@ public class SalesInvoiceController {
     private final SalesInvoiceService salesInvoiceService;
     private final PdfInvoiceService pdfInvoiceService;
     private final ExcelExportService excelExportService;
+    private final VanAccessService vanAccessService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public Page<SalesInvoiceDto> findAll(@RequestParam(required = false) Long customerId,
+    public Page<SalesInvoiceDto> findAll(@AuthenticationPrincipal UserPrincipal principal,
+                                          @RequestParam(required = false) Long customerId,
                                           @RequestParam(required = false) InvoiceStatus status,
                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                           @RequestParam(required = false) String q,
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size) {
+        Long vanWarehouseId = vanAccessService.restrictedWarehouseId(principal.getUser());
+        if (vanWarehouseId != null) {
+            return salesInvoiceService.search(customerId, vanWarehouseId, status, from, to, q, PageRequest.of(page, size));
+        }
         if (customerId != null || status != null || from != null || to != null || (q != null && !q.isBlank())) {
             return salesInvoiceService.search(customerId, status, from, to, q, PageRequest.of(page, size));
         }
@@ -58,11 +65,13 @@ public class SalesInvoiceController {
 
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public ResponseEntity<byte[]> export(@RequestParam(required = false) Long customerId,
+    public ResponseEntity<byte[]> export(@AuthenticationPrincipal UserPrincipal principal,
+                                          @RequestParam(required = false) Long customerId,
                                           @RequestParam(required = false) InvoiceStatus status,
                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                           @RequestParam(required = false) String q) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         Page<SalesInvoiceDto> page = (customerId != null || status != null || from != null || to != null || (q != null && !q.isBlank()))
                 ? salesInvoiceService.search(customerId, status, from, to, q, PageRequest.of(0, 5000))
                 : salesInvoiceService.findAll(PageRequest.of(0, 5000));
@@ -84,8 +93,10 @@ public class SalesInvoiceController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public SalesInvoiceDto findById(@PathVariable Long id) {
-        return salesInvoiceService.findById(id);
+    public SalesInvoiceDto findById(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        SalesInvoiceDto invoice = salesInvoiceService.findById(id);
+        vanAccessService.assertCanView(principal.getUser(), invoice.warehouseId());
+        return invoice;
     }
 
     @PostMapping
@@ -99,12 +110,14 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesInvoiceDto update(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                    @Valid @RequestBody SalesInvoiceCreateRequest request) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.update(id, request, principal.getUser());
     }
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public ResponseEntity<Void> cancel(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         salesInvoiceService.cancel(id, principal.getUser());
         return ResponseEntity.noContent().build();
     }
@@ -113,12 +126,14 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesReturnDto recordReturn(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                         @Valid @RequestBody SalesReturnRequest request) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.recordReturn(id, request, principal.getUser());
     }
 
     @GetMapping("/{id}/returns")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public java.util.List<SalesReturnDto> returns(@PathVariable Long id) {
+    public java.util.List<SalesReturnDto> returns(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        vanAccessService.assertCanView(principal.getUser(), salesInvoiceService.findById(id).warehouseId());
         return salesInvoiceService.findReturnsByInvoice(id);
     }
 
@@ -126,12 +141,14 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesInvoiceDto addPayment(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                        @Valid @RequestBody SalesPaymentRequest request) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.addPayment(id, request, principal.getUser());
     }
 
     @GetMapping("/{id}/payments")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public java.util.List<PaymentDto> payments(@PathVariable Long id) {
+    public java.util.List<PaymentDto> payments(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        vanAccessService.assertCanView(principal.getUser(), salesInvoiceService.findById(id).warehouseId());
         return salesInvoiceService.getPayments(id);
     }
 
@@ -139,34 +156,41 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesInvoiceDto refund(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                    @Valid @RequestBody SalesRefundRequest request) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.recordRefund(id, request, principal.getUser());
     }
 
     @GetMapping("/outstanding")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public Page<SalesInvoiceDto> outstanding(@RequestParam(defaultValue = "0") int page,
+    public Page<SalesInvoiceDto> outstanding(@AuthenticationPrincipal UserPrincipal principal,
+                                              @RequestParam(defaultValue = "0") int page,
                                               @RequestParam(defaultValue = "20") int size) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.outstanding(PageRequest.of(page, size));
     }
 
     @GetMapping("/balances-by-customer")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
-    public java.util.List<PartyBalanceDto> balancesByCustomer() {
+    public java.util.List<PartyBalanceDto> balancesByCustomer(@AuthenticationPrincipal UserPrincipal principal) {
+        vanAccessService.assertNotRestricted(principal.getUser());
         return salesInvoiceService.balancesByCustomer();
     }
 
     @GetMapping("/{id}/print/a4")
     @PreAuthorize("hasAuthority('SALES_INVOICE_PRINT')")
-    public ResponseEntity<byte[]> printA4(@PathVariable Long id) {
+    public ResponseEntity<byte[]> printA4(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
         SalesInvoiceDto invoice = salesInvoiceService.findById(id);
+        vanAccessService.assertCanView(principal.getUser(), invoice.warehouseId());
         byte[] pdf = pdfInvoiceService.renderA4(toPrintModel(invoice));
         return pdfResponse(pdf, invoice.invoiceNumber() + ".pdf");
     }
 
     @GetMapping("/{id}/print/thermal")
     @PreAuthorize("hasAuthority('SALES_INVOICE_PRINT')")
-    public ResponseEntity<byte[]> printThermal(@PathVariable Long id, @RequestParam(defaultValue = "80") int width) {
+    public ResponseEntity<byte[]> printThermal(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
+                                               @RequestParam(defaultValue = "80") int width) {
         SalesInvoiceDto invoice = salesInvoiceService.findById(id);
+        vanAccessService.assertCanView(principal.getUser(), invoice.warehouseId());
         byte[] pdf = pdfInvoiceService.renderThermal(toPrintModel(invoice), width);
         return pdfResponse(pdf, invoice.invoiceNumber() + "-receipt.pdf");
     }

@@ -64,10 +64,17 @@ public class SalesInvoiceService {
 
     @Transactional(readOnly = true)
     public Page<SalesInvoiceDto> search(Long customerId, InvoiceStatus status, LocalDate from, LocalDate to, String q, Pageable pageable) {
+        return search(customerId, null, status, from, to, q, pageable);
+    }
+
+    /** نفس البحث مع حصر النتائج بمخزن معيّن (فواتير سيارة المندوب فقط). */
+    @Transactional(readOnly = true)
+    public Page<SalesInvoiceDto> search(Long customerId, Long warehouseId, InvoiceStatus status, LocalDate from, LocalDate to,
+                                        String q, Pageable pageable) {
         // نتجنب تمرير NULL لمعاملات التاريخ لأن PostgreSQL/PgJDBC لا يستطيع استنتاج نوعها في حالة NULL
         LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime toDateTime = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusYears(50);
-        return salesInvoiceRepository.search(customerId, status, fromDateTime, toDateTime, q, pageable).map(this::toDto);
+        return salesInvoiceRepository.search(customerId, warehouseId, status, fromDateTime, toDateTime, q, pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

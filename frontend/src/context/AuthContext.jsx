@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { authApi } from '../api/endpoints';
+import { authApi, vanApi } from '../api/endpoints';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // وضع المندوب: مستخدم مربوط بسيارة توزيع ومقيّد بها - يرى البيع وحمولة سيارته فقط
+  const [vanMode, setVanMode] = useState(false);
+  const [vanLoading, setVanLoading] = useState(true);
 
   const loadCurrentUser = useCallback(async () => {
     const token = sessionStorage.getItem('accessToken');
@@ -28,10 +31,20 @@ export function AuthProvider({ children }) {
     loadCurrentUser();
   }, [loadCurrentUser]);
 
+  useEffect(() => {
+    if (!user) { setVanMode(false); setVanLoading(false); return; }
+    setVanLoading(true);
+    vanApi.my()
+      .then(({ data }) => setVanMode(!!(data?.van && data.restricted)))
+      .catch(() => setVanMode(false))
+      .finally(() => setVanLoading(false));
+  }, [user]);
+
   async function login(username, password) {
     const { data } = await authApi.login(username, password);
     sessionStorage.setItem('accessToken', data.accessToken);
     sessionStorage.setItem('refreshToken', data.refreshToken);
+    setVanLoading(true);
     setUser({
       id: data.userId,
       username: data.username,
@@ -57,7 +70,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, reload: loadCurrentUser }}>
+    <AuthContext.Provider value={{ user, loading: loading || (!!user && vanLoading), vanMode, login, logout, hasPermission, reload: loadCurrentUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -645,7 +645,10 @@
     "noVan": "You are not linked to any van. Ask the admin to assign you one.",
     "refresh": "Refresh",
     "sell": "Sell from Van",
-    "empty": "No goods on the van right now"
+    "empty": "No goods on the van right now",
+    "todayInvoices": "My invoices today",
+    "todaySales": "My sales today",
+    "todayCollected": "Collected today"
   },
   "login": {
     "headline": "Your warehouses, sales and distribution vans in one place",

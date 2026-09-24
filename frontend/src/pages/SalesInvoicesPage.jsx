@@ -35,7 +35,8 @@ function todayIso() {
 
 export default function SalesInvoicesPage() {
   const { t } = useTranslation();
-  const { hasPermission } = useAuth();
+  // vanMode = المندوب: إنشاء وعرض وطباعة فقط (بدون تعديل/إلغاء/إرجاع/دفعات/تصدير)
+  const { hasPermission, vanMode } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -410,12 +411,14 @@ export default function SalesInvoicesPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5" fontWeight={800}>{t('nav.salesInvoices')}</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />}
-            onClick={() => fetchAndDownload(salesInvoiceApi.exportUrl({
-              status: filterStatus, from: filterFrom, to: filterTo, q: filterQ,
-            }), 'فواتير-البيع.xlsx')}>
-            {t('common.exportExcel')}
-          </Button>
+          {!vanMode && (
+            <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />}
+              onClick={() => fetchAndDownload(salesInvoiceApi.exportUrl({
+                status: filterStatus, from: filterFrom, to: filterTo, q: filterQ,
+              }), 'فواتير-البيع.xlsx')}>
+              {t('common.exportExcel')}
+            </Button>
+          )}
           {hasPermission('SALES_INVOICE_CREATE') && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => openCreate()}>{t('invoice.create')}</Button>
           )}
@@ -499,23 +502,23 @@ export default function SalesInvoicesPage() {
                         <IconButton size="small" onClick={() => fetchAndOpenPdf(salesInvoiceApi.printThermalUrl(inv.id))}><ReceiptIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED'
+                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED'
                       && !inv.items.some((it) => Number(it.returnedQuantity) > 0) && (
                       <Tooltip title={t('common.edit')}>
                         <IconButton size="small" onClick={() => openEdit(inv)}><EditIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
+                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
                       <Tooltip title={t('invoice.return')}>
                         <IconButton size="small" color="warning" onClick={() => openReturn(inv)}><AssignmentReturnIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
+                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
                       <Tooltip title={t('invoice.cancelInvoice')}>
                         <IconButton size="small" color="error" onClick={() => cancelInvoice(inv)}><CancelIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {hasPermission('SALES_INVOICE_CREATE') && inv.status !== 'DRAFT' && (
+                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status !== 'DRAFT' && (
                       <Tooltip title={t('invoice.payments')}>
                         <IconButton size="small" color="primary" onClick={() => openPayments(inv)}><PaymentsIcon fontSize="small" /></IconButton>
                       </Tooltip>
