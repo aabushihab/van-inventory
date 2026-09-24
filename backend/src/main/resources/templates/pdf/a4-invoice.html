@@ -184,6 +184,11 @@
     </div>
 </div>
 
+<div th:if="${model.einvQrImage != null}" style="margin-top:14px; text-align:center;">
+    <img th:src="${model.einvQrImage}" style="width:110px; height:110px;" alt=""/>
+    <div style="font-size:10px; color:#475569;">فاتورة إلكترونية - نظام الفوترة الوطني</div>
+</div>
+
 <div class="footer">
     <div th:text="${'أُصدرت هذه الفاتورة بواسطة: ' + (model.cashierName ?: '-')}">-</div>
     <div>شكراً لتعاملكم معنا</div>

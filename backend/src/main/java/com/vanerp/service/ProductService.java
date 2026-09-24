@@ -90,6 +90,7 @@ public class ProductService {
                 .expiryDate(request.expiryDate())
                 .expiryAlertDays(request.expiryAlertDays())
                 .active(request.active() == null || request.active())
+                .zeroTaxType("O".equals(request.zeroTaxType()) ? "O" : "Z")
                 .build();
 
         product = productRepository.save(product);
@@ -136,6 +137,7 @@ public class ProductService {
         product.setPurchasePrice(request.purchasePrice());
         product.setSalePrice(request.salePrice());
         product.setTaxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO);
+        product.setZeroTaxType("O".equals(request.zeroTaxType()) ? "O" : "Z");
         product.setMinStockThreshold(request.minStockThreshold() != null ? request.minStockThreshold() : BigDecimal.ZERO);
         product.setImageUrl(request.imageUrl());
         product.setExpiryDate(request.expiryDate());
@@ -177,7 +179,7 @@ public class ProductService {
         return new ProductDto(d.id(), d.sku(), d.barcode(), d.name(), d.nameEn(), d.categoryId(), d.categoryName(),
                 d.unitId(), d.unitName(), d.unitsPerCarton(), d.cartonPrice(), d.minSalePrice(), d.maxSalePrice(),
                 null, d.salePrice(), d.taxRate(), d.minStockThreshold(), d.imageUrl(), d.expiryDate(), d.expiryAlertDays(),
-                d.expiryStatus(), d.daysToExpiry(), d.active(), d.totalStock());
+                d.expiryStatus(), d.daysToExpiry(), d.active(), d.totalStock(), d.zeroTaxType());
     }
 
     private ProductDto toDto(Product p) {
@@ -199,7 +201,7 @@ public class ProductService {
                 p.getImageUrl(), p.getExpiryDate(), p.getExpiryAlertDays(),
                 expiryStatus(p), p.getExpiryDate() != null
                         ? java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), p.getExpiryDate()) : null,
-                p.isActive(), totalStock
+                p.isActive(), totalStock, p.getZeroTaxType()
         );
     }
 }

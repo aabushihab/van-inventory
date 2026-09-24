@@ -56,6 +56,11 @@ public class Product {
     @Builder.Default
     private BigDecimal taxRate = BigDecimal.ZERO;
 
+    /** عند نسبة ضريبة صفر: Z معفى | O خاضع لنسبة الصفر (نظام الفوترة يفرّق بينهما). */
+    @Column(name = "zero_tax_type", nullable = false, length = 1)
+    @Builder.Default
+    private String zeroTaxType = "Z";
+
     @Column(name = "min_stock_threshold", nullable = false, precision = 14, scale = 3)
     @Builder.Default
     private BigDecimal minStockThreshold = BigDecimal.ZERO;

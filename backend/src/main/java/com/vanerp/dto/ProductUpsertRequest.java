@@ -26,5 +26,6 @@ public record ProductUpsertRequest(
         String imageUrl,
         LocalDate expiryDate,
         @Min(value = 0, message = "أيام التنبيه لا يمكن أن تكون سالبة") Integer expiryAlertDays,
-        Boolean active
+        Boolean active,
+        String zeroTaxType
 ) {}

@@ -36,7 +36,9 @@ public class CustomerService {
     @Transactional
     public PartyDto create(PartyDto dto) {
         Customer c = Customer.builder().name(dto.name()).phone(dto.phone()).email(dto.email())
-                .address(dto.address()).taxNumber(dto.taxNumber()).creditLimit(dto.creditLimit()).active(true).build();
+                .address(dto.address()).taxNumber(dto.taxNumber()).creditLimit(dto.creditLimit()).active(true)
+                .idType(idType(dto.idType())).idNumber(blankToNull(dto.idNumber()))
+                .postalCode(blankToNull(dto.postalCode())).cityCode(blankToNull(dto.cityCode())).build();
         return toDto(customerRepository.save(c));
     }
 
@@ -46,6 +48,8 @@ public class CustomerService {
         c.setName(dto.name()); c.setPhone(dto.phone()); c.setEmail(dto.email());
         c.setAddress(dto.address()); c.setTaxNumber(dto.taxNumber()); c.setActive(dto.active());
         c.setCreditLimit(dto.creditLimit());
+        c.setIdType(idType(dto.idType())); c.setIdNumber(blankToNull(dto.idNumber()));
+        c.setPostalCode(blankToNull(dto.postalCode())); c.setCityCode(blankToNull(dto.cityCode()));
         return toDto(customerRepository.save(c));
     }
 
@@ -60,6 +64,20 @@ public class CustomerService {
 
     private PartyDto toDto(Customer c, Map<Long, BigDecimal> balances) {
         return new PartyDto(c.getId(), c.getName(), c.getPhone(), c.getEmail(), c.getAddress(), c.getTaxNumber(), c.isActive(),
-                c.getCreditLimit(), balances.getOrDefault(c.getId(), BigDecimal.ZERO));
+                c.getCreditLimit(), balances.getOrDefault(c.getId(), BigDecimal.ZERO),
+                c.getIdType(), c.getIdNumber(), c.getPostalCode(), c.getCityCode());
+    }
+
+    /** نوع هوية المشتري المقبول بنظام الفوترة الوطني فقط. */
+    private static String idType(String v) {
+        if (v == null || v.isBlank()) return null;
+        if (!java.util.Set.of("NIN", "PN", "TN").contains(v)) {
+            throw com.vanerp.exception.ApiException.badRequest("نوع الهوية غير صحيح");
+        }
+        return v;
+    }
+
+    private static String blankToNull(String v) {
+        return v == null || v.isBlank() ? null : v.trim();
     }
 }

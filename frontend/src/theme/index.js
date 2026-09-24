@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { arSD, enUS } from '@mui/material/locale';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
@@ -91,8 +92,21 @@ export function buildTheme(direction) {
       MuiTabs: { styleOverrides: { indicator: { height: 3, borderRadius: 3, background: 'linear-gradient(90deg, #1d4ed8, #f97316)' } } },
       MuiTableRow: { styleOverrides: { root: { transition: 'background .15s ease', '&.MuiTableRow-hover:hover': { background: 'rgba(29,78,216,0.04)' } } } },
       MuiChip: { styleOverrides: { clickable: { transition: 'all .2s ease', '&:hover': { transform: 'translateY(-1px)' } } } },
-      MuiDialog: { styleOverrides: { paper: { borderRadius: 16 } } },
+      // النوافذ المنبثقة على الموبايل: تاخذ كامل العرض تقريباً وما بتطلع برا الشاشة
+      MuiDialog: {
+        styleOverrides: {
+          paper: ({ theme }) => ({
+            borderRadius: 16,
+            [theme.breakpoints.down('sm')]: {
+              margin: 8, width: 'calc(100% - 16px)', maxWidth: 'calc(100% - 16px) !important', maxHeight: 'calc(100% - 16px)',
+              borderRadius: 14,
+            },
+          }),
+        },
+      },
+      MuiDialogContent: { styleOverrides: { root: ({ theme }) => ({ [theme.breakpoints.down('sm')]: { padding: '12px 14px' } }) } },
+      MuiDialogActions: { styleOverrides: { root: { flexWrap: 'wrap', gap: 6 } } },
       MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
     },
-  });
+  }, direction === 'rtl' ? arSD : enUS);
 }

@@ -28,5 +28,7 @@ public record ProductDto(
         String expiryStatus,
         Long daysToExpiry,
         boolean active,
-        BigDecimal totalStock
+        BigDecimal totalStock,
+        /** عند ضريبة صفر: Z معفى | O خاضع لنسبة الصفر (للفوترة الوطنية). */
+        String zeroTaxType
 ) {}

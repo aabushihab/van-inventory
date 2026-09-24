@@ -28,7 +28,8 @@ public class PublicController {
                 "loginBackgroundImage", settings.loginBackgroundImage() != null ? settings.loginBackgroundImage() : "",
                 "logo", settings.logo() != null ? settings.logo() : "",
                 "checksEnabled", String.valueOf(companySettingsService.getSalesSettings().checksEnabled()),
-                "driverChecksEnabled", String.valueOf(companySettingsService.getSalesSettings().driverChecksEnabled())
+                "driverChecksEnabled", String.valueOf(companySettingsService.getSalesSettings().driverChecksEnabled()),
+                "einvEnabled", String.valueOf(companySettingsService.getOrCreate().isEinvEnabled())
         );
     }
 }

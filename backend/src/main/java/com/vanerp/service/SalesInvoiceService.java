@@ -49,6 +49,7 @@ public class SalesInvoiceService {
     private final VanAccessService vanAccessService;
     private final CheckService checkService;
     private final CompanySettingsService companySettingsService;
+    private final com.vanerp.einvoice.EInvoiceService eInvoiceService;
 
     /** يمنع تعديل/إلغاء/إرجاع فاتورة تاريخها ضمن فترة مالية مقفلة - نفس حارس AccountService.recordTransaction. */
     private void guardNotClosed(SalesInvoice invoice) {
@@ -191,6 +192,8 @@ public class SalesInvoiceService {
             }
         }
 
+        // الفوترة الوطنية (إن كانت مفعّلة): تُرسل بعد حفظ الفاتورة، وأي خطأ فيها لا يوقف البيع
+        eInvoiceService.onInvoiceCreated(saved);
         return toDto(saved);
     }
 
@@ -332,6 +335,8 @@ public class SalesInvoiceService {
         }
         invoice.setStatus(InvoiceStatus.CANCELLED);
         salesInvoiceRepository.save(invoice);
+        // فاتورة مُرسلة للفوترة الوطنية تُلغى هناك بفاتورة إرجاع كاملة
+        eInvoiceService.onInvoiceCancelled(invoice);
     }
 
     /**
@@ -349,6 +354,7 @@ public class SalesInvoiceService {
             throw ApiException.badRequest("لا يمكن تعديل فاتورة تم إرجاع جزء منها - يمكنك إلغاؤها بدلاً من ذلك");
         }
         guardNotClosed(invoice);
+        eInvoiceService.assertEditable(invoice);
 
         vanAccessService.enforceSalesmanWarehouse(actingUser, request);
         if (invoice.getPaymentMethod() == PaymentMethod.CHECK || "CHECK".equalsIgnoreCase(request.paymentMethod())) {
@@ -504,7 +510,9 @@ public class SalesInvoiceService {
         }
         salesInvoiceRepository.save(invoice);
 
-        return toReturnDto(salesReturnRepository.save(salesReturn));
+        SalesReturn savedReturn = salesReturnRepository.save(salesReturn);
+        eInvoiceService.onReturnCreated(invoice, savedReturn, request.notes());
+        return toReturnDto(savedReturn);
     }
 
     @Transactional(readOnly = true)

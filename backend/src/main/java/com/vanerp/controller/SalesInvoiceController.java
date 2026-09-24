@@ -42,6 +42,7 @@ public class SalesInvoiceController {
     private final PdfInvoiceService pdfInvoiceService;
     private final ExcelExportService excelExportService;
     private final VanAccessService vanAccessService;
+    private final com.vanerp.einvoice.EInvoiceService eInvoiceService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
@@ -250,6 +251,8 @@ public class SalesInvoiceController {
                 .companyAddress(pdfInvoiceService.getCompanyAddress())
                 .companyTaxNumber(pdfInvoiceService.getCompanyTaxNumber())
                 .currency(pdfInvoiceService.getCurrency())
+                .einvQrImage(eInvoiceService.qrForInvoice(inv.id())
+                        .map(qr -> com.vanerp.einvoice.QrImage.toDataUri(qr, 260)).orElse(null))
                 .items(inv.items().stream().map(this::toRow).toList())
                 .build();
     }

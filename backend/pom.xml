@@ -104,6 +104,12 @@
             <artifactId>openhtmltopdf-rtl-support</artifactId>
             <version>${openhtmltopdf.version}</version>
         </dependency>
+        <!-- رمز QR للفاتورة الإلكترونية (نظام الفوترة الوطني) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.4.1</version>
+        </dependency>
 
         <!-- Excel export -->
         <dependency>

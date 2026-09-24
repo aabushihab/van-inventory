@@ -36,6 +36,8 @@ import RolesPage from './RolesPage';
 import AuditLogsPage from './AuditLogsPage';
 import AlertSettingsPage from './AlertSettingsPage';
 import SalesSettingsPage from './SalesSettingsPage';
+import EInvoicePage from './EInvoicePage';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
 
 /*
  * الشاشات المجمّعة: كل شاشة تضم صفحات مترابطة كتبويبات، وكل تبويب يظهر حسب صلاحية المستخدم.
@@ -91,6 +93,7 @@ export function SettingsHub() {
       { key: 'roles', label: t('nav.roles'), icon: <SecurityIcon />, element: <RolesPage />, permission: 'ROLE_MANAGE' },
       { key: 'sales', label: t('salesSettings.title'), icon: <PointOfSaleIcon />, element: <SalesSettingsPage />, permission: 'ROLE_MANAGE' },
       { key: 'alerts', label: t('alertSettings.title'), icon: <NotificationsActiveIcon />, element: <AlertSettingsPage />, permission: 'ROLE_MANAGE' },
+      { key: 'einvoice', label: t('einv.tab'), icon: <ReceiptLongIcon />, element: <EInvoicePage />, permission: 'ROLE_MANAGE' },
       { key: 'audit', label: t('nav.auditLogs'), icon: <HistoryIcon />, element: <AuditLogsPage />, permission: 'ROLE_MANAGE' },
     ]} />
   );

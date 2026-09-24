@@ -16,8 +16,10 @@ import AssignmentReturnIcon from '@mui/icons-material/AssignmentReturnOutlined';
 import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
+import SendIcon from '@mui/icons-material/SendOutlined';
+import { EINV_STATUS_COLOR } from './EInvoicePage';
 import { useTranslation } from 'react-i18next';
-import {
+import { eInvoiceApi,
   salesInvoiceApi, vanApi, publicApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
 } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
@@ -107,6 +109,29 @@ export default function SalesInvoicesPage() {
   const [filterFrom, setFilterFrom] = useState(todayIso());
   const [filterTo, setFilterTo] = useState(todayIso());
 
+  // الفوترة الوطنية (اختيارية): حالة كل فاتورة بالقائمة + إرسال يدوي
+  const [einvEnabled, setEinvEnabled] = useState(false);
+  const [einvStatuses, setEinvStatuses] = useState({});
+  const [einvBusy, setEinvBusy] = useState(null);
+  useEffect(() => {
+    if (!einvEnabled || vanMode || rows.length === 0) return;
+    eInvoiceApi.statuses(rows.map((r) => r.id)).then(({ data }) => setEinvStatuses(data || {})).catch(() => {});
+  }, [rows, einvEnabled]);
+
+  async function sendEinv(inv) {
+    setEinvBusy(inv.id); setError('');
+    try {
+      const { data } = await eInvoiceApi.sendInvoice(inv.id);
+      setEinvStatuses((m) => ({ ...m, [inv.id]: data.status }));
+      if (data.status === 'FAILED') setError(`${t('einv.sendFailed')}: ${data.lastError || ''}`);
+      else if (data.status === 'PENDING' && data.lastError) setError(data.lastError);
+    } catch (e) {
+      setError(e.response?.data?.message || t('common.error'));
+    } finally {
+      setEinvBusy(null);
+    }
+  }
+
   async function load(overrides = {}) {
     setLoading(true);
     setError('');
@@ -165,6 +190,7 @@ export default function SalesInvoicesPage() {
     customerApi.list().then(({ data }) => setCustomers(data));
     publicApi.companyInfo().then(({ data }) => {
       setChecksAllowed(data.checksEnabled === 'true' && (!vanMode || data.driverChecksEnabled === 'true'));
+      setEinvEnabled(data.einvEnabled === 'true');
     }).catch(() => {});
     Promise.all([accountApi.list(), vanApi.my().catch(() => ({ data: null }))]).then(([{ data }, { data: my }]) => {
       // المندوب يحصّل في صندوق سيارته فقط
@@ -550,11 +576,25 @@ export default function SalesInvoicesPage() {
                       inv.status === 'CONFIRMED' ? (due > 0.001 ? t('invoice.confirmed') : t('invoice.fullyPaid'))
                         : inv.status === 'RETURNED' ? t('invoice.returned') : t('invoice.cancelled')
                     } color={inv.status === 'CONFIRMED' ? (due > 0.001 ? 'success' : 'default') : inv.status === 'RETURNED' ? 'info' : 'default'} />
+                    {einvEnabled && !vanMode && einvStatuses[inv.id] && (
+                      <Chip size="small" variant="outlined" color={EINV_STATUS_COLOR[einvStatuses[inv.id]]}
+                        label={`${t('einv.short')}: ${t(`einv.st.${einvStatuses[inv.id]}`)}`} sx={{ marginInlineStart: '6px' }} />
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title={t('common.actions')}>
                       <IconButton size="small" onClick={() => setViewInvoice(inv)}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
+                    {einvEnabled && !vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status !== 'CANCELLED'
+                      && einvStatuses[inv.id] !== 'SENT' && (
+                      <Tooltip title={t('einv.sendToSystem')}>
+                        <span>
+                          <IconButton size="small" color="primary" disabled={einvBusy === inv.id} onClick={() => sendEinv(inv)}>
+                            {einvBusy === inv.id ? <CircularProgress size={16} /> : <SendIcon fontSize="small" />}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
                     {hasPermission('SALES_INVOICE_PRINT') && (
                       <Tooltip title={t('invoice.printA4')}>
                         <IconButton size="small" onClick={() => fetchAndOpenPdf(salesInvoiceApi.printA4Url(inv.id))}><PrintIcon fontSize="small" /></IconButton>

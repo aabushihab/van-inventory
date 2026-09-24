@@ -89,6 +89,37 @@ public class CompanySettings {
     @Builder.Default
     private boolean driverChecksEnabled = true;
 
+    // ===== الربط مع نظام الفوترة الوطني (JoFotara) - اختياري =====
+    @Column(name = "einv_enabled", nullable = false)
+    @Builder.Default
+    private boolean einvEnabled = false;
+
+    /** INCOME = فاتورة دخل (غير مسجّل بضريبة المبيعات) | GENERAL_SALES = فاتورة مبيعات عامة. */
+    @Column(name = "einv_taxpayer_type", nullable = false, length = 20)
+    @Builder.Default
+    private String einvTaxpayerType = "GENERAL_SALES";
+
+    /** AUTO = إرسال تلقائي فور إنشاء الفاتورة | MANUAL = بزر من المحاسب. */
+    @Column(name = "einv_send_mode", nullable = false, length = 10)
+    @Builder.Default
+    private String einvSendMode = "AUTO";
+
+    @Column(name = "einv_registration_name", length = 200)
+    private String einvRegistrationName;
+
+    @Column(name = "einv_income_source_seq", length = 50)
+    private String einvIncomeSourceSeq;
+
+    @Column(name = "einv_client_id", length = 200)
+    private String einvClientId;
+
+    @Column(name = "einv_secret_key", length = 500)
+    private String einvSecretKey;
+
+    @Column(name = "einv_api_url", nullable = false, length = 300)
+    @Builder.Default
+    private String einvApiUrl = "https://backend.jofotara.gov.jo/core/invoices/";
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

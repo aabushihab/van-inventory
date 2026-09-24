@@ -36,6 +36,19 @@ export default function PartiesPage() {
   const customerFields = [
     ...fields.slice(0, 5),
     { key: 'creditLimit', label: t('parties.creditLimit'), type: 'number' },
+    { key: 'idType', label: t('einv.idType'), type: 'select', options: [
+      { value: '', label: t('einv.none') },
+      { value: 'NIN', label: t('einv.idNIN') },
+      { value: 'PN', label: t('einv.idPN') },
+      { value: 'TN', label: t('einv.idTN') },
+    ] },
+    { key: 'idNumber', label: t('einv.idNumber') },
+    { key: 'cityCode', label: t('einv.city'), type: 'select', options: [
+      { value: '', label: t('einv.none') },
+      ...['JO-AM', 'JO-AZ', 'JO-IR', 'JO-BA', 'JO-MA', 'JO-KA', 'JO-JA', 'JO-AJ', 'JO-MD', 'JO-AT', 'JO-MN', 'JO-AQ']
+        .map((c) => ({ value: c, label: t(`einv.cities.${c}`) })),
+    ] },
+    { key: 'postalCode', label: t('einv.postalCode') },
     fields[5],
   ];
   const customerColumns = [
@@ -68,7 +81,7 @@ export default function PartiesPage() {
         <CrudPage
           title={t('invoice.customer')}
           canManage={hasPermission('CUSTOMER_MANAGE')}
-          emptyModel={{ ...emptyModel, creditLimit: '' }}
+          emptyModel={{ ...emptyModel, creditLimit: '', idType: '', idNumber: '', cityCode: '', postalCode: '' }}
           columns={customerColumns}
           fields={customerFields}
           api={customerApiWithLimit}

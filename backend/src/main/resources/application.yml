@@ -1,5 +1,8 @@
 server:
   port: ${SERVER_PORT:8090}
+  # ملف تثبيت التطبيق على الموبايل/التابلت (PWA)
+  mime-mappings:
+    webmanifest: application/manifest+json
 
 spring:
   application:

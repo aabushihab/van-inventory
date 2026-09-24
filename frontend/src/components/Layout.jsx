@@ -287,9 +287,12 @@ export default function Layout() {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, width: { md: `calc(100% - ${drawerWidth}px)` }, minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box component="main" sx={{
+        flexGrow: 1, minWidth: 0, width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, minHeight: '100vh',
+        bgcolor: 'background.default', overflowX: 'clip',
+      }}>
         <Toolbar />
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, pb: { xs: 'calc(16px + env(safe-area-inset-bottom, 0px))', md: 3 } }}>
           <Outlet />
         </Box>
       </Box>

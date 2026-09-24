@@ -120,3 +120,42 @@ input[type='number']::-webkit-inner-spin-button {
 @keyframes login-card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
 
+
+/* ================= الموبايل والتابلت ================= */
+/* الجداول العريضة تتمرّر أفقياً داخل صندوقها فقط، والصفحة نفسها ما بتتمرّر بالعرض أبداً */
+main .MuiPaper-root:has(> .MuiTable-root),
+main .MuiBox-root:has(> .MuiTable-root),
+.MuiDialogContent-root .MuiBox-root:has(> .MuiTable-root),
+.MuiDialogContent-root .MuiPaper-root:has(> .MuiTable-root),
+.MuiTableContainer-root {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.MuiDialogContent-root { overflow-x: hidden; }
+
+@media (max-width: 900px) {
+  /* أعمدة الجدول تحافظ على عرض مقروء بدل ما تنضغط وتتكسّر الكلمات */
+  main .MuiTable-root, .MuiDialogContent-root .MuiTable-root { min-width: 640px; }
+  .MuiTableCell-root { padding: 8px 10px; }
+  /* أزرار الإجراءات بسطر واحد */
+  .MuiTableCell-root:last-child { white-space: nowrap; }
+  /* حقول الفلاتر بعرض كامل على الشاشات الضيقة */
+  main .MuiTextField-root { max-width: 100%; }
+}
+@media (max-width: 600px) {
+  main .MuiTextField-root:not(.MuiTableCell-root .MuiTextField-root) { min-width: 0 !important; }
+  h5.MuiTypography-root { font-size: 1.25rem; }
+}
+
+/* أهداف لمس مريحة على الأجهزة اللمسية */
+@media (pointer: coarse) {
+  .MuiIconButton-sizeSmall { padding: 8px; }
+  .MuiButton-root { min-height: 40px; }
+}
+
+/* منع تكبير iOS التلقائي عند الكتابة بالحقول */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px !important; }
+}

@@ -43,6 +43,9 @@ public class InvoicePrintModel {
     private String companyTaxNumber;
     private String currency;
 
+    /** رمز QR من نظام الفوترة الوطني (صورة data URI) - يُطبع فقط للفواتير المقبولة هناك. */
+    private String einvQrImage;
+
     private List<Row> items;
 
     @Getter

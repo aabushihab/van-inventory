@@ -118,6 +118,10 @@
 
 <hr/>
 
+<div th:if="${model.einvQrImage != null}" style="text-align:center; margin:6px 0;">
+    <img th:src="${model.einvQrImage}" style="width:90px; height:90px;" alt=""/>
+</div>
+
 <div class="footer">
     <div th:text="${model.cashierName}">الكاشير</div>
     <div>شكراً لزيارتكم</div>

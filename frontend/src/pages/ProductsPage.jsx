@@ -19,7 +19,7 @@ import { compressImage } from '../utils/imageCompress';
 const emptyProduct = {
   sku: '', barcode: '', name: '', nameEn: '', categoryId: '', unitId: '',
   unitsPerCarton: '', cartonPrice: '', minSalePrice: '', maxSalePrice: '',
-  purchasePrice: '0', salePrice: '0', taxRate: '0', minStockThreshold: '0',
+  purchasePrice: '0', salePrice: '0', taxRate: '0', zeroTaxType: 'Z', minStockThreshold: '0',
   imageUrl: '', expiryDate: '', expiryAlertDays: '', active: true,
 };
 
@@ -89,6 +89,7 @@ export default function ProductsPage() {
       categoryId: row.categoryId || '', unitId: row.unitId || '',
       unitsPerCarton: row.unitsPerCarton ?? '', cartonPrice: row.cartonPrice ?? '',
       minSalePrice: row.minSalePrice ?? '', maxSalePrice: row.maxSalePrice ?? '',
+      zeroTaxType: row.zeroTaxType || 'Z',
       expiryDate: row.expiryDate || '', expiryAlertDays: row.expiryAlertDays ?? '',
     });
     setFieldErrors({});
@@ -111,6 +112,7 @@ export default function ProductsPage() {
         purchasePrice: Number(form.purchasePrice || 0),
         salePrice: Number(form.salePrice || 0),
         taxRate: Number(form.taxRate || 0),
+        zeroTaxType: form.zeroTaxType || 'Z',
         minStockThreshold: Number(form.minStockThreshold || 0),
         expiryDate: form.expiryDate || null,
         expiryAlertDays: form.expiryAlertDays === '' ? null : Number(form.expiryAlertDays),
@@ -344,6 +346,15 @@ export default function ProductsPage() {
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={`${t('common.tax')} %`} value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: e.target.value })} />
             </Grid>
+            {Number(form.taxRate || 0) === 0 && (
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <TextField select fullWidth label={t('einv.zeroTaxType')} value={form.zeroTaxType || 'Z'}
+                  onChange={(e) => setForm({ ...form, zeroTaxType: e.target.value })}>
+                  <MenuItem value="Z">{t('einv.exempt')}</MenuItem>
+                  <MenuItem value="O">{t('einv.zeroRated')}</MenuItem>
+                </TextField>
+              </Grid>
+            )}
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.minStock')} value={form.minStockThreshold} onChange={(e) => setForm({ ...form, minStockThreshold: e.target.value })} />
             </Grid>

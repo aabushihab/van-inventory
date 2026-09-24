@@ -134,6 +134,17 @@ export const companySettingsApi = {
   updateSales: (data) => client.put('/settings/company/sales', data),
 };
 
+export const eInvoiceApi = {
+  settings: () => client.get('/einvoice/settings'),
+  updateSettings: (data) => client.put('/einvoice/settings', data),
+  submissions: (params) => client.get('/einvoice/submissions', { params: cleanParams(params) }),
+  statuses: (invoiceIds) => client.get('/einvoice/statuses', { params: { invoiceIds: invoiceIds.join(',') } }),
+  forInvoice: (invoiceId) => client.get(`/einvoice/invoices/${invoiceId}`),
+  sendInvoice: (invoiceId) => client.post(`/einvoice/invoices/${invoiceId}/send`),
+  resend: (id) => client.post(`/einvoice/submissions/${id}/send`),
+  xml: (id) => client.get(`/einvoice/submissions/${id}/xml`, { responseType: 'text', transformResponse: (d) => d }),
+};
+
 export const salesInvoiceApi = {
   list: (params) => client.get('/sales-invoices', { params }),
   get: (id) => client.get(`/sales-invoices/${id}`),

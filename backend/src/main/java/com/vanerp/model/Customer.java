@@ -37,6 +37,20 @@ public class Customer {
     @Column(name = "credit_limit", precision = 14, scale = 3)
     private java.math.BigDecimal creditLimit;
 
+    /** نوع هوية المشتري للفاتورة الإلكترونية: NIN رقم وطني | PN رقم شخصي لغير الأردني | TN رقم ضريبي. */
+    @Column(name = "id_type", length = 5)
+    private String idType;
+
+    @Column(name = "id_number", length = 30)
+    private String idNumber;
+
+    @Column(name = "postal_code", length = 20)
+    private String postalCode;
+
+    /** رمز المحافظة حسب نظام الفوترة (JO-AM عمّان، JO-AZ الزرقاء ...). */
+    @Column(name = "city_code", length = 10)
+    private String cityCode;
+
     @Builder.Default
     private boolean active = true;
 
