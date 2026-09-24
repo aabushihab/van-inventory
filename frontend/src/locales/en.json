@@ -32,7 +32,11 @@
     "fiscalClosing": "Fiscal Closing",
     "companySettings": "Company Settings",
     "auditLogs": "Audit Log",
-    "logout": "Logout"
+    "logout": "Logout",
+    "sales": "Sales",
+    "purchases": "Purchases",
+    "usersAndRoles": "Users & Permissions",
+    "stockAndDamaged": "Stock & Damaged"
   },
   "common": {
     "save": "Save",

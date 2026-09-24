@@ -32,7 +32,11 @@
     "fiscalClosing": "إقفال الفترات المالية",
     "companySettings": "بيانات الشركة",
     "auditLogs": "سجل التدقيق",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "sales": "المبيعات",
+    "purchases": "المشتريات",
+    "usersAndRoles": "المستخدمون والصلاحيات",
+    "stockAndDamaged": "المخزون والتوالف"
   },
   "common": {
     "save": "حفظ",

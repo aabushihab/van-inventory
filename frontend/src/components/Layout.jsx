@@ -17,9 +17,7 @@ import PeopleIcon from '@mui/icons-material/PeopleAltOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
 import SecurityIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import NotificationsIcon from '@mui/icons-material/NotificationsOutlined';
-import BrokenImageIcon from '@mui/icons-material/BrokenImageOutlined';
 import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
-import RequestQuoteIcon from '@mui/icons-material/RequestQuoteOutlined';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import BusinessIcon from '@mui/icons-material/BusinessOutlined';
 import HistoryIcon from '@mui/icons-material/HistoryOutlined';
@@ -44,18 +42,14 @@ const NAV_ITEMS = [
   { to: '/', key: 'dashboard', icon: DashboardIcon, permission: 'DASHBOARD_VIEW' },
   { to: '/products', key: 'products', icon: InventoryIcon, permission: 'PRODUCT_VIEW' },
   { to: '/catalog', key: 'catalog', icon: CategoryIcon, permission: 'PRODUCT_VIEW' },
-  { to: '/stock', key: 'stock', icon: WarehouseIcon, permission: 'STOCK_VIEW' },
-  { to: '/damaged', key: 'damaged', icon: BrokenImageIcon, permission: 'STOCK_VIEW' },
+  { to: '/stock', key: 'stockAndDamaged', icon: WarehouseIcon, permission: 'STOCK_VIEW' },
   { to: '/my-van', key: 'myVan', icon: LocalShippingIcon, permission: 'SALES_INVOICE_CREATE', vanOnly: true },
   { to: '/vans', key: 'vans', icon: LocalShippingIcon, permission: 'VAN_VIEW' },
   { to: '/branches', key: 'branches', icon: StoreIcon, permission: 'WAREHOUSE_MANAGE' },
-  { to: '/purchase-invoices', key: 'purchaseInvoices', icon: ShoppingCartIcon, permission: 'PURCHASE_INVOICE_VIEW' },
-  { to: '/purchase-quotes', key: 'purchaseQuotes', icon: RequestQuoteIcon, permission: 'PURCHASE_INVOICE_VIEW' },
-  { to: '/sales-invoices', key: 'salesInvoices', icon: ReceiptIcon, permission: 'SALES_INVOICE_VIEW' },
-  { to: '/sales-quotes', key: 'salesQuotes', icon: RequestQuoteIcon, permission: 'SALES_INVOICE_VIEW' },
+  { to: '/purchase-invoices', key: 'purchases', icon: ShoppingCartIcon, permission: 'PURCHASE_INVOICE_VIEW' },
+  { to: '/sales-invoices', key: 'sales', icon: ReceiptIcon, permission: 'SALES_INVOICE_VIEW' },
   { to: '/parties', key: 'parties', icon: PeopleIcon, permission: 'CUSTOMER_MANAGE' },
-  { to: '/users', key: 'users', icon: BadgeIcon, permission: 'USER_MANAGE' },
-  { to: '/roles', key: 'roles', icon: SecurityIcon, permission: 'ROLE_MANAGE' },
+  { to: '/users', key: 'usersAndRoles', icon: SecurityIcon, permission: ['USER_MANAGE', 'ROLE_MANAGE'] },
   { to: '/notifications', key: 'notifications', icon: NotificationsIcon, permission: 'NOTIFICATION_VIEW' },
   { to: '/reports', key: 'reports', icon: AssessmentIcon, permission: 'REPORTS_VIEW' },
   { to: '/balances', key: 'balances', icon: AccountBalanceWalletIcon, permission: 'REPORTS_VIEW' },
@@ -136,7 +130,7 @@ export default function Layout() {
 
   const visibleItems = vanMode
     ? NAV_ITEMS.filter((item) => VAN_MODE_PATHS.includes(item.to))
-    : NAV_ITEMS.filter((item) => hasPermission(item.permission) && !item.vanOnly);
+    : NAV_ITEMS.filter((item) => !item.vanOnly && [].concat(item.permission).some((p) => hasPermission(p)));
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

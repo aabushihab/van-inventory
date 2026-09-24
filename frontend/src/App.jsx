@@ -10,16 +10,12 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProductsPage from './pages/ProductsPage';
 import CatalogPage from './pages/CatalogPage';
-import StockPage from './pages/StockPage';
-import DamagedGoodsPage from './pages/DamagedGoodsPage';
+import StockHubPage from './pages/StockHubPage';
 import BranchesPage from './pages/BranchesPage';
-import PurchaseInvoicesPage from './pages/PurchaseInvoicesPage';
-import SalesInvoicesPage from './pages/SalesInvoicesPage';
-import SalesQuotesPage from './pages/SalesQuotesPage';
-import PurchaseQuotesPage from './pages/PurchaseQuotesPage';
+import PurchasesHubPage from './pages/PurchasesHubPage';
+import SalesHubPage from './pages/SalesHubPage';
 import PartiesPage from './pages/PartiesPage';
-import UsersPage from './pages/UsersPage';
-import RolesPage from './pages/RolesPage';
+import UsersHubPage from './pages/UsersHubPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ReportsPage from './pages/ReportsPage';
 import BalancesPage from './pages/BalancesPage';
@@ -74,20 +70,20 @@ export default function App() {
                 <Route index element={<HomeRoute />} />
                 <Route path="products" element={<ProtectedRoute permission="PRODUCT_VIEW"><ProductsPage /></ProtectedRoute>} />
                 <Route path="catalog" element={<ProtectedRoute permission="PRODUCT_VIEW"><CatalogPage /></ProtectedRoute>} />
-                <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockPage /></ProtectedRoute>} />
-                <Route path="damaged" element={<ProtectedRoute permission="STOCK_VIEW"><DamagedGoodsPage /></ProtectedRoute>} />
+                <Route path="stock" element={<ProtectedRoute permission="STOCK_VIEW"><StockHubPage /></ProtectedRoute>} />
+                <Route path="damaged" element={<Navigate to="/stock?tab=damaged" replace />} />
                 <Route path="my-van" element={<ProtectedRoute><MyVanPage /></ProtectedRoute>} />
                 <Route path="vans" element={<ProtectedRoute permission="VAN_VIEW"><VansHubPage /></ProtectedRoute>} />
                 <Route path="van-loads" element={<Navigate to="/vans?tab=loads" replace />} />
                 <Route path="van-settlement" element={<Navigate to="/vans?tab=report" replace />} />
                 <Route path="branches" element={<ProtectedRoute permission="WAREHOUSE_MANAGE"><BranchesPage /></ProtectedRoute>} />
-                <Route path="purchase-invoices" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchaseInvoicesPage /></ProtectedRoute>} />
-                <Route path="sales-invoices" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesInvoicesPage /></ProtectedRoute>} />
-                <Route path="sales-quotes" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesQuotesPage /></ProtectedRoute>} />
-                <Route path="purchase-quotes" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchaseQuotesPage /></ProtectedRoute>} />
+                <Route path="purchase-invoices" element={<ProtectedRoute permission="PURCHASE_INVOICE_VIEW"><PurchasesHubPage /></ProtectedRoute>} />
+                <Route path="sales-invoices" element={<ProtectedRoute permission="SALES_INVOICE_VIEW"><SalesHubPage /></ProtectedRoute>} />
+                <Route path="sales-quotes" element={<Navigate to="/sales-invoices?tab=quotes" replace />} />
+                <Route path="purchase-quotes" element={<Navigate to="/purchase-invoices?tab=quotes" replace />} />
                 <Route path="parties" element={<ProtectedRoute permission="CUSTOMER_MANAGE"><PartiesPage /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute permission="USER_MANAGE"><UsersPage /></ProtectedRoute>} />
-                <Route path="roles" element={<ProtectedRoute permission="ROLE_MANAGE"><RolesPage /></ProtectedRoute>} />
+                <Route path="users" element={<ProtectedRoute><UsersHubPage /></ProtectedRoute>} />
+                <Route path="roles" element={<Navigate to="/users?tab=roles" replace />} />
                 <Route path="notifications" element={<ProtectedRoute permission="NOTIFICATION_VIEW"><NotificationsPage /></ProtectedRoute>} />
                 <Route path="reports" element={<ProtectedRoute permission="REPORTS_VIEW"><ReportsPage /></ProtectedRoute>} />
                 <Route path="balances" element={<ProtectedRoute permission="REPORTS_VIEW"><BalancesPage /></ProtectedRoute>} />
