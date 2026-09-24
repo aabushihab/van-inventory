@@ -266,11 +266,12 @@ export default function VansPage({ onLoad }) {
                         </>
                       )}
                       {canLoad && (
-                        <Tooltip title={t('vans.closeVan')}>
+                        <Tooltip title={loaded ? t('vans.closeVan') : t('vans.countEmptyHint')}>
                           <span>
-                            <IconButton size="small" color="primary" disabled={!loaded} onClick={() => openClose(r)}>
-                              <FactCheckIcon fontSize="small" />
-                            </IconButton>
+                            <Button size="small" variant="outlined" color="warning" startIcon={<FactCheckIcon />}
+                              disabled={!loaded} onClick={() => openClose(r)}>
+                              {t('vans.countButton')}
+                            </Button>
                           </span>
                         </Tooltip>
                       )}
@@ -298,6 +299,12 @@ export default function VansPage({ onLoad }) {
             <Typography variant="h6" fontWeight={800} lineHeight={1.2}>{detailVan?.name}</Typography>
             <Typography variant="caption" color="text.secondary" dir="ltr">{detailVan?.plateNumber}</Typography>
           </Box>
+          {canLoad && Number(detailVan?.stockQuantity) > 0 && (
+            <Button variant="outlined" color="warning" startIcon={<FactCheckIcon />}
+              onClick={() => { const v = detailVan; setDetailVan(null); openClose(v); }}>
+              {t('vans.countButton')}
+            </Button>
+          )}
           <IconButton onClick={() => { setDetailVan(null); load(); }}><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent dividers>

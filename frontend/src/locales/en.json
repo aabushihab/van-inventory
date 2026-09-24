@@ -165,7 +165,9 @@
     "statusLoaded": "Loaded",
     "statusEmpty": "Empty",
     "todaySales": "Today's sales",
-    "todayInvoices": "{{count}} invoices today"
+    "todayInvoices": "{{count}} invoices today",
+    "countButton": "Count van",
+    "countEmptyHint": "Van is empty - nothing to count"
   },
   "vanLoads": {
     "title": "Van Loading & Unloading",

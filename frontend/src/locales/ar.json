@@ -165,7 +165,9 @@
     "statusLoaded": "فيها بضاعة",
     "statusEmpty": "فارغة",
     "todaySales": "مبيعات اليوم",
-    "todayInvoices": "{{count}} فاتورة اليوم"
+    "todayInvoices": "{{count}} فاتورة اليوم",
+    "countButton": "جرد السيارة",
+    "countEmptyHint": "السيارة فارغة - لا يوجد ما يُجرد"
   },
   "vanLoads": {
     "title": "تحميل وتنزيل السيارات",
