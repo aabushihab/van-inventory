@@ -287,6 +287,9 @@ public class VanService {
             qty = qty.add(si.getQuantity());
             value = value.add(si.getQuantity().multiply(si.getProduct().getSalePrice()));
         }
+        // مبيعات اليوم من السيارة (للبطاقة في شاشة السيارات)
+        List<SalesInvoice> todaySales = salesInvoiceRepository.findByWarehouseBetween(v.getWarehouse().getId(),
+                LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay());
         Employee d = v.getDriver();
         return new VanDto(v.getId(), v.getCode(), v.getName(), v.getPlateNumber(),
                 d != null ? d.getId() : null,
@@ -297,7 +300,8 @@ public class VanService {
                 v.getWarehouse().getId(), v.getWarehouse().getName(), v.getWarehouse().getBranch().getId(),
                 v.getCashAccount() != null ? v.getCashAccount().getId() : null,
                 v.getCashAccount() != null ? v.getCashAccount().getName() : null,
-                v.getNotes(), v.isActive(), qty, value);
+                v.getNotes(), v.isActive(), qty, value, todaySales.size(),
+                todaySales.stream().map(SalesInvoice::getGrandTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     private static class Acc {

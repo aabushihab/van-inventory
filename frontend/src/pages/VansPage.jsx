@@ -3,16 +3,21 @@ import {
   Box, Paper, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Chip, Grid,
   Alert, CircularProgress, IconButton, Tooltip, FormControlLabel, Switch,
+  Card, CardActionArea, CardActions, Divider,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
+import PersonIcon from '@mui/icons-material/PersonOutlined';
+import PhoneIcon from '@mui/icons-material/PhoneOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import { useTranslation } from 'react-i18next';
 import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import ErrorAlert from '../components/ErrorAlert';
 import PageGuide from '../components/PageGuide';
+import VanIllustration from '../components/VanIllustration';
+import VanSettlementPage from './VanSettlementPage';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 
 /** رقم اللوحة: رمز من خانتين ثم شرطة ثم رقم السيارة، مثال 12-34567 */
@@ -25,7 +30,7 @@ const emptyForm = {
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 
-export default function VansPage({ onOpenReport, onLoad }) {
+export default function VansPage({ onLoad }) {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
   const canManage = hasPermission('VAN_MANAGE');
@@ -45,8 +50,7 @@ export default function VansPage({ onOpenReport, onLoad }) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const [stockVan, setStockVan] = useState(null);
-  const [stockRows, setStockRows] = useState([]);
+  const [detailVan, setDetailVan] = useState(null);
 
   const [closeVan, setCloseVan] = useState(null);
   const [closeRows, setCloseRows] = useState([]);
@@ -137,13 +141,6 @@ export default function VansPage({ onOpenReport, onLoad }) {
     }
   }
 
-  async function openStock(row) {
-    setStockVan(row);
-    setStockRows([]);
-    const { data } = await stockApi.byWarehouse(row.warehouseId);
-    setStockRows(data.filter((s) => Number(s.quantity) !== 0));
-  }
-
   async function openClose(row) {
     setError('');
     setCloseResult(null);
@@ -182,72 +179,119 @@ export default function VansPage({ onOpenReport, onLoad }) {
 
       {error && !dialogOpen && !closeVan && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
-      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        {loading ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={28} /></Box>
-        ) : rows.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('common.noData')}</Box>
-        ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('vans.code')}</TableCell>
-                <TableCell>{t('vans.name')}</TableCell>
-                <TableCell>{t('vans.plateNumber')}</TableCell>
-                <TableCell>{t('vans.driverName')}</TableCell>
-                <TableCell>{t('vans.salesman')}</TableCell>
-                <TableCell>{t('vans.stockQuantity')}</TableCell>
-                <TableCell>{t('vans.stockValue')}</TableCell>
-                <TableCell>{t('common.status')}</TableCell>
-                <TableCell align="center">{t('common.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((r) => (
-                <TableRow key={r.id} hover sx={!r.active ? { opacity: 0.6 } : undefined}>
-                  <TableCell sx={{ fontWeight: 700 }}>{r.code}</TableCell>
-                  <TableCell>{r.name}</TableCell>
-                  <TableCell dir="ltr" sx={{ textAlign: 'start' }}>{r.plateNumber}</TableCell>
-                  <TableCell>{r.driverName || '-'}{r.driverPhone ? ` (${r.driverPhone})` : ''}</TableCell>
-                  <TableCell>{r.salesmanName || '-'}</TableCell>
-                  <TableCell>{fmt(r.stockQuantity)}</TableCell>
-                  <TableCell>{fmt(r.stockValue)}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={r.active ? t('common.active') : t('common.inactive')} color={r.active ? 'success' : 'default'} />
-                  </TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Tooltip title={t('vans.viewStock')}>
-                      <IconButton size="small" onClick={() => openStock(r)}><InventoryIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                    {canLoad && (
-                      <Tooltip title={t('vans.closeVan')}>
-                        <span>
-                          <IconButton size="small" color="primary" disabled={Number(r.stockQuantity) === 0} onClick={() => openClose(r)}>
-                            <FactCheckIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
-                    {canLoad && r.active && onLoad && (
-                      <>
-                        <Button size="small" onClick={() => onLoad(r.id, 'LOAD')}>{t('vanLoads.LOAD')}</Button>
-                        <Button size="small" disabled={Number(r.stockQuantity) === 0} onClick={() => onLoad(r.id, 'UNLOAD')}>{t('vanLoads.UNLOAD')}</Button>
-                      </>
-                    )}
-                    {onOpenReport && <Button size="small" onClick={() => onOpenReport(r.id)}>{t('vans.report')}</Button>}
+      {loading ? (
+        <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={28} /></Box>
+      ) : rows.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('common.noData')}</Paper>
+      ) : (
+        <Grid container spacing={2}>
+          {rows.map((r) => {
+            const loaded = Number(r.stockQuantity) > 0;
+            return (
+              <Grid key={r.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <Card variant="outlined" sx={{
+                  height: '100%', display: 'flex', flexDirection: 'column', opacity: r.active ? 1 : 0.6,
+                  transition: 'box-shadow .15s, transform .15s',
+                  '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
+                }}>
+                  <CardActionArea onClick={() => setDetailVan(r)} sx={{ flexGrow: 1, alignItems: 'stretch' }}>
+                    <Box sx={{ px: 2, pt: 2, pb: 1, background: loaded
+                      ? 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)'
+                      : 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Box>
+                          <Typography variant="h6" fontWeight={800} lineHeight={1.2}>{r.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{r.code}</Typography>
+                        </Box>
+                        <Chip size="small"
+                          color={!r.active ? 'default' : loaded ? 'success' : 'warning'}
+                          label={!r.active ? t('common.inactive') : loaded ? t('vans.statusLoaded') : t('vans.statusEmpty')} />
+                      </Box>
+                      <VanIllustration loaded={loaded} inactive={!r.active} />
+                      {/* لوحة الأرقام */}
+                      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                        <Box dir="ltr" sx={{
+                          px: 2, py: 0.25, border: '2px solid #0f172a', borderRadius: 1, bgcolor: '#fff',
+                          fontFamily: 'monospace', fontWeight: 800, fontSize: 18, letterSpacing: 2,
+                        }}>{r.plateNumber}</Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ px: 2, py: 1.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PersonIcon fontSize="small" color="action" />
+                        <Typography variant="body2" fontWeight={700}>{r.driverName || '-'}</Typography>
+                        {r.driverPhone && (
+                          <Typography component="a" href={`tel:${r.driverPhone}`} onClick={(e) => e.stopPropagation()}
+                            variant="body2" dir="ltr" sx={{ ms: 'auto', color: 'primary.main', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <PhoneIcon sx={{ fontSize: 16 }} />{r.driverPhone}
+                          </Typography>
+                        )}
+                      </Box>
+                      {r.salesmanName && (
+                        <Typography variant="caption" color="text.secondary">{t('vans.salesman')}: {r.salesmanName}</Typography>
+                      )}
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 0.5 }}>
+                        <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'grey.50' }}>
+                          <Typography variant="caption" color="text.secondary">{t('vans.stockQuantity')}</Typography>
+                          <Typography fontWeight={800}>{fmt(r.stockQuantity)}</Typography>
+                          <Typography variant="caption" color="text.secondary">{fmt(r.stockValue)}</Typography>
+                        </Box>
+                        <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'grey.50' }}>
+                          <Typography variant="caption" color="text.secondary">{t('vans.todaySales')}</Typography>
+                          <Typography fontWeight={800} color="success.main">{fmt(r.todaySalesTotal)}</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('vans.todayInvoices', { count: r.todayInvoiceCount })}</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </CardActionArea>
+                  <Divider />
+                  <CardActions sx={{ flexWrap: 'wrap', gap: 0.5, justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {canLoad && r.active && onLoad && (
+                        <>
+                          <Button size="small" variant="contained" disableElevation onClick={() => onLoad(r.id, 'LOAD')}>{t('vanLoads.LOAD')}</Button>
+                          <Button size="small" disabled={!loaded} onClick={() => onLoad(r.id, 'UNLOAD')}>{t('vanLoads.UNLOAD')}</Button>
+                        </>
+                      )}
+                      {canLoad && (
+                        <Tooltip title={t('vans.closeVan')}>
+                          <span>
+                            <IconButton size="small" color="primary" disabled={!loaded} onClick={() => openClose(r)}>
+                              <FactCheckIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </Box>
                     {canManage && (
-                      <>
+                      <Box>
                         <IconButton size="small" onClick={() => openEdit(r)}><EditIcon fontSize="small" /></IconButton>
                         <IconButton size="small" color="error" onClick={() => remove(r)}><DeleteIcon fontSize="small" /></IconButton>
-                      </>
+                      </Box>
                     )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Paper>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+
+      {/* تفاصيل السيارة: الحمولة الحالية، فواتير اليوم أو أي فترة، وفتح أي فاتورة */}
+      <Dialog open={!!detailVan} onClose={() => { setDetailVan(null); load(); }} fullWidth maxWidth="lg"
+        slotProps={{ paper: { sx: { minHeight: '80vh' } } }}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ width: 64 }}><VanIllustration loaded={Number(detailVan?.stockQuantity) > 0} height={34} /></Box>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" fontWeight={800} lineHeight={1.2}>{detailVan?.name}</Typography>
+            <Typography variant="caption" color="text.secondary" dir="ltr">{detailVan?.plateNumber}</Typography>
+          </Box>
+          <IconButton onClick={() => { setDetailVan(null); load(); }}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {detailVan && <VanSettlementPage initialVanId={detailVan.id} embedded />}
+        </DialogContent>
+      </Dialog>
 
       {/* إضافة / تعديل سيارة */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
@@ -317,36 +361,6 @@ export default function VansPage({ onOpenReport, onLoad }) {
             {saving ? <CircularProgress size={20} /> : t('common.save')}
           </Button>
         </DialogActions>
-      </Dialog>
-
-      {/* الحمولة الحالية */}
-      <Dialog open={!!stockVan} onClose={() => setStockVan(null)} fullWidth maxWidth="sm">
-        <DialogTitle>{t('vans.vanStockTitle')} — {stockVan?.name}</DialogTitle>
-        <DialogContent>
-          {stockRows.length === 0 ? (
-            <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>{t('common.noData')}</Box>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('common.sku')}</TableCell>
-                  <TableCell>{t('common.name')}</TableCell>
-                  <TableCell>{t('common.quantity')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {stockRows.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.productSku}</TableCell>
-                    <TableCell>{s.productName}</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>{fmt(s.quantity)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </DialogContent>
-        <DialogActions><Button onClick={() => setStockVan(null)}>{t('common.close')}</Button></DialogActions>
       </Dialog>
 
       {/* جرد السيارة وإرجاع المتبقي للمستودع */}

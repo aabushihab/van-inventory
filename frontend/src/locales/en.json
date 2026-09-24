@@ -161,7 +161,11 @@
     "tabList": "Vans",
     "tabLoads": "Loading & Unloading",
     "tabReport": "Drivers Report",
-    "report": "Report"
+    "report": "Report",
+    "statusLoaded": "Loaded",
+    "statusEmpty": "Empty",
+    "todaySales": "Today's sales",
+    "todayInvoices": "{{count}} invoices today"
   },
   "vanLoads": {
     "title": "Van Loading & Unloading",
@@ -238,7 +242,9 @@
       "CONFIRMED": "Confirmed",
       "RETURNED": "Returned",
       "CANCELLED": "Cancelled"
-    }
+    },
+    "openInvoice": "Open invoice",
+    "source": "Source"
   },
   "products": {
     "title": "Products",
@@ -318,7 +324,9 @@
     "refundAmount": "Refund Amount",
     "refundSuccess": "Refund recorded successfully",
     "refundHistoryLabel": "Refund",
-    "dueDate": "Due Date"
+    "dueDate": "Due Date",
+    "source": "Source (warehouse / van)",
+    "createdBy": "By (driver/staff)"
   },
   "notifications": {
     "title": "Notifications",

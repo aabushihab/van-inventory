@@ -15,6 +15,7 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import AssignmentReturnIcon from '@mui/icons-material/AssignmentReturnOutlined';
 import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import { useTranslation } from 'react-i18next';
 import {
   salesInvoiceApi, vanApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
@@ -463,6 +464,8 @@ export default function SalesInvoicesPage() {
                 <TableCell>{t('invoice.number')}</TableCell>
                 <TableCell>{t('invoice.date')}</TableCell>
                 <TableCell>{t('invoice.customer')}</TableCell>
+                <TableCell>{t('invoice.source')}</TableCell>
+                <TableCell>{t('invoice.createdBy')}</TableCell>
                 <TableCell>{t('invoice.grandTotal')}</TableCell>
                 <TableCell>{t('invoice.due')}</TableCell>
                 <TableCell>{t('common.status')}</TableCell>
@@ -478,6 +481,13 @@ export default function SalesInvoicesPage() {
                   <TableCell>{inv.invoiceNumber}</TableCell>
                   <TableCell>{new Date(inv.createdAt).toLocaleString()}</TableCell>
                   <TableCell>{inv.customerName || '-'}</TableCell>
+                  <TableCell>
+                    {/* فاتورة من سيارة توزيع تظهر بأيقونة السيارة واسمها */}
+                    {warehouses.find((w) => w.id === inv.warehouseId)?.warehouseType === 'VAN'
+                      ? <Chip size="small" color="info" variant="outlined" icon={<LocalShippingIcon />} label={inv.warehouseName} />
+                      : inv.warehouseName}
+                  </TableCell>
+                  <TableCell>{inv.createdByName || '-'}</TableCell>
                   <TableCell>{Number(inv.grandTotal).toLocaleString(undefined, { maximumFractionDigits: 3 })}</TableCell>
                   <TableCell sx={{ color: due > 0.001 ? 'error.main' : 'success.main', fontWeight: due > 0.001 ? 700 : 400 }}>
                     {due.toLocaleString(undefined, { maximumFractionDigits: 3 })}
@@ -668,6 +678,7 @@ export default function SalesInvoicesPage() {
             <DialogContent>
               <Typography variant="body2">{t('invoice.customer')}: {viewInvoice.customerName || '-'}</Typography>
               <Typography variant="body2">{t('common.warehouse')}: {viewInvoice.warehouseName}</Typography>
+              <Typography variant="body2">{t('invoice.createdBy')}: {viewInvoice.createdByName || '-'}</Typography>
               <Typography variant="body2">{t('invoice.grandTotal')}: {Number(viewInvoice.grandTotal).toLocaleString(undefined, { maximumFractionDigits: 3 })}</Typography>
               <Typography variant="body2">{t('invoice.paid')}: {Number(viewInvoice.paidAmount).toLocaleString(undefined, { maximumFractionDigits: 3 })}</Typography>
             </DialogContent>

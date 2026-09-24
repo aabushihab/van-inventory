@@ -20,5 +20,7 @@ public record VanDto(
         String notes,
         boolean active,
         BigDecimal stockQuantity,
-        BigDecimal stockValue
+        BigDecimal stockValue,
+        long todayInvoiceCount,
+        BigDecimal todaySalesTotal
 ) {}

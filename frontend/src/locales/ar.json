@@ -161,7 +161,11 @@
     "tabList": "السيارات",
     "tabLoads": "التحميل والتنزيل",
     "tabReport": "تقرير السائقين",
-    "report": "التقرير"
+    "report": "التقرير",
+    "statusLoaded": "فيها بضاعة",
+    "statusEmpty": "فارغة",
+    "todaySales": "مبيعات اليوم",
+    "todayInvoices": "{{count}} فاتورة اليوم"
   },
   "vanLoads": {
     "title": "تحميل وتنزيل السيارات",
@@ -238,7 +242,9 @@
       "CONFIRMED": "مؤكدة",
       "RETURNED": "مرتجعة",
       "CANCELLED": "ملغاة"
-    }
+    },
+    "openInvoice": "فتح الفاتورة",
+    "source": "المصدر"
   },
   "products": {
     "title": "المنتجات",
@@ -318,7 +324,9 @@
     "refundAmount": "المبلغ المسترجَع",
     "refundSuccess": "تم تسجيل الاسترجاع بنجاح",
     "refundHistoryLabel": "استرجاع",
-    "dueDate": "تاريخ الاستحقاق"
+    "dueDate": "تاريخ الاستحقاق",
+    "source": "المصدر (مخزن / سيارة)",
+    "createdBy": "بواسطة (السائق/الموظف)"
   },
   "notifications": {
     "title": "التنبيهات",

@@ -17,7 +17,6 @@ export default function VansHubPage() {
   const [params, setParams] = useSearchParams();
   const tab = Math.max(0, TABS.indexOf(params.get('tab') || 'list'));
   // الإجراء المطلوب عند التنقل من صف سيارة: فتح تقريرها، أو فتح سند تحميل/تنزيل لها مباشرة
-  const [reportVanId, setReportVanId] = useState(null);
   const [loadPreset, setLoadPreset] = useState(null);
 
   function goTo(name) {
@@ -36,12 +35,11 @@ export default function VansHubPage() {
 
       {tab === 0 && (
         <VansPage
-          onOpenReport={(vanId) => { setReportVanId(vanId); goTo('report'); }}
           onLoad={(vanId, type) => { setLoadPreset({ vanId, type, key: Date.now() }); goTo('loads'); }}
         />
       )}
       {tab === 1 && <VanLoadsPage preset={loadPreset} onPresetHandled={() => setLoadPreset(null)} />}
-      {tab === 2 && <VanSettlementPage initialVanId={reportVanId} />}
+      {tab === 2 && <VanSettlementPage />}
     </Box>
   );
 }

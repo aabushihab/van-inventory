@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody,
   TextField, MenuItem, Alert, CircularProgress, Grid, Tabs, Tab, Chip, IconButton, Tooltip, ButtonGroup,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import PrintIcon from '@mui/icons-material/PrintOutlined';
 import ReceiptIcon from '@mui/icons-material/ReceiptLongOutlined';
+import VisibilityIcon from '@mui/icons-material/VisibilityOutlined';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { vanApi, salesInvoiceApi, fetchAndOpenPdf } from '../api/endpoints';
@@ -30,7 +32,7 @@ function StatBox({ label, value, color }) {
 }
 
 /** تقرير السائق/السيارة: فواتيره، ما باعه من كل صنف، والكمية الحالية على السيارة. */
-export default function VanSettlementPage({ initialVanId }) {
+export default function VanSettlementPage({ initialVanId, embedded }) {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
   const location = useLocation();
@@ -42,6 +44,16 @@ export default function VanSettlementPage({ initialVanId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [viewInvoice, setViewInvoice] = useState(null);
+
+  async function openInvoice(id) {
+    try {
+      const { data: inv } = await salesInvoiceApi.get(id);
+      setViewInvoice(inv);
+    } catch (e) {
+      setError(getErrorMessage(e, t('common.error')));
+    }
+  }
 
   useEffect(() => {
     vanApi.list().then(({ data: list }) => {
@@ -81,18 +93,22 @@ export default function VanSettlementPage({ initialVanId }) {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>{t('vanSettlement.title')}</Typography>
-      <PageGuide points={t('vanSettlement.guide', { returnObjects: true })} />
+      {!embedded && (
+        <>
+          <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>{t('vanSettlement.title')}</Typography>
+          <PageGuide points={t('vanSettlement.guide', { returnObjects: true })} />
+        </>
+      )}
 
       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }} className="app-no-print">
-        <TextField select size="small" label={t('vanSettlement.selectVan')} value={vanId} sx={{ minWidth: 260 }}
+        {!embedded && <TextField select size="small" label={t('vanSettlement.selectVan')} value={vanId} sx={{ minWidth: 260 }}
           onChange={(e) => setVanId(e.target.value)}>
           {vans.map((v) => (
             <MenuItem key={v.id} value={v.id}>
               {v.code} - {v.name}{v.salesmanName ? ` — ${v.salesmanName}` : ''}{v.driverName ? ` / ${v.driverName}` : ''}
             </MenuItem>
           ))}
-        </TextField>
+        </TextField>}
         <ButtonGroup size="small" variant="outlined">
           <Button onClick={() => applyPreset('today')}>{t('vanSettlement.today')}</Button>
           <Button onClick={() => applyPreset('week')}>{t('vanSettlement.week')}</Button>
@@ -128,13 +144,13 @@ export default function VanSettlementPage({ initialVanId }) {
           </Grid>
 
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 1 }} className="app-no-print">
+            <Tab label={`${t('vanSettlement.tabCurrent')} (${data.currentStock.length})`} />
             <Tab label={`${t('vanSettlement.tabInvoices')} (${data.invoices.length})`} />
             <Tab label={t('vanSettlement.tabSold')} />
-            <Tab label={`${t('vanSettlement.tabCurrent')} (${data.currentStock.length})`} />
           </Tabs>
 
           {/* فواتير السائق */}
-          {tab === 0 && (
+          {tab === 1 && (
             <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               {data.invoices.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('common.noData')}</Box>
@@ -151,7 +167,7 @@ export default function VanSettlementPage({ initialVanId }) {
                       <TableCell>{t('vanSettlement.due')}</TableCell>
                       <TableCell>{t('common.status')}</TableCell>
                       <TableCell>{t('vanSettlement.createdBy')}</TableCell>
-                      {canPrint && <TableCell align="center" className="app-no-print">{t('common.print')}</TableCell>}
+                      <TableCell align="center" className="app-no-print">{t('common.actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -169,16 +185,19 @@ export default function VanSettlementPage({ initialVanId }) {
                             label={t(`vanSettlement.status.${inv.status}`, inv.status)} />
                         </TableCell>
                         <TableCell>{inv.createdByName || '-'}</TableCell>
-                        {canPrint && (
-                          <TableCell align="center" className="app-no-print" sx={{ whiteSpace: 'nowrap' }}>
+                        <TableCell align="center" className="app-no-print" sx={{ whiteSpace: 'nowrap' }}>
+                          <Tooltip title={t('vanSettlement.openInvoice')}>
+                            <IconButton size="small" color="primary" onClick={() => openInvoice(inv.id)}><VisibilityIcon fontSize="small" /></IconButton>
+                          </Tooltip>
+                          {canPrint && (<>
                             <Tooltip title={t('invoice.printA4')}>
                               <IconButton size="small" onClick={() => fetchAndOpenPdf(salesInvoiceApi.printA4Url(inv.id))}><PrintIcon fontSize="small" /></IconButton>
                             </Tooltip>
                             <Tooltip title={t('invoice.printThermal')}>
                               <IconButton size="small" onClick={() => fetchAndOpenPdf(salesInvoiceApi.printThermalUrl(inv.id))}><ReceiptIcon fontSize="small" /></IconButton>
                             </Tooltip>
-                          </TableCell>
-                        )}
+                          </>)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -188,7 +207,7 @@ export default function VanSettlementPage({ initialVanId }) {
           )}
 
           {/* حركة كل صنف: محمّل / مباع / مرتجع / منزّل / متبقي */}
-          {tab === 1 && (
+          {tab === 2 && (
             <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               {data.lines.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('common.noData')}</Box>
@@ -232,7 +251,7 @@ export default function VanSettlementPage({ initialVanId }) {
           )}
 
           {/* الحمولة الحالية على السيارة (الآن) */}
-          {tab === 2 && (
+          {tab === 0 && (
             <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               {data.currentStock.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('myVan.empty')}</Box>
@@ -266,6 +285,60 @@ export default function VanSettlementPage({ initialVanId }) {
           )}
         </Box>
       )}
+
+      {/* عرض فاتورة */}
+      <Dialog open={!!viewInvoice} onClose={() => setViewInvoice(null)} fullWidth maxWidth="md">
+        <DialogTitle>{t('vanSettlement.invoiceNumber')}: {viewInvoice?.invoiceNumber}</DialogTitle>
+        <DialogContent dividers>
+          {viewInvoice && (
+            <Box>
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 2 }}>
+                <Typography variant="body2"><b>{t('common.createdAt')}:</b> {new Date(viewInvoice.createdAt).toLocaleString()}</Typography>
+                <Typography variant="body2"><b>{t('vanSettlement.customer')}:</b> {viewInvoice.customerName || t('vanSettlement.cashCustomer')}</Typography>
+                <Typography variant="body2"><b>{t('vanSettlement.createdBy')}:</b> {viewInvoice.createdByName || '-'}</Typography>
+                <Chip size="small" variant="outlined" color={STATUS_COLORS[viewInvoice.status] || 'default'}
+                  label={t(`vanSettlement.status.${viewInvoice.status}`, viewInvoice.status)} />
+              </Box>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('common.name')}</TableCell>
+                    <TableCell>{t('common.quantity')}</TableCell>
+                    <TableCell>{t('common.price')}</TableCell>
+                    <TableCell>{t('common.discount')}</TableCell>
+                    <TableCell>{t('common.total')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {viewInvoice.items.map((it) => (
+                    <TableRow key={it.id}>
+                      <TableCell>{it.productName}</TableCell>
+                      <TableCell>{fmt(it.quantity)}</TableCell>
+                      <TableCell>{fmt(it.unitPrice)}</TableCell>
+                      <TableCell>{fmt(it.discount)}</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{fmt(it.lineTotal)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'flex-end', mt: 2, flexWrap: 'wrap' }}>
+                <Typography><b>{t('common.total')}:</b> {fmt(viewInvoice.grandTotal)}</Typography>
+                <Typography color="success.main"><b>{t('vanSettlement.paid')}:</b> {fmt(viewInvoice.paidAmount)}</Typography>
+                <Typography color="warning.main"><b>{t('vanSettlement.due')}:</b> {fmt(viewInvoice.dueAmount)}</Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {canPrint && viewInvoice && (
+            <>
+              <Button startIcon={<PrintIcon />} onClick={() => fetchAndOpenPdf(salesInvoiceApi.printA4Url(viewInvoice.id))}>{t('invoice.printA4')}</Button>
+              <Button startIcon={<ReceiptIcon />} onClick={() => fetchAndOpenPdf(salesInvoiceApi.printThermalUrl(viewInvoice.id))}>{t('invoice.printThermal')}</Button>
+            </>
+          )}
+          <Button onClick={() => setViewInvoice(null)}>{t('common.close')}</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
