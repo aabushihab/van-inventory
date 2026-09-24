@@ -11,6 +11,7 @@ import PrintIcon from '@mui/icons-material/PrintOutlined';
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
 import { useTranslation } from 'react-i18next';
 import CrudPage from '../components/CrudPage';
+import SalaryRunDialog from '../components/SalaryRunDialog';
 import { employeeApi, expenseApi, accountApi, fetchAndOpenPdf, vanShortageApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
@@ -46,6 +47,7 @@ export default function EmployeesPage() {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
   const canManageExpenses = hasPermission('EXPENSE_MANAGE');
+  const [salaryRunOpen, setSalaryRunOpen] = useState(false);
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
@@ -253,7 +255,14 @@ export default function EmployeesPage() {
             <MenuItem key={y} value={y}>{y}</MenuItem>
           ))}
         </TextField>
+        {canManageExpenses && (
+          <Button variant="contained" color="success" startIcon={<PaymentsOutlinedIcon />} onClick={() => setSalaryRunOpen(true)} sx={{ ms: 'auto' }}>
+            {t('salaryRun.button')}
+          </Button>
+        )}
       </Box>
+      <SalaryRunDialog open={salaryRunOpen} year={listYear} month={listMonth}
+        onClose={() => setSalaryRunOpen(false)} onDone={refreshSummaries} />
       <CrudPage
         title={t('employees.title')}
         canManage={hasPermission('EMPLOYEE_MANAGE')}
@@ -359,7 +368,10 @@ export default function EmployeesPage() {
             </Grid>
           </Grid>
 
-          {canManageExpenses && (
+          {canManageExpenses && detailsEmployee && !detailsEmployee.active && (
+            <Alert severity="warning">{t('employees.inactiveNoPay')}</Alert>
+          )}
+          {canManageExpenses && detailsEmployee?.active && (
             <>
               <Divider />
               <Typography variant="subtitle2">{t('employees.paySalary')}</Typography>

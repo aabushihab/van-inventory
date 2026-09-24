@@ -79,6 +79,16 @@ public class CompanySettings {
     @Builder.Default
     private java.math.BigDecimal shortageAlertThreshold = java.math.BigDecimal.ZERO;
 
+    /** تفعيل البيع/التحصيل بالشيكات (يقرره المدير). */
+    @Column(name = "checks_enabled", nullable = false)
+    @Builder.Default
+    private boolean checksEnabled = false;
+
+    /** هل يستطيع السائقون (المندوبون) استلام شيكات من العملاء عند تفعيل الشيكات. */
+    @Column(name = "driver_checks_enabled", nullable = false)
+    @Builder.Default
+    private boolean driverChecksEnabled = true;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

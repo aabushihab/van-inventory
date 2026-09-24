@@ -491,7 +491,8 @@
       "MANAGER": "Manager",
       "WORKER": "Worker",
       "OTHER": "Other"
-    }
+    },
+    "inactiveNoPay": "This employee is inactive - no payments allowed"
   },
   "accounts": {
     "title": "Cash & Bank Accounts",
@@ -542,7 +543,8 @@
     "markBounced": "Mark Bounced",
     "markCancelled": "Cancel Check",
     "confirmBounce": "Confirm this check bounced?",
-    "confirmCancel": "Confirm cancelling this check?"
+    "confirmCancel": "Confirm cancelling this check?",
+    "source": "Source (invoice / van)"
   },
   "stocktake": {
     "title": "Physical Stocktake",
@@ -838,5 +840,45 @@
     "done": "Cash handed over",
     "shortageRecorded": "The difference was recorded as a cash shortage against the driver - see \"Driver Shortages\".",
     "none": "No handovers in this period"
+  },
+  "checkPay": {
+    "method": "Cheque",
+    "title": "Cheque details",
+    "number": "Cheque number",
+    "dueDate": "Due date",
+    "bank": "Bank",
+    "drawer": "Drawer name",
+    "photo": "Cheque photo",
+    "imageError": "Couldn't read the image",
+    "hint": "The cheque enters no cash box now - it's recorded under Cheques and reaches the account on clearing; if it bounces its value returns as debt on the invoice.",
+    "required": "Enter the cheque number and due date",
+    "driverHint": "Hand the original cheque to management with the cash"
+  },
+  "salesSettings": {
+    "title": "Sales & Payment Settings",
+    "checksSection": "Cheque payments",
+    "checksEnabled": "Enable selling and collecting by cheque",
+    "checksEnabledHint": "When enabled, \"Cheque\" appears as a payment method on sales invoices and payments.",
+    "driverChecks": "Allow drivers to take cheques",
+    "driverChecksHint": "Drivers enter the cheque details and photograph it from their screen.",
+    "flow": "Received cheques are recorded under Finance → Cheques, linked to their invoice and van. On clearing you pick the receiving account; if a cheque bounces or is cancelled its value returns as debt on the invoice automatically."
+  },
+  "salaryRun": {
+    "button": "Pay all",
+    "title": "Pay {{month}} salaries to all active employees",
+    "employee": "Employee",
+    "salary": "Salary",
+    "paid": "Paid",
+    "deduction": "Shortage deduction",
+    "remaining": "To pay",
+    "total": "Total",
+    "account": "Pay from account",
+    "paymentDate": "Payment date",
+    "confirm": "Confirm payment ({{count}} employees - {{total}})",
+    "confirmQuestion": "Are you sure you want to pay {{total}} to {{count}} employees for {{month}}?",
+    "done": "Paid {{total}} to {{count}} employees",
+    "nothing": "No remaining salaries to pay this month",
+    "inactiveNote": "Inactive employees are not listed and cannot be paid.",
+    "select": "Pay"
   }
 }

@@ -18,12 +18,13 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import { useTranslation } from 'react-i18next';
 import {
-  salesInvoiceApi, vanApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
+  salesInvoiceApi, vanApi, publicApi, warehouseApi, customerApi, productApi, categoryApi, accountApi, fetchAndOpenPdf, fetchAndDownload,
 } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import PartyAutocomplete from '../components/PartyAutocomplete';
 import CategoryProductPicker from '../components/CategoryProductPicker';
 import ErrorAlert from '../components/ErrorAlert';
+import CheckFields, { emptyCheck, checkIsValid } from '../components/CheckFields';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 
 const emptyItem = { productId: '', categoryId: '', warehouseId: '', packType: 'UNIT', quantity: 1, unitPrice: 0, discount: 0, taxRate: 0 };
@@ -72,6 +73,10 @@ export default function SalesInvoicesPage() {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [paidAmount, setPaidAmount] = useState('');
   const [createAccountId, setCreateAccountId] = useState('');
+  // الدفع بشيك (يفعّله المدير من الإعدادات)
+  const [checksAllowed, setChecksAllowed] = useState(false);
+  const [createCheck, setCreateCheck] = useState(emptyCheck());
+  const [paymentCheck, setPaymentCheck] = useState(emptyCheck());
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState([{ ...emptyItem }]);
@@ -156,6 +161,9 @@ export default function SalesInvoicesPage() {
         }
       });
     customerApi.list().then(({ data }) => setCustomers(data));
+    publicApi.companyInfo().then(({ data }) => {
+      setChecksAllowed(data.checksEnabled === 'true' && (!vanMode || data.driverChecksEnabled === 'true'));
+    }).catch(() => {});
     Promise.all([accountApi.list(), vanApi.my().catch(() => ({ data: null }))]).then(([{ data }, { data: my }]) => {
       // المندوب يحصّل في صندوق سيارته فقط
       setAccounts(my?.restricted && my.van?.cashAccountId ? data.filter((a) => a.id === my.van.cashAccountId) : data);
@@ -170,6 +178,7 @@ export default function SalesInvoicesPage() {
     setPaymentMethod('CASH');
     setPaidAmount('');
     setCreateAccountId(vanCashAccountId || '');
+    setCreateCheck(emptyCheck());
     setDueDate('');
     setNotes('');
     setError('');
@@ -303,7 +312,8 @@ export default function SalesInvoicesPage() {
       setError(t('vanLoads.exceedsAvailable')); return;
     }
     if (Number(paidAmount || 0) > grandTotal) { setError(t('invoice.paidExceedsTotal')); return; }
-    if (Number(paidAmount || 0) > 0 && !createAccountId) { setError(t('invoice.accountRequired')); return; }
+    if (Number(paidAmount || 0) > 0 && paymentMethod === 'CHECK' && !checkIsValid(createCheck)) { setError(t('checkPay.required')); return; }
+    if (Number(paidAmount || 0) > 0 && paymentMethod !== 'CHECK' && !createAccountId) { setError(t('invoice.accountRequired')); return; }
 
     setSaving(true);
     setError('');
@@ -328,7 +338,8 @@ export default function SalesInvoicesPage() {
         })),
         paidAmount: paidAmount === '' ? 0 : Number(paidAmount),
         paymentMethod,
-        accountId: createAccountId || null,
+        accountId: paymentMethod === 'CHECK' ? null : (createAccountId || null),
+        checkInfo: paymentMethod === 'CHECK' && Number(paidAmount || 0) > 0 ? createCheck : null,
         notes,
         dueDate: dueDate || null,
       };
@@ -360,6 +371,7 @@ export default function SalesInvoicesPage() {
     setPaymentsInvoice(row);
     setNewPaymentAmount('');
     setNewPaymentMethod('CASH');
+    setPaymentCheck(emptyCheck());
     setNewPaymentNote('');
     // المندوب: التحصيل يدخل صندوق سيارته
     setNewPaymentAccountId(vanCashAccountId || '');
@@ -385,18 +397,20 @@ export default function SalesInvoicesPage() {
       setError(t('invoice.invalidPaymentAmount'));
       return;
     }
-    if (!newPaymentAccountId) { setError(t('invoice.accountRequired')); return; }
+    if (newPaymentMethod === 'CHECK' && !checkIsValid(paymentCheck)) { setError(t('checkPay.required')); return; }
+    if (newPaymentMethod !== 'CHECK' && !newPaymentAccountId) { setError(t('invoice.accountRequired')); return; }
     setSaving(true);
     setError('');
     try {
       const { data } = await salesInvoiceApi.addPayment(paymentsInvoice.id, {
         amount: Number(newPaymentAmount), paymentMethod: newPaymentMethod, note: newPaymentNote,
-        accountId: newPaymentAccountId || null,
+        accountId: newPaymentMethod === 'CHECK' ? null : (newPaymentAccountId || null),
+        checkInfo: newPaymentMethod === 'CHECK' ? paymentCheck : null,
       });
       setPaymentsInvoice(data);
       const { data: history } = await salesInvoiceApi.payments(paymentsInvoice.id);
       setPaymentsHistory(history);
-      setNewPaymentAmount(''); setNewPaymentNote(''); setNewPaymentAccountId('');
+      setNewPaymentAmount(''); setNewPaymentNote(''); setNewPaymentAccountId(vanCashAccountId || ''); setPaymentCheck(emptyCheck());
       await load();
     } catch (e) {
       setError(e.response?.data?.message || t('common.error'));
@@ -594,6 +608,7 @@ export default function SalesInvoicesPage() {
                 <MenuItem value="CARD">{t('invoice.card')}</MenuItem>
                 <MenuItem value="TRANSFER">{t('invoice.transfer')}</MenuItem>
                 <MenuItem value="CREDIT">{t('invoice.credit')}</MenuItem>
+                {(checksAllowed || paymentMethod === 'CHECK') && <MenuItem value="CHECK">{t('checkPay.method')}</MenuItem>}
               </TextField>
             </Grid>
           </Grid>
@@ -681,7 +696,10 @@ export default function SalesInvoicesPage() {
               <TextField fullWidth type="number" label={t('invoice.paid')} value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)}
                 error={Number(paidAmount || 0) > grandTotal} helperText={Number(paidAmount || 0) > grandTotal ? t('invoice.paidExceedsTotal') : ''}
                 inputProps={{ max: grandTotal, min: 0, step: 'any' }} sx={{ mb: 2 }} />
-              {Number(paidAmount || 0) > 0 && (
+              {Number(paidAmount || 0) > 0 && paymentMethod === 'CHECK' && (
+                <Box sx={{ mb: 2 }}><CheckFields value={createCheck} onChange={setCreateCheck} /></Box>
+              )}
+              {Number(paidAmount || 0) > 0 && paymentMethod !== 'CHECK' && (
                 <TextField select fullWidth required label={t('accounts.account')} value={createAccountId}
                   error={!createAccountId} helperText={!createAccountId ? t('invoice.accountRequired') : ''}
                   onChange={(e) => setCreateAccountId(e.target.value)} sx={{ mb: 2 }}>
@@ -838,15 +856,19 @@ export default function SalesInvoicesPage() {
                   <MenuItem value="CARD">{t('invoice.card')}</MenuItem>
                   <MenuItem value="TRANSFER">{t('invoice.transfer')}</MenuItem>
                   <MenuItem value="CREDIT">{t('invoice.credit')}</MenuItem>
+                  {checksAllowed && <MenuItem value="CHECK">{t('checkPay.method')}</MenuItem>}
                 </TextField>
                 <TextField size="small" label={t('common.notes')} value={newPaymentNote}
                   onChange={(e) => setNewPaymentNote(e.target.value)} sx={{ minWidth: 160 }} />
-                <TextField select size="small" required label={t('accounts.account')} value={newPaymentAccountId}
-                  error={!newPaymentAccountId} onChange={(e) => setNewPaymentAccountId(e.target.value)} sx={{ minWidth: 140 }}>
-                  <MenuItem value="">-</MenuItem>
-                  {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
-                </TextField>
+                {newPaymentMethod !== 'CHECK' && (
+                  <TextField select size="small" required label={t('accounts.account')} value={newPaymentAccountId}
+                    error={!newPaymentAccountId} onChange={(e) => setNewPaymentAccountId(e.target.value)} sx={{ minWidth: 140 }}>
+                    <MenuItem value="">-</MenuItem>
+                    {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
+                  </TextField>
+                )}
               </Box>
+              {newPaymentMethod === 'CHECK' && <CheckFields value={paymentCheck} onChange={setPaymentCheck} />}
             </>
           )}
 

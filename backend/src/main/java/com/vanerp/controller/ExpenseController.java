@@ -77,6 +77,19 @@ public class ExpenseController {
         return ResponseEntity.ok().headers(headers).body(pdf);
     }
 
+    @GetMapping("/salary-run-preview")
+    @PreAuthorize("hasAuthority('EXPENSE_VIEW')")
+    public java.util.List<com.vanerp.dto.SalaryRunLineDto> salaryRunPreview(@RequestParam int year, @RequestParam int month) {
+        return expenseService.salaryRunPreview(year, month);
+    }
+
+    @PostMapping("/salary-run")
+    @PreAuthorize("hasAuthority('EXPENSE_MANAGE')")
+    public com.vanerp.dto.SalaryRunResultDto salaryRun(@AuthenticationPrincipal UserPrincipal principal,
+                                                       @jakarta.validation.Valid @RequestBody com.vanerp.dto.SalaryRunRequest request) {
+        return expenseService.runSalaries(request, principal.getUser());
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('EXPENSE_MANAGE')")
     public ResponseEntity<ExpenseDto> create(@AuthenticationPrincipal UserPrincipal principal,

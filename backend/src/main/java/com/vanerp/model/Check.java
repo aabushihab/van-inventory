@@ -62,6 +62,20 @@ public class Check {
     @JoinColumn(name = "related_sales_invoice_id")
     private SalesInvoice relatedSalesInvoice;
 
+    /** الدفعة التي سُدّدت بهذا الشيك - عند رجوعه/إلغائه تُعكس على الفاتورة. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "related_sales_payment_id")
+    private SalesInvoicePayment relatedSalesPayment;
+
+    /** السيارة التي استلم سائقها الشيك (إن وُجد). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "van_id")
+    private Van van;
+
+    /** صورة الشيك (base64). */
+    @Column(columnDefinition = "TEXT")
+    private String image;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "related_purchase_invoice_id")
     private PurchaseInvoice relatedPurchaseInvoice;

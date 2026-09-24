@@ -26,5 +26,8 @@ public record CheckDto(
         Long relatedPurchaseInvoiceId,
         String notes,
         String createdByName,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String relatedSalesInvoiceNumber,
+        String vanName,
+        boolean hasImage
 ) {}

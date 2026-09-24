@@ -47,6 +47,8 @@ public class SalesInvoiceService {
     private final AccountService accountService;
     private final FiscalYearClosingService fiscalYearClosingService;
     private final VanAccessService vanAccessService;
+    private final CheckService checkService;
+    private final CompanySettingsService companySettingsService;
 
     /** يمنع تعديل/إلغاء/إرجاع فاتورة تاريخها ضمن فترة مالية مقفلة - نفس حارس AccountService.recordTransaction. */
     private void guardNotClosed(SalesInvoice invoice) {
@@ -162,12 +164,21 @@ public class SalesInvoiceService {
         invoice.setGrandTotal(grandTotal);
         validatePaidAmount(invoice.getPaidAmount(), grandTotal);
         checkCreditLimit(customer, grandTotal.subtract(invoice.getPaidAmount()), null);
-        if (invoice.getPaidAmount().signum() > 0 && request.accountId() == null) {
+        boolean byCheck = paymentMethod == PaymentMethod.CHECK && invoice.getPaidAmount().signum() > 0;
+        if (byCheck) {
+            assertChecksAllowed(actingUser, request.checkInfo());
+        } else if (invoice.getPaidAmount().signum() > 0 && request.accountId() == null) {
             throw ApiException.badRequest("يجب اختيار الحساب (كاش/بنك) عند تسجيل دفعة");
         }
 
         SalesInvoice saved = salesInvoiceRepository.save(invoice);
-        if (saved.getPaidAmount().signum() > 0) {
+        if (saved.getPaidAmount().signum() > 0 && byCheck) {
+            // الشيك لا يدخل أي صندوق الآن - يُسجَّل بشاشة الشيكات ويدخل الحساب عند التصفية
+            SalesInvoicePayment payment = salesInvoicePaymentRepository.save(SalesInvoicePayment.builder()
+                    .salesInvoice(saved).amount(saved.getPaidAmount()).paymentMethod(PaymentMethod.CHECK)
+                    .note("شيك رقم " + request.checkInfo().checkNumber() + " عند إصدار الفاتورة").createdBy(actingUser).build());
+            checkService.createFromSalePayment(saved, payment, request.checkInfo(), vanAccessService.findVanOf(actingUser).orElse(null), actingUser);
+        } else if (saved.getPaidAmount().signum() > 0) {
             Account account = request.accountId() != null ? accountService.getAccountRef(request.accountId()) : null;
             SalesInvoicePayment payment = salesInvoicePaymentRepository.save(SalesInvoicePayment.builder()
                     .salesInvoice(saved).amount(saved.getPaidAmount()).paymentMethod(paymentMethod).account(account)
@@ -205,7 +216,8 @@ public class SalesInvoiceService {
             }
         }
         return new SalesInvoiceCreateRequest(request.customerId(), request.warehouseId(), request.branchId(), items,
-                request.paidAmount(), request.paymentMethod(), request.accountId(), request.notes(), request.dueDate());
+                request.paidAmount(), request.paymentMethod(), request.accountId(), request.notes(), request.dueDate(),
+                request.checkInfo());
     }
 
     /** المبلغ المستحق حالياً على عميل (صافي بعد المرتجعات والدفعات)، مع استثناء فاتورة معيّنة عند التعديل. */
@@ -257,6 +269,18 @@ public class SalesInvoiceService {
                 .map(this::toDto).toList();
     }
 
+    /** الدفع بشيك: يجب أن تكون الشيكات مفعّلة (وللسائقين إن كان المستخدم سائقاً)، وأن تُرفق بيانات الشيك. */
+    private void assertChecksAllowed(User user, com.vanerp.dto.CheckInfo info) {
+        var settings = companySettingsService.getOrCreate();
+        if (!settings.isChecksEnabled()) throw ApiException.badRequest("الدفع بالشيكات غير مفعّل - فعّله من الإعدادات");
+        if (vanAccessService.isRestrictedSalesman(user) && !settings.isDriverChecksEnabled()) {
+            throw ApiException.forbidden("استلام الشيكات غير مسموح للسائقين");
+        }
+        if (info == null || info.checkNumber() == null || info.checkNumber().isBlank() || info.dueDate() == null) {
+            throw ApiException.badRequest("أدخل رقم الشيك وتاريخ استحقاقه");
+        }
+    }
+
     private void validatePaidAmount(BigDecimal paidAmount, BigDecimal grandTotal) {
         if (paidAmount != null && paidAmount.compareTo(grandTotal) > 0) {
             throw ApiException.badRequest("لا يمكن دفع مبلغ أكبر من إجمالي الفاتورة ("
@@ -300,6 +324,9 @@ public class SalesInvoiceService {
         guardNotClosed(invoice);
 
         vanAccessService.enforceSalesmanWarehouse(actingUser, request);
+        if (invoice.getPaymentMethod() == PaymentMethod.CHECK || "CHECK".equalsIgnoreCase(request.paymentMethod())) {
+            throw ApiException.badRequest("لا يمكن تعديل فاتورة مدفوعة بشيك - غيّر حالة الشيك أو الغِ الفاتورة");
+        }
         request = normalizePacks(request);
         Warehouse oldWarehouse = invoice.getWarehouse();
         Warehouse newWarehouse = warehouseRepository.findById(request.warehouseId())
@@ -578,11 +605,21 @@ public class SalesInvoiceService {
             throw ApiException.badRequest("مبلغ الدفعة أكبر من المتبقي على الفاتورة (المتبقي: "
                     + remaining.stripTrailingZeros().toPlainString() + ")");
         }
+        PaymentMethod method = parsePaymentMethod(request.paymentMethod());
+        if (method == PaymentMethod.CHECK) {
+            assertChecksAllowed(actingUser, request.checkInfo());
+            SalesInvoicePayment payment = salesInvoicePaymentRepository.save(SalesInvoicePayment.builder()
+                    .salesInvoice(invoice).amount(request.amount()).paymentMethod(PaymentMethod.CHECK)
+                    .note(request.note() != null && !request.note().isBlank() ? request.note() : "شيك رقم " + request.checkInfo().checkNumber())
+                    .createdBy(actingUser).build());
+            checkService.createFromSalePayment(invoice, payment, request.checkInfo(), vanAccessService.findVanOf(actingUser).orElse(null), actingUser);
+            invoice.setPaidAmount(invoice.getPaidAmount().add(request.amount()));
+            return toDto(salesInvoiceRepository.save(invoice));
+        }
         if (request.accountId() == null) {
             throw ApiException.badRequest("يجب اختيار الحساب (كاش/بنك) عند تسجيل دفعة");
         }
 
-        PaymentMethod method = parsePaymentMethod(request.paymentMethod());
         Account account = request.accountId() != null ? accountService.getAccountRef(request.accountId()) : null;
         SalesInvoicePayment payment = SalesInvoicePayment.builder()
                 .salesInvoice(invoice).amount(request.amount()).paymentMethod(method).account(account)

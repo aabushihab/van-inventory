@@ -67,6 +67,22 @@ public class CompanySettingsService {
     }
 
     @Transactional
+    public com.vanerp.dto.SalesSettingsDto getSalesSettings() {
+        CompanySettings s = getOrCreate();
+        return new com.vanerp.dto.SalesSettingsDto(s.isChecksEnabled(), s.isDriverChecksEnabled());
+    }
+
+    @Transactional
+    public com.vanerp.dto.SalesSettingsDto updateSalesSettings(com.vanerp.dto.SalesSettingsDto request) {
+        CompanySettings s = getOrCreate();
+        s.setChecksEnabled(request.checksEnabled());
+        s.setDriverChecksEnabled(request.driverChecksEnabled());
+        s.setUpdatedAt(LocalDateTime.now());
+        companySettingsRepository.save(s);
+        return getSalesSettings();
+    }
+
+    @Transactional
     public CompanySettingsDto get() {
         return toDto(getOrCreate());
     }

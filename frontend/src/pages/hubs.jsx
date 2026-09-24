@@ -15,6 +15,7 @@ import BadgeIcon from '@mui/icons-material/BadgeOutlined';
 import SecurityIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import HistoryIcon from '@mui/icons-material/HistoryOutlined';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActiveOutlined';
+import PointOfSaleIcon from '@mui/icons-material/PointOfSaleOutlined';
 import { useTranslation } from 'react-i18next';
 import TabbedHub from '../components/TabbedHub';
 import ProductsPage from './ProductsPage';
@@ -34,6 +35,7 @@ import UsersPage from './UsersPage';
 import RolesPage from './RolesPage';
 import AuditLogsPage from './AuditLogsPage';
 import AlertSettingsPage from './AlertSettingsPage';
+import SalesSettingsPage from './SalesSettingsPage';
 
 /*
  * الشاشات المجمّعة: كل شاشة تضم صفحات مترابطة كتبويبات، وكل تبويب يظهر حسب صلاحية المستخدم.
@@ -87,6 +89,7 @@ export function SettingsHub() {
       { key: 'branches', label: t('nav.branches'), icon: <StoreIcon />, element: <BranchesPage />, permission: 'WAREHOUSE_MANAGE' },
       { key: 'users', label: t('nav.users'), icon: <BadgeIcon />, element: <UsersPage />, permission: 'USER_MANAGE' },
       { key: 'roles', label: t('nav.roles'), icon: <SecurityIcon />, element: <RolesPage />, permission: 'ROLE_MANAGE' },
+      { key: 'sales', label: t('salesSettings.title'), icon: <PointOfSaleIcon />, element: <SalesSettingsPage />, permission: 'ROLE_MANAGE' },
       { key: 'alerts', label: t('alertSettings.title'), icon: <NotificationsActiveIcon />, element: <AlertSettingsPage />, permission: 'ROLE_MANAGE' },
       { key: 'audit', label: t('nav.auditLogs'), icon: <HistoryIcon />, element: <AuditLogsPage />, permission: 'ROLE_MANAGE' },
     ]} />

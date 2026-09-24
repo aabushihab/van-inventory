@@ -32,6 +32,7 @@ public class ExpenseService {
     private final BranchRepository branchRepository;
     private final EmployeeRepository employeeRepository;
     private final AccountService accountService;
+    private final com.vanerp.repository.VanShortageRepository vanShortageRepository;
 
     @Transactional(readOnly = true)
     public Page<ExpenseDto> search(String q, java.time.LocalDate from, java.time.LocalDate to, Pageable pageable) {
@@ -61,6 +62,9 @@ public class ExpenseService {
             throw ApiException.badRequest("يجب اختيار الحساب (كاش/بنك) عند تسجيل مصروف");
         }
         Employee employee = resolveEmployee(request);
+        if (employee != null && !employee.isActive()) {
+            throw ApiException.badRequest("الموظف \"" + employee.getName() + "\" غير مفعّل - لا يجوز صرف أي مبلغ له");
+        }
         java.time.LocalDate salaryPeriod = resolveSalaryPeriod(request);
         validateMonthlyCap(employee, request, salaryPeriod, null);
         Branch branch = request.branchId() != null
@@ -150,13 +154,61 @@ public class ExpenseService {
         java.time.LocalDate to = salaryPeriod.withDayOfMonth(salaryPeriod.lengthOfMonth());
         java.math.BigDecimal existing = expenseRepository.sumAmountForEmployeeInPeriod(
                 employee.getId(), EMPLOYEE_REQUIRED_CATEGORIES, from, to, excludeId != null ? excludeId : -1L);
-        java.math.BigDecimal remaining = employee.getMonthlySalary().subtract(existing);
+        java.math.BigDecimal remaining = employee.getMonthlySalary().subtract(existing)
+                .subtract(shortageDeduction(employee.getId(), from.getYear(), from.getMonthValue()));
         if (request.amount().compareTo(remaining) > 0) {
             throw ApiException.badRequest(
                     "المبلغ يتجاوز الراتب الشهري المتبقي لـ" + employee.getName() + " عن شهر "
                     + from.getYear() + "-" + String.format("%02d", from.getMonthValue())
                     + " (المتبقي: " + remaining + ")");
         }
+    }
+
+    /** خصومات عجز السائق المحسومة من راتب شهر معيّن. */
+    private java.math.BigDecimal shortageDeduction(Long employeeId, int year, int month) {
+        return vanShortageRepository.findByStatusAndSalaryYearAndSalaryMonth(com.vanerp.model.ShortageStatus.SALARY_DEDUCTED, year, month)
+                .stream().filter(s -> s.getDriver() != null && s.getDriver().getId().equals(employeeId))
+                .map(com.vanerp.model.VanShortage::getTotalValue)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+    }
+
+    /** معاينة صرف رواتب شهر: كل الموظفين المفعّلين مع المتبقي لكل منهم (الراتب - المستلم - خصم العجز). */
+    @Transactional(readOnly = true)
+    public java.util.List<com.vanerp.dto.SalaryRunLineDto> salaryRunPreview(int year, int month) {
+        java.time.LocalDate from = java.time.LocalDate.of(year, month, 1);
+        java.time.LocalDate to = from.withDayOfMonth(from.lengthOfMonth());
+        java.util.Map<Long, java.math.BigDecimal> paid = salaryPaidByEmployee(from, to);
+        return employeeRepository.findAllByOrderByNameAsc().stream()
+                .filter(Employee::isActive)
+                .map(e -> {
+                    java.math.BigDecimal p = paid.getOrDefault(e.getId(), java.math.BigDecimal.ZERO);
+                    java.math.BigDecimal d = shortageDeduction(e.getId(), year, month);
+                    java.math.BigDecimal remaining = e.getMonthlySalary().subtract(p).subtract(d).max(java.math.BigDecimal.ZERO);
+                    return new com.vanerp.dto.SalaryRunLineDto(e.getId(), e.getName(), e.getPosition(),
+                            e.getMonthlySalary(), p, d, remaining);
+                }).toList();
+    }
+
+    /** صرف المتبقي من رواتب الشهر لكل الموظفين المفعّلين (أو المحددين) دفعة واحدة - كل صرفة مصروف "رواتب" منفصل. */
+    @Transactional
+    public com.vanerp.dto.SalaryRunResultDto runSalaries(com.vanerp.dto.SalaryRunRequest request, User actingUser) {
+        java.time.LocalDate period = java.time.LocalDate.of(request.year(), request.month(), 1);
+        java.time.LocalDate payDate = request.paymentDate() != null ? request.paymentDate() : java.time.LocalDate.now();
+        java.util.Set<Long> only = request.employeeIds() != null && !request.employeeIds().isEmpty()
+                ? new java.util.HashSet<>(request.employeeIds()) : null;
+        java.util.List<com.vanerp.dto.SalaryRunLineDto> paidLines = new java.util.ArrayList<>();
+        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+        for (com.vanerp.dto.SalaryRunLineDto line : salaryRunPreview(request.year(), request.month())) {
+            if (only != null && !only.contains(line.employeeId())) continue;
+            if (line.remaining().signum() <= 0) continue;
+            create(new ExpenseRequest("رواتب", line.remaining(), payDate, period,
+                    "صرف رواتب شهر " + request.year() + "-" + String.format("%02d", request.month()) + " (صرف جماعي)",
+                    null, line.employeeId(), request.accountId(), null), actingUser);
+            paidLines.add(line);
+            total = total.add(line.remaining());
+        }
+        if (paidLines.isEmpty()) throw ApiException.badRequest("لا يوجد رواتب متبقية للصرف في هذا الشهر");
+        return new com.vanerp.dto.SalaryRunResultDto(paidLines.size(), total, paidLines);
     }
 
     private Expense getOrThrow(Long id) {

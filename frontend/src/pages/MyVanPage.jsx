@@ -9,7 +9,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { vanApi, salesInvoiceApi, loadRequestApi } from '../api/endpoints';
+import { vanApi, salesInvoiceApi, loadRequestApi, publicApi } from '../api/endpoints';
+import CheckFields, { emptyCheck, checkIsValid } from '../components/CheckFields';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/apiError';
 
@@ -42,6 +43,9 @@ export default function MyVanPage() {
   const [collectInvoice, setCollectInvoice] = useState(null);
   const [collectAmount, setCollectAmount] = useState('');
   const [collectNote, setCollectNote] = useState('');
+  const [collectMethod, setCollectMethod] = useState('CASH');
+  const [collectCheck, setCollectCheck] = useState(emptyCheck());
+  const [checksAllowed, setChecksAllowed] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // طلب تحميل
@@ -69,14 +73,20 @@ export default function MyVanPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    publicApi.companyInfo().then(({ data }) => setChecksAllowed(data.checksEnabled === 'true' && data.driverChecksEnabled === 'true')).catch(() => {});
+  }, []);
 
   const totalDue = useMemo(() => receivables.reduce((s, r) => s + Number(r.dueAmount || 0), 0), [receivables]);
 
   async function submitCollect() {
     setSaving(true); setError('');
     try {
-      await salesInvoiceApi.addPayment(collectInvoice.id, { amount: Number(collectAmount), paymentMethod: 'CASH', note: collectNote });
+      await salesInvoiceApi.addPayment(collectInvoice.id, {
+        amount: Number(collectAmount), paymentMethod: collectMethod, note: collectNote,
+        checkInfo: collectMethod === 'CHECK' ? collectCheck : null,
+      });
       setSuccess(t('myVan.collected', { amount: fmt(collectAmount), invoice: collectInvoice.invoiceNumber }));
       setCollectInvoice(null);
       load();
@@ -250,7 +260,7 @@ export default function MyVanPage() {
                     <TableCell sx={{ color: 'warning.main', fontWeight: 800 }}>{fmt(inv.dueAmount)}</TableCell>
                     <TableCell>
                       <Button size="small" variant="contained" disableElevation
-                        onClick={() => { setCollectInvoice(inv); setCollectAmount(String(Number(inv.dueAmount))); setCollectNote(''); setError(''); }}>
+                        onClick={() => { setCollectInvoice(inv); setCollectAmount(String(Number(inv.dueAmount))); setCollectNote(''); setCollectMethod('CASH'); setCollectCheck(emptyCheck()); setError(''); }}>
                         {t('myVan.collect')}
                       </Button>
                     </TableCell>
@@ -303,13 +313,21 @@ export default function MyVanPage() {
             onChange={(e) => setCollectAmount(e.target.value)}
             error={Number(collectAmount) > Number(collectInvoice?.dueAmount || 0)}
             slotProps={{ htmlInput: { min: 0, max: collectInvoice?.dueAmount, step: 'any' } }}
-            helperText={t('myVan.collectHint')} />
+            helperText={collectMethod === 'CHECK' ? t('checkPay.driverHint') : t('myVan.collectHint')} />
+          {checksAllowed && (
+            <TextField select label={t('invoice.paymentMethod')} value={collectMethod} onChange={(e) => setCollectMethod(e.target.value)}>
+              <MenuItem value="CASH">{t('invoice.cash')}</MenuItem>
+              <MenuItem value="CHECK">{t('checkPay.method')}</MenuItem>
+            </TextField>
+          )}
+          {collectMethod === 'CHECK' && <CheckFields value={collectCheck} onChange={setCollectCheck} />}
           <TextField label={t('common.notes')} value={collectNote} onChange={(e) => setCollectNote(e.target.value)} />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCollectInvoice(null)}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={submitCollect}
-            disabled={saving || !(Number(collectAmount) > 0) || Number(collectAmount) > Number(collectInvoice?.dueAmount || 0)}>
+            disabled={saving || !(Number(collectAmount) > 0) || Number(collectAmount) > Number(collectInvoice?.dueAmount || 0)
+              || (collectMethod === 'CHECK' && !checkIsValid(collectCheck))}>
             {saving ? <CircularProgress size={20} /> : t('myVan.collect')}
           </Button>
         </DialogActions>

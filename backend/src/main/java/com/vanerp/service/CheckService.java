@@ -10,7 +10,10 @@ import com.vanerp.model.CheckDirection;
 import com.vanerp.model.CheckStatus;
 import com.vanerp.model.Customer;
 import com.vanerp.model.PurchaseInvoice;
+import com.vanerp.model.PaymentMethod;
 import com.vanerp.model.SalesInvoice;
+import com.vanerp.model.SalesInvoicePayment;
+import com.vanerp.model.Van;
 import com.vanerp.model.Supplier;
 import com.vanerp.model.TxDirection;
 import com.vanerp.model.User;
@@ -35,6 +38,7 @@ public class CheckService {
     private final SalesInvoiceRepository salesInvoiceRepository;
     private final PurchaseInvoiceRepository purchaseInvoiceRepository;
     private final AccountService accountService;
+    private final com.vanerp.repository.SalesInvoicePaymentRepository salesInvoicePaymentRepository;
 
     @Transactional(readOnly = true)
     public Page<CheckDto> search(CheckStatus status, Pageable pageable) {
@@ -92,6 +96,16 @@ public class CheckService {
             check.setAccount(accountService.getAccountRef(request.accountId()));
         } else if (request.status() != CheckStatus.BOUNCED && request.status() != CheckStatus.CANCELLED) {
             throw ApiException.badRequest("انتقال حالة غير مسموح");
+        } else if (check.getRelatedSalesPayment() != null) {
+            // شيك راجع/ملغى سُدّدت به فاتورة: تعود قيمته ديناً على الفاتورة (دفعة سالبة موثّقة)
+            SalesInvoice invoice = check.getRelatedSalesPayment().getSalesInvoice();
+            invoice.setPaidAmount(invoice.getPaidAmount().subtract(check.getAmount()));
+            salesInvoiceRepository.save(invoice);
+            salesInvoicePaymentRepository.save(SalesInvoicePayment.builder()
+                    .salesInvoice(invoice).amount(check.getAmount().negate()).paymentMethod(PaymentMethod.CHECK)
+                    .note((request.status() == CheckStatus.BOUNCED ? "شيك راجع" : "شيك ملغى") + " رقم "
+                            + (check.getCheckNumber() != null ? check.getCheckNumber() : "-") + " - عادت قيمته ديناً على الفاتورة")
+                    .createdBy(actingUser).build());
         }
 
         check.setStatus(request.status());
@@ -104,7 +118,32 @@ public class CheckService {
         if (check.getStatus() == CheckStatus.CLEARED) {
             throw ApiException.badRequest("لا يمكن حذف شيك تمت تصفيته - الغِ التصفية غير ممكن، سجّل حركة يدوية معاكسة إذا لزم");
         }
+        if (check.getRelatedSalesPayment() != null && check.getStatus() == CheckStatus.PENDING) {
+            throw ApiException.badRequest("هذا الشيك مسجّل كدفعة على فاتورة بيع - غيّر حالته إلى ملغى أو راجع بدلاً من حذفه");
+        }
         checkRepository.delete(check);
+    }
+
+    /** شيك مستلم من عميل كدفعة على فاتورة بيع (من البيع أو التحصيل) - بانتظار التصفية. */
+    @Transactional
+    public Check createFromSalePayment(SalesInvoice invoice, SalesInvoicePayment payment, com.vanerp.dto.CheckInfo info,
+                                       Van van, User actingUser) {
+        String notes = "دفعة فاتورة بيع رقم " + invoice.getInvoiceNumber()
+                + (info.drawerName() != null && !info.drawerName().isBlank() ? " - الساحب: " + info.drawerName() : "")
+                + (van != null ? " - استلمه سائق " + van.getName() : "");
+        return checkRepository.save(Check.builder()
+                .direction(CheckDirection.RECEIVED).customer(invoice.getCustomer())
+                .partyName(info.drawerName() != null && !info.drawerName().isBlank() ? info.drawerName()
+                        : invoice.getCustomer() != null ? invoice.getCustomer().getName() : null)
+                .amount(payment.getAmount()).checkNumber(info.checkNumber()).bankName(info.bankName())
+                .dueDate(info.dueDate()).status(CheckStatus.PENDING)
+                .relatedSalesInvoice(invoice).relatedSalesPayment(payment).van(van).image(info.image())
+                .notes(notes).createdBy(actingUser).build());
+    }
+
+    @Transactional(readOnly = true)
+    public String image(Long id) {
+        return getOrThrow(id).getImage();
     }
 
     private Check getOrThrow(Long id) {
@@ -124,6 +163,9 @@ public class CheckService {
                 c.getRelatedSalesInvoice() != null ? c.getRelatedSalesInvoice().getId() : null,
                 c.getRelatedPurchaseInvoice() != null ? c.getRelatedPurchaseInvoice().getId() : null,
                 c.getNotes(), c.getCreatedBy() != null ? c.getCreatedBy().getFullName() : null, c.getCreatedAt()
-        );
+        ,
+                c.getRelatedSalesInvoice() != null ? c.getRelatedSalesInvoice().getInvoiceNumber() : null,
+                c.getVan() != null ? c.getVan().getName() : null,
+                c.getImage() != null && !c.getImage().isBlank());
     }
 }

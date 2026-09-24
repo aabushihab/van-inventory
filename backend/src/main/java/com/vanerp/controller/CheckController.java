@@ -30,6 +30,13 @@ public class CheckController {
         return checkService.search(status, PageRequest.of(page, size));
     }
 
+    @GetMapping("/{id}/image")
+    @PreAuthorize("hasAuthority('CHECKS_VIEW')")
+    public java.util.Map<String, String> image(@PathVariable Long id) {
+        String img = checkService.image(id);
+        return java.util.Map.of("image", img != null ? img : "");
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('CHECKS_MANAGE')")
     public ResponseEntity<CheckDto> create(@AuthenticationPrincipal UserPrincipal principal,

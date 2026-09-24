@@ -145,8 +145,8 @@ public class SalesInvoiceController {
         // السائق يحصّل على فواتير سيارته فقط، والمبلغ يدخل صندوق سيارته دائماً
         vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
         Long vanCash = vanAccessService.restrictedCashAccountId(principal.getUser());
-        if (vanCash != null) {
-            request = new SalesPaymentRequest(request.amount(), "CASH", request.note(), vanCash);
+        if (vanCash != null && !"CHECK".equalsIgnoreCase(request.paymentMethod())) {
+            request = new SalesPaymentRequest(request.amount(), "CASH", request.note(), vanCash, null);
         }
         return salesInvoiceService.addPayment(id, request, principal.getUser());
     }

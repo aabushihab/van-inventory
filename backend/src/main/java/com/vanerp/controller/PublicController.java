@@ -26,7 +26,9 @@ public class PublicController {
                 "name", settings.name() != null ? settings.name() : "",
                 "nameEn", settings.nameEn() != null ? settings.nameEn() : "",
                 "loginBackgroundImage", settings.loginBackgroundImage() != null ? settings.loginBackgroundImage() : "",
-                "logo", settings.logo() != null ? settings.logo() : ""
+                "logo", settings.logo() != null ? settings.logo() : "",
+                "checksEnabled", String.valueOf(companySettingsService.getSalesSettings().checksEnabled()),
+                "driverChecksEnabled", String.valueOf(companySettingsService.getSalesSettings().driverChecksEnabled())
         );
     }
 }

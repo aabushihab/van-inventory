@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import ImageIcon from '@mui/icons-material/ImageOutlined';
 import { useTranslation } from 'react-i18next';
 import { checkApi, accountApi } from '../api/endpoints';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
@@ -51,6 +52,16 @@ export default function ChecksPage() {
   const [clearingCheck, setClearingCheck] = useState(null);
   const [clearAccountId, setClearAccountId] = useState('');
   const [clearError, setClearError] = useState('');
+  const [imageView, setImageView] = useState(null);
+
+  async function showImage(row) {
+    try {
+      const { data } = await checkApi.image(row.id);
+      setImageView({ number: row.checkNumber, src: data.image });
+    } catch (e) {
+      setError(getErrorMessage(e, t('common.error')));
+    }
+  }
 
   async function load(overrides = {}) {
     setLoading(true);
@@ -187,6 +198,7 @@ export default function ChecksPage() {
                 <TableCell>{t('expenses.amount')}</TableCell>
                 <TableCell>{t('checks.checkNumber')}</TableCell>
                 <TableCell>{t('checks.bankName')}</TableCell>
+                <TableCell>{t('checks.source')}</TableCell>
                 <TableCell>{t('common.status')}</TableCell>
                 <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
@@ -201,9 +213,18 @@ export default function ChecksPage() {
                   <TableCell>{row.checkNumber || '-'}</TableCell>
                   <TableCell>{row.bankName || '-'}</TableCell>
                   <TableCell>
+                    {row.relatedSalesInvoiceNumber || '-'}
+                    {row.vanName && <Typography variant="caption" display="block" color="text.secondary">{row.vanName} · {row.createdByName}</Typography>}
+                  </TableCell>
+                  <TableCell>
                     <Chip size="small" color={STATUS_COLORS[row.status]} label={t(`checks.status${row.status}`)} />
                   </TableCell>
                   <TableCell align="center">
+                    {row.hasImage && (
+                      <Tooltip title={t('checkPay.photo')}>
+                        <IconButton size="small" onClick={() => showImage(row)}><ImageIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
                     {row.status === 'PENDING' && canManage && (
                       <>
                         <Tooltip title={t('checks.markCleared')}>
@@ -303,6 +324,13 @@ export default function ChecksPage() {
           <Button onClick={() => setClearingCheck(null)}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={confirmClear} disabled={!clearAccountId}>{t('common.save')}</Button>
         </DialogActions>
+      </Dialog>
+      <Dialog open={!!imageView} onClose={() => setImageView(null)} maxWidth="md">
+        <DialogTitle>{t('checkPay.photo')} — {imageView?.number}</DialogTitle>
+        <DialogContent>
+          {imageView?.src && <Box component="img" src={imageView.src} alt="" sx={{ maxWidth: '100%', maxHeight: '75vh', display: 'block' }} />}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setImageView(null)}>{t('common.close')}</Button></DialogActions>
       </Dialog>
     </Box>
   );

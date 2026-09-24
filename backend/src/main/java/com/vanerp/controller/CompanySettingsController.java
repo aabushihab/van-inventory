@@ -21,6 +21,16 @@ public class CompanySettingsController {
         return companySettingsService.get();
     }
 
+    @GetMapping("/sales")
+    public com.vanerp.dto.SalesSettingsDto salesSettings() {
+        return companySettingsService.getSalesSettings();
+    }
+
+    @PutMapping("/sales")
+    public com.vanerp.dto.SalesSettingsDto updateSalesSettings(@RequestBody com.vanerp.dto.SalesSettingsDto request) {
+        return companySettingsService.updateSalesSettings(request);
+    }
+
     @GetMapping("/alerts")
     public com.vanerp.dto.AlertSettingsDto alertSettings() {
         return companySettingsService.getAlertSettings();

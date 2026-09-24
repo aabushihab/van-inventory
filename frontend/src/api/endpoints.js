@@ -129,6 +129,8 @@ export const companySettingsApi = {
   alerts: () => client.get('/settings/company/alerts'),
   updateAlerts: (data) => client.put('/settings/company/alerts', data),
   runAlerts: () => client.post('/settings/company/alerts/run'),
+  sales: () => client.get('/settings/company/sales'),
+  updateSales: (data) => client.put('/settings/company/sales', data),
 };
 
 export const salesInvoiceApi = {
@@ -184,6 +186,8 @@ export const expenseApi = {
   listPage: (params) => client.get('/expenses/page', { params }),
   byEmployee: (employeeId) => client.get(`/expenses/by-employee/${employeeId}`),
   salaryPaidSummary: (params) => client.get('/expenses/salary-paid-summary', { params }),
+  salaryRunPreview: (year, month) => client.get('/expenses/salary-run-preview', { params: { year, month } }),
+  salaryRun: (data) => client.post('/expenses/salary-run', data),
   voucherUrl: (id) => `/expenses/${id}/voucher`,
   create: (data) => client.post('/expenses', data),
   update: (id, data) => client.put(`/expenses/${id}`, data),
@@ -229,6 +233,7 @@ export const stocktakeApi = {
 };
 
 export const checkApi = {
+  image: (id) => client.get(`/checks/${id}/image`),
   listPage: (params) => client.get('/checks/page', { params }),
   create: (data) => client.post('/checks', data),
   updateStatus: (id, data) => client.put(`/checks/${id}/status`, data),

@@ -17,5 +17,12 @@ public record SalesInvoiceCreateRequest(
         String paymentMethod,
         Long accountId,
         String notes,
-        LocalDate dueDate
-) {}
+        LocalDate dueDate,
+        /** مطلوب عند paymentMethod = CHECK مع مبلغ مدفوع. */
+        @Valid CheckInfo checkInfo
+) {
+    public SalesInvoiceCreateRequest(Long customerId, Long warehouseId, Long branchId, List<InvoiceItemRequest> items,
+                                     BigDecimal paidAmount, String paymentMethod, Long accountId, String notes, LocalDate dueDate) {
+        this(customerId, warehouseId, branchId, items, paidAmount, paymentMethod, accountId, notes, dueDate, null);
+    }
+}
