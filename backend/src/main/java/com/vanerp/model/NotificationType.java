@@ -9,6 +9,7 @@ public enum NotificationType {
     VAN_NOT_LOADED,
     VAN_NOT_UNLOADED,
     VAN_SHORTAGE,
+    VAN_LOAD_REQUEST,
     SYSTEM,
     INFO
 }

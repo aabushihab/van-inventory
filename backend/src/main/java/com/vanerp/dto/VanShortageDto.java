@@ -11,6 +11,7 @@ public record VanShortageDto(
         String plateNumber,
         Long driverId,
         String driverName,
+        String shortageType,
         String pricing,
         BigDecimal totalValue,
         String status,

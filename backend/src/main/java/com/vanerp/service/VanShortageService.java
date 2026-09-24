@@ -79,6 +79,23 @@ public class VanShortageService {
         return shortage;
     }
 
+    /** تسجيل عجز كاش (نقص المبلغ المسلَّم عن المتوقع في صندوق السيارة). */
+    @Transactional
+    public VanShortage recordCash(Van van, BigDecimal amount, String notes, User actingUser) {
+        VanShortage shortage = vanShortageRepository.save(VanShortage.builder()
+                .van(van).driver(van.getDriver())
+                .driverName(van.getDriver() != null ? van.getDriver().getName() : van.getDriverName())
+                .salesman(van.getSalesman()).shortageType("CASH").pricing("SALE")
+                .totalValue(amount).notes(notes).createdBy(actingUser).build());
+        notificationRepository.save(Notification.builder()
+                .type(NotificationType.VAN_SHORTAGE)
+                .title("عجز كاش على سائق: " + (shortage.getDriverName() != null ? shortage.getDriverName() : van.getName()))
+                .message(String.format("عند تسليم صندوق السيارة \"%s\" نقص مبلغ %s عن المتوقع.",
+                        van.getName(), amount.stripTrailingZeros().toPlainString()))
+                .relatedWarehouse(van.getWarehouse()).alertKey("VAN_SHORTAGE:" + shortage.getId()).read(false).build());
+        return shortage;
+    }
+
     @Transactional(readOnly = true)
     public Page<VanShortageDto> search(Long vanId, Long driverId, String status, LocalDate from, LocalDate to, Pageable pageable) {
         LocalDateTime start = from != null ? from.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
@@ -203,7 +220,7 @@ public class VanShortageService {
                 it.getProduct().getId(), it.getProduct().getName(), it.getProduct().getSku(),
                 it.getQuantity(), it.getUnitPrice(), it.getLineValue())).toList();
         return new VanShortageDto(s.getId(), s.getVan().getId(), s.getVan().getName(), s.getVan().getPlateNumber(),
-                s.getDriver() != null ? s.getDriver().getId() : null, s.getDriverName(), s.getPricing(), s.getTotalValue(),
+                s.getDriver() != null ? s.getDriver().getId() : null, s.getDriverName(), s.getShortageType(), s.getPricing(), s.getTotalValue(),
                 s.getStatus().name(), s.getSalaryYear(), s.getSalaryMonth(),
                 s.getAccount() != null ? s.getAccount().getName() : null, s.getSettlementNote(), s.getSettledAt(),
                 s.getSettledBy() != null ? s.getSettledBy().getFullName() : null, s.getNotes(),

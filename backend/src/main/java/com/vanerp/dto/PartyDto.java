@@ -10,5 +10,8 @@ public record PartyDto(
         String email,
         String address,
         String taxNumber,
-        boolean active
+        boolean active,
+        /** للعملاء فقط: سقف الدين والمستحق الحالي. */
+        java.math.BigDecimal creditLimit,
+        java.math.BigDecimal balance
 ) {}

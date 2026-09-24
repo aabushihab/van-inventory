@@ -14,6 +14,7 @@ public record ProductDto(
         Long unitId,
         String unitName,
         BigDecimal unitsPerCarton,
+        BigDecimal cartonPrice,
         BigDecimal purchasePrice,
         BigDecimal salePrice,
         BigDecimal taxRate,

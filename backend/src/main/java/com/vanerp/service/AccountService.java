@@ -88,6 +88,17 @@ public class AccountService {
                 .toList();
     }
 
+    /** الرصيد الحالي لحساب واحد (افتتاحي + الحركات). */
+    @Transactional(readOnly = true)
+    public BigDecimal balanceOf(Long accountId) {
+        Account account = getOrThrow(accountId);
+        BigDecimal net = accountTransactionRepository.findAll().stream()
+                .filter(t -> t.getAccount().getId().equals(accountId))
+                .map(t -> t.getDirection() == TxDirection.IN ? t.getAmount() : t.getAmount().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return account.getOpeningBalance().add(net);
+    }
+
     @Transactional(readOnly = true)
     public List<AccountTransactionDto> ledger(Long accountId, LocalDate from, LocalDate to) {
         return accountTransactionRepository

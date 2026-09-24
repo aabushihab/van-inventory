@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box, Paper, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, IconButton,
-  Chip, Alert, CircularProgress, Grid, Divider, TablePagination, Tooltip,
+  Chip, Alert, CircularProgress, Grid, Divider, TablePagination, Tooltip, Checkbox,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -26,7 +26,12 @@ import CategoryProductPicker from '../components/CategoryProductPicker';
 import ErrorAlert from '../components/ErrorAlert';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 
-const emptyItem = { productId: '', categoryId: '', warehouseId: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 16 };
+const emptyItem = { productId: '', categoryId: '', warehouseId: '', packType: 'UNIT', quantity: 1, unitPrice: 0, discount: 0, taxRate: 0 };
+
+/** عدد الحبات في العبوة المختارة للسطر (1 للحبة، عدد حبات الكرتونة للكرتونة). */
+const packSizeOf = (product, packType) => (packType === 'CARTON' && Number(product?.unitsPerCarton) > 0 ? Number(product.unitsPerCarton) : 1);
+/** سعر الكرتونة: سعرها الخاص إن حُدد، وإلا سعر الحبة × عدد الحبات. */
+const cartonPriceOf = (p) => (p?.cartonPrice != null ? Number(p.cartonPrice) : Number(p?.salePrice || 0) * Number(p?.unitsPerCarton || 0));
 
 /** يبني تاريخ ISO محلي (سنة-شهر-يوم) بدون تحويل للتوقيت العالمي، لتفادي انزياح يوم كامل قرب منتصف الليل بمنطقة زمنية شرقية. */
 function todayIso() {
@@ -202,7 +207,9 @@ export default function SalesInvoicesPage() {
     setNotes(row.notes || '');
     setItems(row.items.map((it) => ({
       productId: it.productId, warehouseId: it.warehouseId || row.warehouseId,
-      quantity: it.quantity, unitPrice: it.unitPrice,
+      packType: it.packType || 'UNIT',
+      quantity: it.packType === 'CARTON' ? it.packQuantity : it.quantity,
+      unitPrice: it.packType === 'CARTON' ? Number((Number(it.unitPrice) * Number(it.packSize)).toFixed(3)) : it.unitPrice,
       discount: it.discount, taxRate: it.taxRate,
     })));
     setError('');
@@ -216,7 +223,7 @@ export default function SalesInvoicesPage() {
       .map((it) => ({
         invoiceItemId: it.id, productName: it.productName, sku: it.productSku,
         remaining: Number(it.quantity) - Number(it.returnedQuantity || 0),
-        quantity: '',
+        quantity: '', damaged: false,
       }))
       .filter((it) => it.remaining > 0));
     setReturnNotes('');
@@ -224,8 +231,8 @@ export default function SalesInvoicesPage() {
     setReturnOpen(true);
   }
 
-  function updateReturnItem(idx, quantity) {
-    setReturnItems((prev) => prev.map((it, i) => (i === idx ? { ...it, quantity } : it)));
+  function updateReturnItem(idx, patch) {
+    setReturnItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
 
   async function submitReturn() {
@@ -235,7 +242,7 @@ export default function SalesInvoicesPage() {
     setError('');
     try {
       await salesInvoiceApi.return(returnInvoice.id, {
-        items: chosen.map((it) => ({ invoiceItemId: it.invoiceItemId, quantity: Number(it.quantity) })),
+        items: chosen.map((it) => ({ invoiceItemId: it.invoiceItemId, quantity: Number(it.quantity), damaged: !!it.damaged })),
         notes: returnNotes,
       });
       setReturnOpen(false);
@@ -253,7 +260,11 @@ export default function SalesInvoicesPage() {
       const updated = { ...it, ...patch };
       if (patch.productId) {
         const p = products.find((pp) => pp.id === patch.productId);
-        if (p) { updated.unitPrice = p.salePrice; updated.taxRate = p.taxRate; }
+        if (p) { updated.unitPrice = p.salePrice; updated.taxRate = p.taxRate; updated.packType = 'UNIT'; }
+      }
+      if (patch.packType) {
+        const p = products.find((pp) => pp.id === updated.productId);
+        if (p) updated.unitPrice = patch.packType === 'CARTON' ? cartonPriceOf(p) : Number(p.salePrice);
       }
       return updated;
     }));
@@ -270,8 +281,11 @@ export default function SalesInvoicesPage() {
     const base = qty * price - discount;
     const taxAmount = base * (tax / 100);
     const product = products.find((p) => p.id === it.productId);
-    const belowCost = product && it.unitPrice !== '' && Number(it.unitPrice) < Number(product.purchasePrice);
-    return { ...it, lineTotal: base + taxAmount, purchasePrice: product?.purchasePrice, belowCost };
+    const packSize = packSizeOf(product, it.packType);
+    const baseQty = qty * packSize;
+    const belowCost = product && it.unitPrice !== '' && Number(it.unitPrice) / packSize < Number(product.purchasePrice);
+    return { ...it, lineTotal: base + taxAmount, purchasePrice: product ? Number(product.purchasePrice) * packSize : undefined,
+      belowCost, packSize, baseQty, canCarton: Number(product?.unitsPerCarton) > 0 };
   });
   const grandTotal = computedItems.reduce((s, it) => s + it.lineTotal, 0);
   const hasBelowCostItem = computedItems.some((it) => it.belowCost);
@@ -281,7 +295,11 @@ export default function SalesInvoicesPage() {
     if (!warehouseId || !branchId) { setError('اختر المخزن'); return; }
     const validItems = items.filter((it) => it.productId && Number(it.quantity) > 0);
     if (validItems.length === 0) { setError('أضف صنفاً واحداً على الأقل'); return; }
-    if (vanStock && !editingInvoice && validItems.some((it) => Number(it.quantity) > (vanStock[it.productId] ?? 0))) {
+    // تحقق حمولة السيارة بالحبات (مجموع أسطر نفس الصنف، والكرتونة = حبات)
+    const baseByProduct = {};
+    computedItems.filter((it) => it.productId && Number(it.quantity) > 0)
+      .forEach((it) => { baseByProduct[it.productId] = (baseByProduct[it.productId] || 0) + it.baseQty; });
+    if (vanStock && !editingInvoice && Object.entries(baseByProduct).some(([pid, q]) => q > (vanStock[pid] ?? 0))) {
       setError(t('vanLoads.exceedsAvailable')); return;
     }
     if (Number(paidAmount || 0) > grandTotal) { setError(t('invoice.paidExceedsTotal')); return; }
@@ -305,7 +323,7 @@ export default function SalesInvoicesPage() {
         branchId,
         items: validItems.map((it) => ({
           productId: it.productId, warehouseId: it.warehouseId || warehouseId,
-          quantity: Number(it.quantity), unitPrice: Number(it.unitPrice),
+          quantity: Number(it.quantity), unitPrice: Number(it.unitPrice), packType: it.packType || 'UNIT',
           discount: Number(it.discount || 0), taxRate: Number(it.taxRate || 0),
         })),
         paidAmount: paidAmount === '' ? 0 : Number(paidAmount),
@@ -343,7 +361,8 @@ export default function SalesInvoicesPage() {
     setNewPaymentAmount('');
     setNewPaymentMethod('CASH');
     setNewPaymentNote('');
-    setNewPaymentAccountId('');
+    // المندوب: التحصيل يدخل صندوق سيارته
+    setNewPaymentAccountId(vanCashAccountId || '');
     setRefundAmount(String(row.creditOwed || ''));
     setRefundNote('');
     setRefundAccountId('');
@@ -522,7 +541,7 @@ export default function SalesInvoicesPage() {
                         <IconButton size="small" onClick={() => openEdit(inv)}><EditIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
+                    {hasPermission('SALES_INVOICE_CREATE') && inv.status === 'CONFIRMED' && (
                       <Tooltip title={t('invoice.return')}>
                         <IconButton size="small" color="warning" onClick={() => openReturn(inv)}><AssignmentReturnIcon fontSize="small" /></IconButton>
                       </Tooltip>
@@ -532,7 +551,7 @@ export default function SalesInvoicesPage() {
                         <IconButton size="small" color="error" onClick={() => cancelInvoice(inv)}><CancelIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     )}
-                    {!vanMode && hasPermission('SALES_INVOICE_CREATE') && inv.status !== 'DRAFT' && (
+                    {hasPermission('SALES_INVOICE_CREATE') && inv.status !== 'DRAFT' && (!vanMode || Number(inv.dueAmount) > 0.001) && (
                       <Tooltip title={t('invoice.payments')}>
                         <IconButton size="small" color="primary" onClick={() => openPayments(inv)}><PaymentsIcon fontSize="small" /></IconButton>
                       </Tooltip>
@@ -588,6 +607,7 @@ export default function SalesInvoicesPage() {
               <TableRow>
                 <TableCell>{t('products.title')}</TableCell>
                 <TableCell width={140}>{t('common.warehouse')}</TableCell>
+                <TableCell width={110}>{t('invoice.pack')}</TableCell>
                 <TableCell width={90}>{t('common.quantity')}</TableCell>
                 <TableCell width={110}>{t('common.price')}</TableCell>
                 <TableCell width={100}>{t('common.discount')}</TableCell>
@@ -614,9 +634,20 @@ export default function SalesInvoicesPage() {
                     </TextField>
                   </TableCell>
                   <TableCell>
+                    <TextField select size="small" fullWidth value={it.packType || 'UNIT'} disabled={!it.canCarton}
+                      onChange={(e) => updateItem(idx, { packType: e.target.value })}
+                      helperText={it.canCarton && it.packType === 'CARTON' ? `×${it.packSize}` : ''}>
+                      <MenuItem value="UNIT">{t('invoice.packUnit')}</MenuItem>
+                      <MenuItem value="CARTON">{t('invoice.packCarton')}</MenuItem>
+                    </TextField>
+                  </TableCell>
+                  <TableCell>
                     <TextField size="small" type="number" value={it.quantity} onChange={(e) => updateItem(idx, { quantity: e.target.value })}
-                      error={!!vanStock && !!it.productId && Number(it.quantity) > (vanStock[it.productId] ?? 0)}
-                      helperText={vanStock && it.productId ? `${t('vanLoads.available')}: ${(vanStock[it.productId] ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 })}` : ''} />
+                      error={!!vanStock && !!it.productId && it.baseQty > (vanStock[it.productId] ?? 0)}
+                      helperText={vanStock && it.productId
+                        ? `${t('vanLoads.available')}: ${(vanStock[it.productId] ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 })}`
+                          + (it.packType === 'CARTON' ? ` (${t('invoice.pieces', { count: it.baseQty })})` : '')
+                        : (it.packType === 'CARTON' ? t('invoice.pieces', { count: it.baseQty }) : '')} />
                   </TableCell>
                   <TableCell>
                     <TextField size="small" type="number" value={it.unitPrice} onChange={(e) => updateItem(idx, { unitPrice: e.target.value })}
@@ -705,6 +736,7 @@ export default function SalesInvoicesPage() {
                   <TableCell>{t('products.title')}</TableCell>
                   <TableCell width={110}>{t('invoice.remainingQty')}</TableCell>
                   <TableCell width={110}>{t('invoice.returnQty')}</TableCell>
+                  <TableCell width={70}>{t('invoice.packDamaged')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -715,13 +747,18 @@ export default function SalesInvoicesPage() {
                     <TableCell>
                       <TextField size="small" type="number" value={it.quantity}
                         inputProps={{ min: 0, max: it.remaining, step: 'any' }}
-                        onChange={(e) => updateReturnItem(idx, e.target.value)} />
+                        onChange={(e) => updateReturnItem(idx, { quantity: e.target.value })} />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox size="small" color="error" checked={!!it.damaged}
+                        onChange={(e) => updateReturnItem(idx, { damaged: e.target.checked })} />
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
+          <Typography variant="caption" color="text.secondary">{t('invoice.damagedHint')}</Typography>
           <TextField label={t('common.notes')} value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} />
         </DialogContent>
         <DialogActions>
@@ -813,7 +850,7 @@ export default function SalesInvoicesPage() {
             </>
           )}
 
-          {paymentsInvoice && Number(paymentsInvoice.creditOwed || 0) > 0.001 && (
+          {!vanMode && paymentsInvoice && Number(paymentsInvoice.creditOwed || 0) > 0.001 && (
             <>
               <Divider />
               <Typography variant="subtitle2" fontWeight={700} color="warning.main">{t('invoice.markRefunded')}</Typography>

@@ -184,9 +184,9 @@ export default function VanShortagesPage() {
                   <TableCell>{new Date(r.createdAt).toLocaleString()}</TableCell>
                   <TableCell>{r.vanName} <Typography component="span" variant="caption" color="text.secondary" dir="ltr">({r.plateNumber})</Typography></TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{r.driverName || '-'}</TableCell>
-                  <TableCell>{r.items.length}</TableCell>
+                  <TableCell>{r.shortageType === 'CASH' ? <Chip size="small" color="warning" variant="outlined" label={t('shortages.cashType')} /> : r.items.length}</TableCell>
                   <TableCell sx={{ fontWeight: 800, color: r.status === 'PENDING' ? 'error.main' : undefined }}>{fmt(r.totalValue)}</TableCell>
-                  <TableCell>{pricingLabel(r.pricing)}</TableCell>
+                  <TableCell>{r.shortageType === 'CASH' ? '-' : pricingLabel(r.pricing)}</TableCell>
                   <TableCell><Chip size="small" color={STATUS_COLORS[r.status]} variant={r.status === 'PENDING' ? 'filled' : 'outlined'} label={t(`shortages.status.${r.status}`)} /></TableCell>
                   <TableCell sx={{ maxWidth: 240 }}><Typography variant="body2" noWrap title={settlementText(r)}>{settlementText(r)}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>

@@ -146,6 +146,9 @@ public class ReportService {
         for (VanShortage shortage : vanShortageRepository.findByStatusAndCreatedAtBetween(ShortageStatus.WAIVED, start, end)) {
             String period = shortage.getCreatedAt().format(formatter);
             Accumulator acc = byPeriod.computeIfAbsent(period, p -> new Accumulator());
+            if ("CASH".equals(shortage.getShortageType())) {
+                acc.shortageLoss = acc.shortageLoss.add(shortage.getTotalValue());
+            }
             for (VanShortageItem item : shortage.getItems()) {
                 acc.shortageLoss = acc.shortageLoss.add(item.getProduct().getPurchasePrice().multiply(item.getQuantity()));
             }

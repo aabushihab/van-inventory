@@ -10,9 +10,10 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import PersonIcon from '@mui/icons-material/PersonOutlined';
 import PhoneIcon from '@mui/icons-material/PhoneOutlined';
 import CloseIcon from '@mui/icons-material/Close';
+import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
 import FactCheckIcon from '@mui/icons-material/FactCheckOutlined';
 import { useTranslation } from 'react-i18next';
-import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi, companySettingsApi } from '../api/endpoints';
+import { vanApi, branchApi, userApi, warehouseApi, stockApi, employeeApi, companySettingsApi, accountApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import ErrorAlert from '../components/ErrorAlert';
 import PageGuide from '../components/PageGuide';
@@ -59,6 +60,37 @@ export default function VansPage({ onLoad }) {
   const [closePricing, setClosePricing] = useState('SALE');
   const [defaultPricing, setDefaultPricing] = useState('SALE');
   const [closeResult, setCloseResult] = useState(null);
+
+  // تسليم كاش السائق
+  const [cashVan, setCashVan] = useState(null);
+  const [cashAccounts, setCashAccounts] = useState([]);
+  const [cashToAccount, setCashToAccount] = useState('');
+  const [cashHanded, setCashHanded] = useState('');
+  const [cashNotes, setCashNotes] = useState('');
+  const [cashResult, setCashResult] = useState(null);
+
+  async function openCash(row) {
+    setError(''); setCashResult(null); setCashNotes('');
+    setCashHanded(String(Number(row.cashBalance || 0)));
+    const { data } = await accountApi.list();
+    const others = data.filter((a) => a.id !== row.cashAccountId && a.active !== false);
+    setCashAccounts(others);
+    setCashToAccount(others[0]?.id || '');
+    setCashVan(row);
+  }
+
+  async function submitCash() {
+    setSaving(true); setError('');
+    try {
+      const { data } = await vanApi.cashHandover(cashVan.id, { toAccountId: cashToAccount, handedAmount: Number(cashHanded || 0), notes: cashNotes });
+      setCashResult(data);
+      await load();
+    } catch (e) {
+      setError(getErrorMessage(e, t('common.error')));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -250,6 +282,10 @@ export default function VansPage({ onLoad }) {
                           <Typography variant="caption" color="text.secondary">{t('vans.todayInvoices', { count: r.todayInvoiceCount })}</Typography>
                         </Box>
                       </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderRadius: 1, bgcolor: 'primary.50', border: '1px dashed', borderColor: 'primary.light' }}>
+                        <Typography variant="caption" color="text.secondary">{t('myVan.cashBox')}</Typography>
+                        <Typography fontWeight={800} color="primary.main">{fmt(r.cashBalance)}</Typography>
+                      </Box>
                       {Number(r.pendingShortageValue) > 0 && (
                         <Chip size="small" color="error" variant="outlined" sx={{ alignSelf: 'flex-start' }}
                           label={`${t('shortages.pendingOn')}: ${fmt(r.pendingShortageValue)}`} />
@@ -274,6 +310,12 @@ export default function VansPage({ onLoad }) {
                             </Button>
                           </span>
                         </Tooltip>
+                      )}
+                      {canLoad && (
+                        <Button size="small" variant="outlined" color="success" startIcon={<PaymentsIcon />}
+                          disabled={Number(r.cashBalance) === 0} onClick={() => openCash(r)}>
+                          {t('cash.button')}
+                        </Button>
                       )}
                     </Box>
                     {canManage && (
@@ -379,6 +421,50 @@ export default function VansPage({ onLoad }) {
           <Button variant="contained" onClick={save} disabled={saving || plateInvalid || !form.driverId}>
             {saving ? <CircularProgress size={20} /> : t('common.save')}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* تسليم كاش السائق للصندوق */}
+      <Dialog open={!!cashVan} onClose={() => setCashVan(null)} fullWidth maxWidth="sm">
+        <DialogTitle>{t('cash.title')} — {cashVan?.name} ({cashVan?.driverName})</DialogTitle>
+        <DialogContent dividers>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {cashResult ? (
+            <Alert severity={Number(cashResult.difference) < 0 ? 'warning' : 'success'}>
+              {t('cash.done')}<br />
+              {t('cash.expected')}: <b>{fmt(cashResult.expectedAmount)}</b> · {t('cash.handed')}: <b>{fmt(cashResult.handedAmount)}</b>
+              {' · '}{t('cash.difference')}: <b>{fmt(cashResult.difference)}</b>
+              {Number(cashResult.difference) < 0 && <><br />{t('cash.shortageRecorded')}</>}
+            </Alert>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Alert severity="info">{t('cash.hint')}</Alert>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, borderRadius: 1, bgcolor: 'grey.50' }}>
+                <Typography>{t('cash.expected')}</Typography>
+                <Typography variant="h6" fontWeight={800}>{fmt(cashVan?.cashBalance)}</Typography>
+              </Box>
+              <TextField type="number" label={t('cash.handed')} value={cashHanded} onChange={(e) => setCashHanded(e.target.value)}
+                slotProps={{ htmlInput: { min: 0, step: 'any' } }}
+                helperText={(() => {
+                  const d = Number(cashHanded || 0) - Number(cashVan?.cashBalance || 0);
+                  if (Math.abs(d) < 0.0005) return t('cash.matches');
+                  return d < 0 ? t('cash.willBeShortage', { amount: fmt(-d) }) : t('cash.willBeSurplus', { amount: fmt(d) });
+                })()}
+                error={Number(cashHanded || 0) < Number(cashVan?.cashBalance || 0)} />
+              <TextField select label={t('cash.toAccount')} value={cashToAccount} onChange={(e) => setCashToAccount(e.target.value)}>
+                {cashAccounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
+              </TextField>
+              <TextField label={t('common.notes')} value={cashNotes} onChange={(e) => setCashNotes(e.target.value)} />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCashVan(null)}>{t('common.close')}</Button>
+          {!cashResult && (
+            <Button variant="contained" onClick={submitCash} disabled={saving || !cashToAccount || cashHanded === ''}>
+              {saving ? <CircularProgress size={20} /> : t('cash.confirm')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

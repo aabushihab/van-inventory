@@ -60,6 +60,10 @@ public class Product {
     @Builder.Default
     private BigDecimal minStockThreshold = BigDecimal.ZERO;
 
+    /** سعر بيع الكرتونة (اختياري) - فارغ = سعر الحبة × عدد الحبات بالكرتونة. */
+    @Column(name = "carton_price", precision = 14, scale = 3)
+    private BigDecimal cartonPrice;
+
     /** تاريخ انتهاء الصنف (اختياري). */
     @Column(name = "expiry_date")
     private LocalDate expiryDate;

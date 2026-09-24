@@ -37,6 +37,19 @@ public class SalesInvoiceItem {
     @Column(name = "unit_price", nullable = false, precision = 14, scale = 3)
     private BigDecimal unitPrice;
 
+    /** UNIT أو CARTON - كيف بيع السطر. quantity/unitPrice دائماً بالوحدة الأساسية (للمخزون والأرباح). */
+    @Column(name = "pack_type", nullable = false, length = 10)
+    @Builder.Default
+    private String packType = "UNIT";
+
+    /** الكمية كما بيعت (عدد الكراتين عند CARTON). */
+    @Column(name = "pack_quantity", precision = 14, scale = 3)
+    private BigDecimal packQuantity;
+
+    /** عدد الوحدات في العبوة المباعة (1 للوحدة، عدد الحبات بالكرتونة للكرتونة). */
+    @Column(name = "pack_size", precision = 12, scale = 2)
+    private BigDecimal packSize;
+
     /** سعر شراء الوحدة وقت هذا البيع تحديداً (لحساب أرباح تاريخي ثابت لا يتغيّر مع تغيّر سعر شراء المنتج لاحقاً). */
     @Column(name = "unit_cost", nullable = false, precision = 14, scale = 3)
     @Builder.Default

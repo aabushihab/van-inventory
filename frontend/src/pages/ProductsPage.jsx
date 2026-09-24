@@ -18,8 +18,8 @@ import { compressImage } from '../utils/imageCompress';
 
 const emptyProduct = {
   sku: '', barcode: '', name: '', nameEn: '', categoryId: '', unitId: '',
-  unitsPerCarton: '',
-  purchasePrice: '0', salePrice: '0', taxRate: '16', minStockThreshold: '0',
+  unitsPerCarton: '', cartonPrice: '',
+  purchasePrice: '0', salePrice: '0', taxRate: '0', minStockThreshold: '0',
   imageUrl: '', expiryDate: '', expiryAlertDays: '', active: true,
 };
 
@@ -87,7 +87,7 @@ export default function ProductsPage() {
     setForm({
       ...emptyProduct, ...row,
       categoryId: row.categoryId || '', unitId: row.unitId || '',
-      unitsPerCarton: row.unitsPerCarton ?? '',
+      unitsPerCarton: row.unitsPerCarton ?? '', cartonPrice: row.cartonPrice ?? '',
       expiryDate: row.expiryDate || '', expiryAlertDays: row.expiryAlertDays ?? '',
     });
     setFieldErrors({});
@@ -104,6 +104,7 @@ export default function ProductsPage() {
         categoryId: form.categoryId || null,
         unitId: form.unitId,
         unitsPerCarton: form.unitsPerCarton === '' ? null : Number(form.unitsPerCarton),
+        cartonPrice: form.cartonPrice === '' || form.cartonPrice == null ? null : Number(form.cartonPrice),
         purchasePrice: Number(form.purchasePrice || 0),
         salePrice: Number(form.salePrice || 0),
         taxRate: Number(form.taxRate || 0),
@@ -289,6 +290,14 @@ export default function ProductsPage() {
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.unitsPerCarton')} value={form.unitsPerCarton} onChange={(e) => setForm({ ...form, unitsPerCarton: e.target.value })} />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField fullWidth type="number" label={t('products.cartonPrice')} value={form.cartonPrice ?? ''}
+                disabled={!(Number(form.unitsPerCarton) > 0)}
+                onChange={(e) => setForm({ ...form, cartonPrice: e.target.value })}
+                placeholder={Number(form.unitsPerCarton) > 0 ? String(Number(form.salePrice || 0) * Number(form.unitsPerCarton)) : ''}
+                helperText={Number(form.unitsPerCarton) > 0 ? t('products.cartonPriceHint') : ''}
+                slotProps={{ inputLabel: { shrink: true } }} />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.purchasePrice')} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}

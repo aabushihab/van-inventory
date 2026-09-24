@@ -16,6 +16,7 @@ public record ProductUpsertRequest(
         Long categoryId,
         @NotNull Long unitId,
         BigDecimal unitsPerCarton,
+        BigDecimal cartonPrice,
         @NotNull BigDecimal purchasePrice,
         @NotNull BigDecimal salePrice,
         BigDecimal taxRate,

@@ -85,6 +85,7 @@ public class SalesInvoiceService {
     @Transactional
     public SalesInvoiceDto create(SalesInvoiceCreateRequest request, User actingUser) {
         vanAccessService.enforceSalesmanWarehouse(actingUser, request);
+        request = normalizePacks(request);
         Warehouse warehouse = warehouseRepository.findById(request.warehouseId())
                 .orElseThrow(() -> ApiException.notFound("المخزن غير موجود"));
         Branch branch = branchRepository.findById(request.branchId())
@@ -137,6 +138,9 @@ public class SalesInvoiceService {
             SalesInvoiceItem item = SalesInvoiceItem.builder()
                     .salesInvoice(invoice).product(product).warehouse(itemWarehouse)
                     .quantity(itemReq.quantity()).unitPrice(itemReq.unitPrice())
+                    .packType(itemReq.packType() != null ? itemReq.packType() : "UNIT")
+                    .packQuantity(itemReq.packQuantity() != null ? itemReq.packQuantity() : itemReq.quantity())
+                    .packSize(itemReq.packSize() != null ? itemReq.packSize() : BigDecimal.ONE)
                     .taxRate(tax).discount(discount).lineTotal(lineTotal)
                     .unitCost(product.getPurchasePrice())
                     .build();
@@ -157,6 +161,7 @@ public class SalesInvoiceService {
         BigDecimal grandTotal = subtotal.subtract(discountTotal).add(taxTotal);
         invoice.setGrandTotal(grandTotal);
         validatePaidAmount(invoice.getPaidAmount(), grandTotal);
+        checkCreditLimit(customer, grandTotal.subtract(invoice.getPaidAmount()), null);
         if (invoice.getPaidAmount().signum() > 0 && request.accountId() == null) {
             throw ApiException.badRequest("يجب اختيار الحساب (كاش/بنك) عند تسجيل دفعة");
         }
@@ -175,6 +180,81 @@ public class SalesInvoiceService {
         }
 
         return toDto(saved);
+    }
+
+    /**
+     * البيع بالكرتونة: يحوّل كل سطر CARTON (عدد كراتين × سعر كرتونة) إلى الوحدة الأساسية (حبات × سعر حبة)
+     * لأن المخزون والأرباح والمرتجعات كلها بالوحدة الأساسية، ويحتفظ بطريقة البيع للعرض والطباعة.
+     */
+    private SalesInvoiceCreateRequest normalizePacks(SalesInvoiceCreateRequest request) {
+        List<InvoiceItemRequest> items = new java.util.ArrayList<>();
+        for (InvoiceItemRequest it : request.items()) {
+            if ("CARTON".equals(it.packType())) {
+                Product product = productRepository.findById(it.productId())
+                        .orElseThrow(() -> ApiException.notFound("منتج غير موجود ضمن عناصر الفاتورة"));
+                BigDecimal size = product.getUnitsPerCarton();
+                if (size == null || size.signum() <= 0) {
+                    throw ApiException.badRequest("الصنف \"" + product.getName() + "\" ليس له عدد حبات بالكرتونة - لا يمكن بيعه بالكرتونة");
+                }
+                items.add(new InvoiceItemRequest(it.productId(), it.warehouseId(), it.quantity().multiply(size),
+                        it.unitPrice().divide(size, 3, RoundingMode.HALF_UP), it.taxRate(), it.discount(),
+                        "CARTON", it.quantity(), size));
+            } else {
+                items.add(new InvoiceItemRequest(it.productId(), it.warehouseId(), it.quantity(), it.unitPrice(),
+                        it.taxRate(), it.discount(), "UNIT", it.quantity(), BigDecimal.ONE));
+            }
+        }
+        return new SalesInvoiceCreateRequest(request.customerId(), request.warehouseId(), request.branchId(), items,
+                request.paidAmount(), request.paymentMethod(), request.accountId(), request.notes(), request.dueDate());
+    }
+
+    /** المبلغ المستحق حالياً على عميل (صافي بعد المرتجعات والدفعات)، مع استثناء فاتورة معيّنة عند التعديل. */
+    @Transactional(readOnly = true)
+    public BigDecimal customerOutstanding(Long customerId, Long excludeInvoiceId) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (SalesInvoice inv : salesInvoiceRepository.findAllOutstanding()) {
+            if (inv.getCustomer() == null || !inv.getCustomer().getId().equals(customerId)) continue;
+            if (inv.getId().equals(excludeInvoiceId)) continue;
+            total = total.add(netDueAmount(inv));
+        }
+        return total;
+    }
+
+    /** مستحقات كل العملاء: العميل ← المبلغ (لشاشة العملاء). */
+    @Transactional(readOnly = true)
+    public Map<Long, BigDecimal> customerOutstandingMap() {
+        Map<Long, BigDecimal> result = new HashMap<>();
+        for (SalesInvoice inv : salesInvoiceRepository.findAllOutstanding()) {
+            if (inv.getCustomer() == null) continue;
+            result.merge(inv.getCustomer().getId(), netDueAmount(inv), BigDecimal::add);
+        }
+        return result;
+    }
+
+    /** يرفض البيع الآجل إن تجاوز مستحق العميل سقف الدين المحدد له. */
+    private void checkCreditLimit(Customer customer, BigDecimal newDue, Long excludeInvoiceId) {
+        if (customer == null || customer.getCreditLimit() == null || newDue.signum() <= 0) return;
+        BigDecimal current = customerOutstanding(customer.getId(), excludeInvoiceId);
+        if (current.add(newDue).compareTo(customer.getCreditLimit()) > 0) {
+            throw ApiException.badRequest(String.format(
+                    "تجاوز سقف الدين للعميل \"%s\": السقف %s، المستحق حالياً %s، والمبلغ الآجل بهذه الفاتورة %s. "
+                            + "المتاح للبيع الآجل: %s - اقبض مبلغاً أكبر أو راجع الإدارة.",
+                    customer.getName(), plain(customer.getCreditLimit()), plain(current), plain(newDue),
+                    plain(customer.getCreditLimit().subtract(current).max(BigDecimal.ZERO))));
+        }
+    }
+
+    private static String plain(BigDecimal v) {
+        return v.stripTrailingZeros().toPlainString();
+    }
+
+    /** فواتير مخزن معيّن (سيارة) التي عليها مبالغ مستحقة - لتحصيل السائق. */
+    @Transactional(readOnly = true)
+    public List<SalesInvoiceDto> outstandingByWarehouse(Long warehouseId) {
+        return salesInvoiceRepository.findAllOutstanding().stream()
+                .filter(inv -> inv.getWarehouse().getId().equals(warehouseId))
+                .filter(inv -> netDueAmount(inv).signum() > 0)
+                .map(this::toDto).toList();
     }
 
     private void validatePaidAmount(BigDecimal paidAmount, BigDecimal grandTotal) {
@@ -220,6 +300,7 @@ public class SalesInvoiceService {
         guardNotClosed(invoice);
 
         vanAccessService.enforceSalesmanWarehouse(actingUser, request);
+        request = normalizePacks(request);
         Warehouse oldWarehouse = invoice.getWarehouse();
         Warehouse newWarehouse = warehouseRepository.findById(request.warehouseId())
                 .orElseThrow(() -> ApiException.notFound("المخزن غير موجود"));
@@ -267,6 +348,9 @@ public class SalesInvoiceService {
             SalesInvoiceItem item = SalesInvoiceItem.builder()
                     .salesInvoice(invoice).product(product).warehouse(itemWarehouse)
                     .quantity(itemReq.quantity()).unitPrice(itemReq.unitPrice())
+                    .packType(itemReq.packType() != null ? itemReq.packType() : "UNIT")
+                    .packQuantity(itemReq.packQuantity() != null ? itemReq.packQuantity() : itemReq.quantity())
+                    .packSize(itemReq.packSize() != null ? itemReq.packSize() : BigDecimal.ONE)
                     .taxRate(tax).discount(discount).lineTotal(lineTotal)
                     .unitCost(product.getPurchasePrice())
                     .build();
@@ -287,6 +371,7 @@ public class SalesInvoiceService {
         BigDecimal paidAmount = request.paidAmount() != null ? request.paidAmount() : BigDecimal.ZERO;
         BigDecimal grandTotal = subtotal.subtract(discountTotal).add(taxTotal);
         validatePaidAmount(paidAmount, grandTotal);
+        checkCreditLimit(customer, grandTotal.subtract(paidAmount), invoice.getId());
 
         invoice.setPaidAmount(paidAmount);
         invoice.setNotes(request.notes());
@@ -344,9 +429,16 @@ public class SalesInvoiceService {
 
             invoiceItem.setReturnedQuantity(invoiceItem.getReturnedQuantity().add(itemReq.quantity()));
 
-            stockService.applyMovement(invoiceItem.getProduct(), itemWarehouseOrDefault(invoiceItem, invoice), itemReq.quantity(),
+            Warehouse returnWarehouse = itemWarehouseOrDefault(invoiceItem, invoice);
+            stockService.applyMovement(invoiceItem.getProduct(), returnWarehouse, itemReq.quantity(),
                     MovementType.SALE_RETURN_IN, "SALES_RETURN", invoice.getId(),
                     "إرجاع من فاتورة بيع رقم " + invoice.getInvoiceNumber(), actingUser);
+            // مرتجع تالف/منتهي: يدخل المخزن ثم يُسجَّل تالفاً فوراً (لا يعود قابلاً للبيع)
+            if (Boolean.TRUE.equals(itemReq.damaged())) {
+                stockService.recordDamage(new com.vanerp.dto.DamageRequest(invoiceItem.getProduct().getId(),
+                        returnWarehouse.getId(), itemReq.quantity(),
+                        "مرتجع تالف من فاتورة بيع رقم " + invoice.getInvoiceNumber()), actingUser);
+            }
         }
         salesReturn.setTotalValue(totalValue);
 
@@ -451,7 +543,8 @@ public class SalesInvoiceService {
                     it.getId(), it.getProduct().getId(), it.getProduct().getName(), it.getProduct().getSku(),
                     it.getProduct().getUnit().getName(), w.getId(), w.getName(),
                     it.getQuantity(), it.getUnitPrice(), it.getTaxRate(),
-                    it.getDiscount(), it.getLineTotal(), it.getReturnedQuantity()
+                    it.getDiscount(), it.getLineTotal(), it.getReturnedQuantity(),
+                    it.getPackType(), it.getPackQuantity(), it.getPackSize()
             );
         }).toList();
 

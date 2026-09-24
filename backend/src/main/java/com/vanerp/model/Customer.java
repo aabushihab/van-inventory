@@ -33,6 +33,10 @@ public class Customer {
     @Column(name = "tax_number", length = 60)
     private String taxNumber;
 
+    /** سقف الدين: أقصى مبلغ مستحق مسموح على العميل (فارغ = بدون سقف). */
+    @Column(name = "credit_limit", precision = 14, scale = 3)
+    private java.math.BigDecimal creditLimit;
+
     @Builder.Default
     private boolean active = true;
 

@@ -47,6 +47,6 @@ public class SupplierService {
     }
 
     private PartyDto toDto(Supplier s) {
-        return new PartyDto(s.getId(), s.getName(), s.getPhone(), s.getEmail(), s.getAddress(), s.getTaxNumber(), s.isActive());
+        return new PartyDto(s.getId(), s.getName(), s.getPhone(), s.getEmail(), s.getAddress(), s.getTaxNumber(), s.isActive(), null, null);
     }
 }

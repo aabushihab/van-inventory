@@ -24,7 +24,7 @@ import CategoryProductPicker from '../components/CategoryProductPicker';
 import ErrorAlert from '../components/ErrorAlert';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 
-const emptyItem = { productId: '', categoryId: '', warehouseId: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 16 };
+const emptyItem = { productId: '', categoryId: '', warehouseId: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 0 };
 
 /** يبني تاريخ ISO محلي (سنة-شهر-يوم) بدون تحويل للتوقيت العالمي، لتفادي انزياح يوم كامل قرب منتصف الليل بمنطقة زمنية شرقية. */
 function todayIso() {

@@ -127,14 +127,14 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesReturnDto recordReturn(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                         @Valid @RequestBody SalesReturnRequest request) {
-        vanAccessService.assertNotRestricted(principal.getUser());
+        vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
         return salesInvoiceService.recordReturn(id, request, principal.getUser());
     }
 
     @GetMapping("/{id}/returns")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
     public java.util.List<SalesReturnDto> returns(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
-        vanAccessService.assertCanView(principal.getUser(), salesInvoiceService.findById(id));
+        vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
         return salesInvoiceService.findReturnsByInvoice(id);
     }
 
@@ -142,14 +142,19 @@ public class SalesInvoiceController {
     @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesInvoiceDto addPayment(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
                                        @Valid @RequestBody SalesPaymentRequest request) {
-        vanAccessService.assertNotRestricted(principal.getUser());
+        // السائق يحصّل على فواتير سيارته فقط، والمبلغ يدخل صندوق سيارته دائماً
+        vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
+        Long vanCash = vanAccessService.restrictedCashAccountId(principal.getUser());
+        if (vanCash != null) {
+            request = new SalesPaymentRequest(request.amount(), "CASH", request.note(), vanCash);
+        }
         return salesInvoiceService.addPayment(id, request, principal.getUser());
     }
 
     @GetMapping("/{id}/payments")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
     public java.util.List<PaymentDto> payments(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
-        vanAccessService.assertCanView(principal.getUser(), salesInvoiceService.findById(id));
+        vanAccessService.assertVanInvoice(principal.getUser(), salesInvoiceService.findById(id));
         return salesInvoiceService.getPayments(id);
     }
 
@@ -243,9 +248,12 @@ public class SalesInvoiceController {
     }
 
     private InvoicePrintModel.Row toRow(InvoiceItemDto it) {
+        boolean carton = "CARTON".equals(it.packType()) && it.packSize() != null && it.packSize().signum() > 0;
         return InvoicePrintModel.Row.builder()
-                .name(it.productName()).sku(it.productSku()).unit(it.unitName())
-                .quantity(it.quantity()).unitPrice(it.unitPrice())
+                .name(it.productName()).sku(it.productSku())
+                .unit(carton ? "كرتونة ×" + it.packSize().stripTrailingZeros().toPlainString() : it.unitName())
+                .quantity(carton ? it.packQuantity() : it.quantity())
+                .unitPrice(carton ? it.unitPrice().multiply(it.packSize()) : it.unitPrice())
                 .discount(it.discount()).taxRate(it.taxRate()).lineTotal(it.lineTotal())
                 .returnedQuantity(it.returnedQuantity())
                 .build();

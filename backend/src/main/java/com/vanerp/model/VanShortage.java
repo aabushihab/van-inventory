@@ -38,6 +38,11 @@ public class VanShortage {
     @JoinColumn(name = "salesman_id")
     private User salesman;
 
+    /** GOODS = عجز بضاعة من الجرد، CASH = عجز كاش عند تسليم الصندوق. */
+    @Column(name = "shortage_type", nullable = false, length = 10)
+    @Builder.Default
+    private String shortageType = "GOODS";
+
     /** SALE أو COST - السعر الذي حُسبت به قيمة العجز. */
     @Column(nullable = false, length = 10)
     private String pricing;

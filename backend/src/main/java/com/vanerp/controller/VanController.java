@@ -2,7 +2,10 @@ package com.vanerp.controller;
 
 import com.vanerp.dto.*;
 import com.vanerp.security.UserPrincipal;
+import com.vanerp.service.VanCashService;
 import com.vanerp.service.VanLoadService;
+import com.vanerp.service.SalesInvoiceService;
+import com.vanerp.service.VanAccessService;
 import com.vanerp.service.VanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,9 @@ public class VanController {
 
     private final VanService vanService;
     private final VanLoadService vanLoadService;
+    private final VanCashService vanCashService;
+    private final SalesInvoiceService salesInvoiceService;
+    private final VanAccessService vanAccessService;
 
     // ---------- السيارات (Vans) ----------
 
@@ -37,6 +43,36 @@ public class VanController {
     @GetMapping("/my")
     public MyVanDto myVan(@AuthenticationPrincipal UserPrincipal principal) {
         return vanLoadService.myVan(principal.getUser());
+    }
+
+    /** ديون عملاء سيارة المندوب (فواتير سيارته غير المسددة) - للتحصيل. */
+    @GetMapping("/my/receivables")
+    public List<SalesInvoiceDto> myReceivables(@AuthenticationPrincipal UserPrincipal principal) {
+        Long wh = vanAccessService.findVanOf(principal.getUser()).map(v -> v.getWarehouse().getId()).orElse(null);
+        return wh != null ? salesInvoiceService.outstandingByWarehouse(wh) : List.of();
+    }
+
+    /** ديون عملاء سيارة معيّنة (للمدير). */
+    @GetMapping("/{id}/receivables")
+    @PreAuthorize("hasAuthority('VAN_VIEW')")
+    public List<SalesInvoiceDto> receivables(@PathVariable Long id) {
+        return salesInvoiceService.outstandingByWarehouse(vanService.findById(id).warehouseId());
+    }
+
+    /** تسليم كاش السائق للصندوق. */
+    @PostMapping("/{id}/cash-handover")
+    @PreAuthorize("hasAuthority('VAN_LOAD')")
+    public CashHandoverDto cashHandover(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id,
+                                        @Valid @RequestBody CashHandoverRequest request) {
+        return vanCashService.handover(id, request, principal.getUser());
+    }
+
+    @GetMapping("/{id}/cash-handovers")
+    @PreAuthorize("hasAuthority('VAN_VIEW')")
+    public List<CashHandoverDto> cashHandovers(@PathVariable Long id,
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return vanCashService.list(id, from, to);
     }
 
     @GetMapping("/{id}")

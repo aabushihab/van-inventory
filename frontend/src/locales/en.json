@@ -265,7 +265,9 @@
     "expiryAlertDaysDefault": "Default",
     "expiryAlertDaysHint": "Empty = default from alert settings",
     "expiresIn": "Expires in {{days}} days",
-    "expiredAgo": "Expired {{days}} days ago"
+    "expiredAgo": "Expired {{days}} days ago",
+    "cartonPrice": "Carton sale price",
+    "cartonPriceHint": "Empty = piece price × pieces"
   },
   "stock": {
     "adjust": "Add Stock",
@@ -328,7 +330,13 @@
     "refundHistoryLabel": "Refund",
     "dueDate": "Due Date",
     "source": "Source (warehouse / van)",
-    "createdBy": "By (driver/staff)"
+    "createdBy": "By (driver/staff)",
+    "pack": "Pack",
+    "packUnit": "Piece",
+    "packCarton": "Carton",
+    "pieces": "= {{count}} pcs",
+    "packDamaged": "Damaged",
+    "damagedHint": "Damaged/expired returns go to damaged goods and are not resold"
   },
   "notifications": {
     "title": "Notifications",
@@ -419,7 +427,10 @@
   "parties": {
     "searchByNameOrPhone": "Search by name or phone",
     "newSalesInvoice": "New sales invoice for this customer",
-    "newPurchaseInvoice": "New purchase invoice from this supplier"
+    "newPurchaseInvoice": "New purchase invoice from this supplier",
+    "creditLimit": "Credit limit",
+    "balance": "Balance due",
+    "noLimit": "No limit"
   },
   "balances": {
     "byParty": "Balance by Party",
@@ -698,7 +709,21 @@
     "empty": "No goods on the van right now",
     "todayInvoices": "My invoices today",
     "todaySales": "My sales today",
-    "todayCollected": "Collected today"
+    "todayCollected": "Collected today",
+    "requestLoad": "Request load",
+    "sendRequest": "Send request",
+    "requestSent": "Load request sent to management",
+    "cashBox": "Van cash box",
+    "cashBoxHint": "Collected, not yet handed over",
+    "customerDebts": "Customer debts",
+    "debtInvoices": "{{count}} invoices",
+    "noDebts": "No outstanding customer debts",
+    "collect": "Collect",
+    "collected": "Collected {{amount}} on invoice {{invoice}} - added to your van cash box",
+    "amount": "Amount received",
+    "collectHint": "Goes to your van cash box and is handed to management at cash handover",
+    "myRequests": "Load requests",
+    "noRequests": "No requests"
   },
   "login": {
     "headline": "Your warehouses, sales and distribution vans in one place",
@@ -767,6 +792,49 @@
       "Settle by deducting from a month's salary (shown on the Employees screen), cash payment (goes to the cash box), or waiving with a reason.",
       "Click a driver's card to see only their shortages. A wrong settlement can be reopened.",
       "Waived shortages count as a loss at cost and reduce profit; shortages deducted from salary or paid in cash are recovered and are not a loss."
+    ],
+    "cashType": "Cash shortage"
+  },
+  "loadRequests": {
+    "title": "Load Requests",
+    "none": "No requests",
+    "forDate": "For date",
+    "requestedBy": "Requested by",
+    "response": "Response / voucher",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveTitle": "Approve load request",
+    "approveAndLoad": "Approve & load van",
+    "requested": "Requested",
+    "toLoad": "To load",
+    "rejectReason": "Reason for rejection",
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "guide": [
+      "Drivers send load requests from \"My Van\" (usually for tomorrow) and you get a notification.",
+      "On approval pick the warehouse and adjust quantities; a real load voucher is created and goods move to the van.",
+      "When rejecting, write the reason so the driver sees it."
     ]
+  },
+  "cash": {
+    "button": "Cash handover",
+    "title": "Driver cash handover",
+    "tab": "Cash",
+    "now": "now",
+    "hint": "Expected = van cash box balance (cash sales and collections). Enter what the driver actually handed over.",
+    "expected": "Expected",
+    "handed": "Handed over",
+    "difference": "Difference",
+    "toAccount": "To cash box / account",
+    "matches": "Matches",
+    "willBeShortage": "Short {{amount}} - recorded against the driver",
+    "willBeSurplus": "Surplus {{amount}}",
+    "confirm": "Confirm handover",
+    "done": "Cash handed over",
+    "shortageRecorded": "The difference was recorded as a cash shortage against the driver - see \"Driver Shortages\".",
+    "none": "No handovers in this period"
   }
 }

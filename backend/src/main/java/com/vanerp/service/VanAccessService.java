@@ -68,6 +68,23 @@ public class VanAccessService {
         }
     }
 
+    /** المندوب يحصّل ويستلم مرتجعات فواتير سيارته (أي سائق عليها) - وليس فواتير المستودع أو سيارات أخرى. */
+    @Transactional(readOnly = true)
+    public void assertVanInvoice(User user, SalesInvoiceDto invoice) {
+        Long own = restrictedWarehouseId(user);
+        if (own != null && !own.equals(invoice.warehouseId())) {
+            throw ApiException.forbidden("هذه الفاتورة ليست من سيارتك");
+        }
+    }
+
+    /** صندوق سيارة المندوب المقيّد (المبالغ التي يحصّلها تدخل هنا فقط)، أو null. */
+    @Transactional(readOnly = true)
+    public Long restrictedCashAccountId(User user) {
+        if (!isRestrictedSalesman(user)) return null;
+        Van van = findVanOf(user).get();
+        return van.getCashAccount() != null ? van.getCashAccount().getId() : null;
+    }
+
     /** عمليات التعديل/الإلغاء/الإرجاع/الدفعات والتقارير الشاملة ليست متاحة للمندوب - البيع فقط. */
     @Transactional(readOnly = true)
     public void assertNotRestricted(User user) {

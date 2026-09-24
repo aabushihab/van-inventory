@@ -78,6 +78,7 @@ public class ProductService {
                 .category(category)
                 .unit(unit)
                 .unitsPerCarton(request.unitsPerCarton())
+                .cartonPrice(request.cartonPrice())
                 .purchasePrice(request.purchasePrice())
                 .salePrice(request.salePrice())
                 .taxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO)
@@ -119,6 +120,7 @@ public class ProductService {
         product.setCategory(category);
         product.setUnit(unit);
         product.setUnitsPerCarton(request.unitsPerCarton());
+        product.setCartonPrice(request.cartonPrice());
         product.setPurchasePrice(request.purchasePrice());
         product.setSalePrice(request.salePrice());
         product.setTaxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO);
@@ -172,7 +174,7 @@ public class ProductService {
                 p.getCategory() != null ? p.getCategory().getId() : null,
                 p.getCategory() != null ? p.getCategory().getName() : null,
                 p.getUnit().getId(), p.getUnit().getName(),
-                p.getUnitsPerCarton(),
+                p.getUnitsPerCarton(), p.getCartonPrice(),
                 p.getPurchasePrice(), p.getSalePrice(), p.getTaxRate(), p.getMinStockThreshold(),
                 p.getImageUrl(), p.getExpiryDate(), p.getExpiryAlertDays(),
                 expiryStatus(p), p.getExpiryDate() != null

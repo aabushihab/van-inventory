@@ -31,6 +31,32 @@ export default function PartiesPage() {
 
   const emptyModel = { name: '', phone: '', email: '', address: '', taxNumber: '', active: true };
 
+  // العملاء: سقف الدين + المستحق الحالي (يُرفض البيع الآجل فوق السقف)
+  const fmtMoney = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
+  const customerFields = [
+    ...fields.slice(0, 5),
+    { key: 'creditLimit', label: t('parties.creditLimit'), type: 'number' },
+    fields[5],
+  ];
+  const customerColumns = [
+    ...columns.slice(0, 3),
+    { key: 'balance', label: t('parties.balance'), render: (row) => fmtMoney(row.balance) },
+    {
+      key: 'creditLimit', label: t('parties.creditLimit'),
+      render: (row) => {
+        if (row.creditLimit == null) return t('parties.noLimit');
+        const over = Number(row.balance || 0) >= Number(row.creditLimit);
+        return <Box component="span" sx={{ color: over ? 'error.main' : 'inherit', fontWeight: over ? 700 : 400 }}>{fmtMoney(row.creditLimit)}</Box>;
+      },
+    },
+    columns[3],
+  ];
+  const customerApiWithLimit = {
+    ...customerApi,
+    create: (data) => customerApi.create({ ...data, creditLimit: data.creditLimit === '' || data.creditLimit == null ? null : Number(data.creditLimit) }),
+    update: (id, data) => customerApi.update(id, { ...data, creditLimit: data.creditLimit === '' || data.creditLimit == null ? null : Number(data.creditLimit) }),
+  };
+
   return (
     <Box>
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
@@ -42,10 +68,10 @@ export default function PartiesPage() {
         <CrudPage
           title={t('invoice.customer')}
           canManage={hasPermission('CUSTOMER_MANAGE')}
-          emptyModel={emptyModel}
-          columns={columns}
-          fields={fields}
-          api={customerApi}
+          emptyModel={{ ...emptyModel, creditLimit: '' }}
+          columns={customerColumns}
+          fields={customerFields}
+          api={customerApiWithLimit}
           paginated
           searchPlaceholder={t('parties.searchByNameOrPhone')}
           extraRowActions={hasPermission('SALES_INVOICE_CREATE') ? (row) => (

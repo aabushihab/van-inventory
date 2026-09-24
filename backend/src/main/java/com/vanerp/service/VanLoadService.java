@@ -203,6 +203,10 @@ public class VanLoadService {
         return (type == VanLoadType.LOAD ? "VL-" : "VU-") + datePart + "-" + String.format("%04d", countToday + 1) + "-" + suffix;
     }
 
+    VanLoad getRef(Long id) {
+        return getOrThrow(id);
+    }
+
     private VanLoad getOrThrow(Long id) {
         return vanLoadRepository.findById(id).orElseThrow(() -> ApiException.notFound("سند التحميل غير موجود"));
     }

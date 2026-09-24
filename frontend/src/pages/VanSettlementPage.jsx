@@ -45,6 +45,8 @@ export default function VanSettlementPage({ initialVanId, embedded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [viewInvoice, setViewInvoice] = useState(null);
+  const [handovers, setHandovers] = useState([]);
+  const [receivables, setReceivables] = useState([]);
 
   async function openInvoice(id) {
     try {
@@ -69,6 +71,8 @@ export default function VanSettlementPage({ initialVanId, embedded }) {
     try {
       const { data: result } = await vanApi.settlement(vanId, range);
       setData(result);
+      vanApi.cashHandovers(vanId, range).then(({ data: h }) => setHandovers(h)).catch(() => setHandovers([]));
+      vanApi.receivables(vanId).then(({ data: r }) => setReceivables(r)).catch(() => setReceivables([]));
     } catch (e) {
       setError(getErrorMessage(e, t('common.error')));
     } finally {
@@ -147,7 +151,89 @@ export default function VanSettlementPage({ initialVanId, embedded }) {
             <Tab label={`${t('vanSettlement.tabCurrent')} (${data.currentStock.length})`} />
             <Tab label={`${t('vanSettlement.tabInvoices')} (${data.invoices.length})`} />
             <Tab label={t('vanSettlement.tabSold')} />
+            <Tab label={`${t('cash.tab')} (${handovers.length})`} />
+            <Tab label={`${t('myVan.customerDebts')} (${receivables.length})`} />
           </Tabs>
+
+          {/* الكاش: رصيد صندوق السيارة الحالي + عمليات التسليم في الفترة */}
+          {tab === 3 && (
+            <Box>
+              <Paper variant="outlined" sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+                <Typography>{t('myVan.cashBox')} ({t('cash.now')})</Typography>
+                <Typography variant="h6" fontWeight={800} color="primary.main">{fmt(vans.find((v) => v.id === vanId)?.cashBalance)}</Typography>
+              </Paper>
+              <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+                {handovers.length === 0 ? (
+                  <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('cash.none')}</Box>
+                ) : (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('common.createdAt')}</TableCell>
+                        <TableCell>{t('vans.driver')}</TableCell>
+                        <TableCell>{t('cash.expected')}</TableCell>
+                        <TableCell>{t('cash.handed')}</TableCell>
+                        <TableCell>{t('cash.difference')}</TableCell>
+                        <TableCell>{t('cash.toAccount')}</TableCell>
+                        <TableCell>{t('vanLoads.createdBy')}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {handovers.map((h) => (
+                        <TableRow key={h.id} hover>
+                          <TableCell>{new Date(h.createdAt).toLocaleString()}</TableCell>
+                          <TableCell>{h.driverName || '-'}</TableCell>
+                          <TableCell>{fmt(h.expectedAmount)}</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>{fmt(h.handedAmount)}</TableCell>
+                          <TableCell sx={{ color: Number(h.difference) < 0 ? 'error.main' : Number(h.difference) > 0 ? 'success.main' : undefined, fontWeight: 700 }}>
+                            {fmt(h.difference)}
+                          </TableCell>
+                          <TableCell>{h.toAccountName || '-'}</TableCell>
+                          <TableCell>{h.createdByName || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Paper>
+            </Box>
+          )}
+
+          {/* ديون عملاء السيارة غير المسددة */}
+          {tab === 4 && (
+            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+              {receivables.length === 0 ? (
+                <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>{t('myVan.noDebts')}</Box>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t('vanSettlement.invoiceNumber')}</TableCell>
+                      <TableCell>{t('common.createdAt')}</TableCell>
+                      <TableCell>{t('vanSettlement.customer')}</TableCell>
+                      <TableCell>{t('common.total')}</TableCell>
+                      <TableCell>{t('vanSettlement.paid')}</TableCell>
+                      <TableCell>{t('vanSettlement.due')}</TableCell>
+                      <TableCell>{t('vanSettlement.createdBy')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {receivables.map((inv) => (
+                      <TableRow key={inv.id} hover>
+                        <TableCell>{inv.invoiceNumber}</TableCell>
+                        <TableCell>{new Date(inv.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{inv.customerName || '-'}</TableCell>
+                        <TableCell>{fmt(inv.grandTotal)}</TableCell>
+                        <TableCell>{fmt(inv.paidAmount)}</TableCell>
+                        <TableCell sx={{ color: 'warning.main', fontWeight: 800 }}>{fmt(inv.dueAmount)}</TableCell>
+                        <TableCell>{inv.createdByName || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Paper>
+          )}
 
           {/* فواتير السائق */}
           {tab === 1 && (
@@ -313,8 +399,12 @@ export default function VanSettlementPage({ initialVanId, embedded }) {
                   {viewInvoice.items.map((it) => (
                     <TableRow key={it.id}>
                       <TableCell>{it.productName}</TableCell>
-                      <TableCell>{fmt(it.quantity)}</TableCell>
-                      <TableCell>{fmt(it.unitPrice)}</TableCell>
+                      <TableCell>
+                        {it.packType === 'CARTON'
+                          ? `${fmt(it.packQuantity)} ${t('invoice.packCarton')} (${t('invoice.pieces', { count: fmt(it.quantity) })})`
+                          : fmt(it.quantity)}
+                      </TableCell>
+                      <TableCell>{fmt(it.packType === 'CARTON' ? Number(it.unitPrice) * Number(it.packSize) : it.unitPrice)}</TableCell>
                       <TableCell>{fmt(it.discount)}</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>{fmt(it.lineTotal)}</TableCell>
                     </TableRow>

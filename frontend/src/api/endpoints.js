@@ -244,6 +244,10 @@ export const notificationApi = {
 export const vanApi = {
   list: () => client.get('/vans'),
   my: () => client.get('/vans/my'),
+  myReceivables: () => client.get('/vans/my/receivables'),
+  receivables: (id) => client.get(`/vans/${id}/receivables`),
+  cashHandover: (id, data) => client.post(`/vans/${id}/cash-handover`, data),
+  cashHandovers: (id, params) => client.get(`/vans/${id}/cash-handovers`, { params: cleanParams(params) }),
   get: (id) => client.get(`/vans/${id}`),
   create: (data) => client.post('/vans', data),
   update: (id, data) => client.put(`/vans/${id}`, data),
@@ -255,6 +259,16 @@ export const vanApi = {
   getLoad: (id) => client.get(`/vans/loads/${id}`),
   createLoad: (data) => client.post('/vans/loads', data),
   cancelLoad: (id) => client.post(`/vans/loads/${id}/cancel`),
+};
+
+export const loadRequestApi = {
+  create: (data) => client.post('/van-load-requests', data),
+  mine: () => client.get('/van-load-requests/my'),
+  products: () => client.get('/van-load-requests/products'),
+  list: (status) => client.get('/van-load-requests', { params: cleanParams({ status }) }),
+  pendingCount: () => client.get('/van-load-requests/pending-count'),
+  approve: (id, data) => client.post(`/van-load-requests/${id}/approve`, data),
+  reject: (id, data) => client.post(`/van-load-requests/${id}/reject`, data),
 };
 
 export const vanShortageApi = {

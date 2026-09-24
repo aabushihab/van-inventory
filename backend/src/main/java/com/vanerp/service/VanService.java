@@ -33,6 +33,7 @@ public class VanService {
     private final AccountRepository accountRepository;
     private final EmployeeRepository employeeRepository;
     private final VanShortageRepository vanShortageRepository;
+    private final AccountService accountService;
 
     @Transactional(readOnly = true)
     public List<VanDto> findAll() {
@@ -303,7 +304,8 @@ public class VanService {
                 v.getCashAccount() != null ? v.getCashAccount().getName() : null,
                 v.getNotes(), v.isActive(), qty, value, todaySales.size(),
                 todaySales.stream().map(SalesInvoice::getGrandTotal).reduce(BigDecimal.ZERO, BigDecimal::add),
-                vanShortageRepository.pendingValueByVan(v.getId()));
+                vanShortageRepository.pendingValueByVan(v.getId()),
+                v.getCashAccount() != null ? accountService.balanceOf(v.getCashAccount().getId()) : BigDecimal.ZERO);
     }
 
     private static class Acc {
