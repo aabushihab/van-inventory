@@ -250,19 +250,29 @@ public class EInvoiceService {
         } catch (Exception ignored) {
             // رد غير JSON
         }
+        // الدليل 1.5 - أكثر رموز الاستجابة شيوعاً
         if (code == 401 || code == 403) {
             return new Outcome(false, false, "رفض نظام الفوترة الدخول - تحقق من رقم المستخدم (Client ID) والمفتاح السري ("
                     + extractErrors(root, code, body) + ")", null, trimmed);
         }
-        if (code >= 500 || code == 429) {
-            return new Outcome(false, true, "نظام الفوترة غير متاح حالياً (" + code + ") - سيُعاد الإرسال تلقائياً", null, trimmed);
+        if (code == 500) {
+            return new Outcome(false, false, "خطأ 500 من نظام الفوترة: غالباً الرقم الضريبي أو تسلسل مصدر الدخل غير صحيح، "
+                    + "أو نسبة ضريبة غير معتمدة، أو خطأ برقم المستخدم/المفتاح السري", null, trimmed);
         }
+        if (code > 500 || code == 429) {
+            return new Outcome(false, true, "تعذّر الوصول لنظام الفوترة (" + code + ") - قد تكون المشكلة بالجدار الناري أو بموقع الفوترة، "
+                    + "سيُعاد الإرسال تلقائياً", null, trimmed);
+        }
+        // لا يُعتمد على رمز الاستجابة وحده: الحالة النهائية من EINV_STATUS، والاعتماد يكتمل فقط باستلام EINV_QR
         String status = root != null ? root.path("EINV_STATUS").asText("") : "";
-        String qr = root != null ? root.path("EINV_QR").asText("") : "";
+        String qr = root != null && root.hasNonNull("EINV_QR") ? root.path("EINV_QR").asText("") : "";
         boolean accepted = code >= 200 && code < 300
-                && ("SUBMITTED".equalsIgnoreCase(status) || "ALREADY_SUBMITTED".equalsIgnoreCase(status)
-                    || (!qr.isBlank() && !status.toUpperCase().contains("NOT")));
-        if (accepted) return new Outcome(true, false, null, qr.isBlank() ? null : qr, trimmed);
+                && ("SUBMITTED".equalsIgnoreCase(status) || "ALREADY_SUBMITTED".equalsIgnoreCase(status));
+        if (accepted && !qr.isBlank()) return new Outcome(true, false, null, qr, trimmed);
+        if (accepted) {
+            // يُعاد إرسالها بنفس ID و UUID فيرجع ALREADY_SUBMITTED مع رمز QR
+            return new Outcome(false, true, "قُبلت الفاتورة لكن لم يصل رمز QR - سيُعاد الطلب لاستلامه", null, trimmed);
+        }
         return new Outcome(false, false, extractErrors(root, code, body), null, trimmed);
     }
 
@@ -284,6 +294,8 @@ public class EInvoiceService {
 
     private void applyOutcome(Long id, Outcome o) {
         EInvoiceSubmission sub = repo.findById(id).orElseThrow();
+        log.info("E-invoice {} [{} {} ICV={}] -> {}{}", sub.getId(), sub.getDocType(), sub.getDocNumber(), sub.getIcv(),
+                o.success() ? "SENT" : "FAILED", o.success() ? "" : " : " + o.error());
         sub.setResponse(o.body());
         if (o.success()) {
             sub.setStatus(EInvoiceSubmission.SENT);
@@ -318,25 +330,33 @@ public class EInvoiceService {
         String typeCode = (sub.isCash() ? "01" : "02") + (withTax ? "2" : "1");
         SalesInvoice inv = sub.getSalesInvoice();
 
+        // رقم كل سطر ثابت = ترتيبه بالفاتورة الأصلية (حسب المعرّف) ليُستخدم نفسه بفواتير الإرجاع
+        List<SalesInvoiceItem> ordered = inv.getItems().stream()
+                .sorted(Comparator.comparing(SalesInvoiceItem::getId)).toList();
+        Map<Long, Integer> lineNo = new HashMap<>();
+        for (int i = 0; i < ordered.size(); i++) lineNo.put(ordered.get(i).getId(), i + 1);
+
         List<EInvoiceXmlBuilder.Line> lines = new ArrayList<>();
         switch (sub.getDocType()) {
             case EInvoiceSubmission.INVOICE -> {
-                for (SalesInvoiceItem it : inv.getItems()) {
+                for (SalesInvoiceItem it : ordered) {
                     BigDecimal gross = it.getQuantity().multiply(it.getUnitPrice()).setScale(3, RoundingMode.HALF_UP);
                     BigDecimal tax = it.getLineTotal().subtract(gross.subtract(nz(it.getDiscount())));
-                    lines.add(line(it, it.getQuantity(), nz(it.getDiscount()), tax, withTax));
+                    lines.add(line(lineNo.get(it.getId()), it, it.getQuantity(), nz(it.getDiscount()), tax, withTax));
                 }
             }
             case EInvoiceSubmission.RETURN -> {
                 SalesReturn ret = sub.getSalesReturn();
                 for (SalesReturnItem ri : ret.getItems()) {
-                    lines.add(proportionalLine(ri.getSalesInvoiceItem(), ri.getQuantity(), withTax));
+                    SalesInvoiceItem it = ri.getSalesInvoiceItem();
+                    lines.add(proportionalLine(lineNo.get(it.getId()), it, ri.getQuantity(), withTax));
                 }
+                lines.sort(Comparator.comparingInt(EInvoiceXmlBuilder.Line::lineNo));
             }
             default -> {
-                for (SalesInvoiceItem it : inv.getItems()) {
+                for (SalesInvoiceItem it : ordered) {
                     BigDecimal remaining = it.getQuantity().subtract(it.getReturnedQuantity());
-                    if (remaining.signum() > 0) lines.add(proportionalLine(it, remaining, withTax));
+                    if (remaining.signum() > 0) lines.add(proportionalLine(lineNo.get(it.getId()), it, remaining, withTax));
                 }
             }
         }
@@ -348,6 +368,9 @@ public class EInvoiceService {
         if (c != null) {
             if (c.getIdNumber() != null && !c.getIdNumber().isBlank() && !c.getIdNumber().matches("\\d+")) {
                 throw new ValidationException("رقم هوية العميل \"" + c.getName() + "\" يجب أن يكون أرقاماً فقط");
+            }
+            if (c.getPostalCode() != null && !c.getPostalCode().isBlank() && !c.getPostalCode().matches("\\d{1,5}")) {
+                throw new ValidationException("الرمز البريدي للعميل \"" + c.getName() + "\" يجب أن يكون 5 أرقام كحد أقصى");
             }
             buyer = new EInvoiceXmlBuilder.Buyer(c.getIdType(), c.getIdNumber(), c.getPostalCode(), c.getCityCode(), c.getName(), c.getPhone());
         }
@@ -382,14 +405,14 @@ public class EInvoiceService {
     }
 
     /** سطر إرجاع: الخصم والضريبة بنفس نسبة الكمية المرتجعة من السطر الأصلي. */
-    private EInvoiceXmlBuilder.Line proportionalLine(SalesInvoiceItem it, BigDecimal qty, boolean withTax) {
+    private EInvoiceXmlBuilder.Line proportionalLine(int no, SalesInvoiceItem it, BigDecimal qty, boolean withTax) {
         BigDecimal discount = nz(it.getDiscount()).multiply(qty).divide(it.getQuantity(), 3, RoundingMode.HALF_UP);
         BigDecimal base = qty.multiply(it.getUnitPrice()).setScale(3, RoundingMode.HALF_UP).subtract(discount);
         BigDecimal tax = base.multiply(nz(it.getTaxRate())).divide(BigDecimal.valueOf(100), 3, RoundingMode.HALF_UP);
-        return line(it, qty, discount, tax, withTax);
+        return line(no, it, qty, discount, tax, withTax);
     }
 
-    private EInvoiceXmlBuilder.Line line(SalesInvoiceItem it, BigDecimal qty, BigDecimal discount, BigDecimal tax, boolean withTax) {
+    private EInvoiceXmlBuilder.Line line(int no, SalesInvoiceItem it, BigDecimal qty, BigDecimal discount, BigDecimal tax, boolean withTax) {
         Product p = it.getProduct();
         BigDecimal rate = nz(it.getTaxRate());
         if (withTax && !ALLOWED_RATES.contains(rate.stripTrailingZeros())) {
@@ -397,7 +420,7 @@ public class EInvoiceService {
                     + "%) غير مقبولة بنظام الفوترة - المسموح: 0، 1، 2، 3، 4، 5، 7، 8، 10، 16");
         }
         String category = rate.signum() > 0 ? "S" : ("O".equals(p.getZeroTaxType()) ? "O" : "Z");
-        return new EInvoiceXmlBuilder.Line(p.getName(), qty, it.getUnitPrice(), discount,
+        return new EInvoiceXmlBuilder.Line(no, p.getName(), qty, it.getUnitPrice(), discount,
                 withTax ? tax : BigDecimal.ZERO, rate, category);
     }
 

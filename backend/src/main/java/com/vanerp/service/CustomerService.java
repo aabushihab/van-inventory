@@ -38,7 +38,7 @@ public class CustomerService {
         Customer c = Customer.builder().name(dto.name()).phone(dto.phone()).email(dto.email())
                 .address(dto.address()).taxNumber(dto.taxNumber()).creditLimit(dto.creditLimit()).active(true)
                 .idType(idType(dto.idType())).idNumber(blankToNull(dto.idNumber()))
-                .postalCode(blankToNull(dto.postalCode())).cityCode(blankToNull(dto.cityCode())).build();
+                .postalCode(postal(dto.postalCode())).cityCode(blankToNull(dto.cityCode())).build();
         return toDto(customerRepository.save(c));
     }
 
@@ -49,7 +49,7 @@ public class CustomerService {
         c.setAddress(dto.address()); c.setTaxNumber(dto.taxNumber()); c.setActive(dto.active());
         c.setCreditLimit(dto.creditLimit());
         c.setIdType(idType(dto.idType())); c.setIdNumber(blankToNull(dto.idNumber()));
-        c.setPostalCode(blankToNull(dto.postalCode())); c.setCityCode(blankToNull(dto.cityCode()));
+        c.setPostalCode(postal(dto.postalCode())); c.setCityCode(blankToNull(dto.cityCode()));
         return toDto(customerRepository.save(c));
     }
 
@@ -75,6 +75,15 @@ public class CustomerService {
             throw com.vanerp.exception.ApiException.badRequest("نوع الهوية غير صحيح");
         }
         return v;
+    }
+
+    /** الرمز البريدي حسب نظام الفوترة: أرقام، 5 خانات كحد أقصى. */
+    private static String postal(String v) {
+        String p = blankToNull(v);
+        if (p != null && !p.matches("\\d{1,5}")) {
+            throw com.vanerp.exception.ApiException.badRequest("الرمز البريدي يجب أن يكون أرقاماً (5 خانات كحد أقصى)");
+        }
+        return p;
     }
 
     private static String blankToNull(String v) {

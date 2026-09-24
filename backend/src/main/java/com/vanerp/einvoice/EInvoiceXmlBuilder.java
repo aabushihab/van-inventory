@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * يبني ملف XML للفاتورة الإلكترونية بمعيار UBL 2.1 حسب "الدليل التقني للربط مع نظام الفوترة الوطني" (الإصدار 1.4):
+ * يبني ملف XML للفاتورة الإلكترونية بمعيار UBL 2.1 حسب "الدليل التقني للربط مع نظام الفوترة الوطني" (الإصدار 1.5 - 2026/5/12):
  * فاتورة جديدة (388) أو فاتورة إرجاع (381)، لنوعي المكلّف: فاتورة دخل (بدون ضريبة) وفاتورة مبيعات عامة.
  * ترتيب العناصر مطابق لترتيب مخطط UBL وأمثلة الدليل.
  */
@@ -14,8 +14,11 @@ public final class EInvoiceXmlBuilder {
 
     private EInvoiceXmlBuilder() {}
 
-    /** سطر سلعة: الكمية وسعر الوحدة قبل الضريبة وخصم السطر وضريبته الفعلية. */
-    public record Line(String name, BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
+    /**
+     * سطر سلعة. lineNo = رقم السطر بالفاتورة الأصلية (الدليل 1.5: فاتورة الإرجاع تستخدم نفس رقم ID الخاص بالسلعة
+     * بالفاتورة الأصلية لمطابقة السلعة المرتجعة).
+     */
+    public record Line(int lineNo, String name, BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
                        BigDecimal taxAmount, BigDecimal taxPercent, String taxCategory) {}
 
     /** بيانات المشتري (كلها اختيارية ما عدا الاسم في حالات يحددها الدليل). */
@@ -85,8 +88,8 @@ public final class EInvoiceXmlBuilder {
         el(x, "cbc:RegistrationName", d.sellerName());
         x.append("</cac:PartyLegalEntity></cac:Party></cac:AccountingSupplierParty>");
 
-        // C. المشتري - بفاتورة الإرجاع وصف ثابت (بياناته من الفاتورة الأصلية)
-        appendBuyer(x, d.isReturn() ? null : d.buyer());
+        // C. المشتري - بفاتورة الإرجاع يجب أن تتوافق بياناته مع الفاتورة الأصلية
+        appendBuyer(x, d.buyer());
 
         // D. تسلسل مصدر الدخل
         x.append("<cac:SellerSupplierParty><cac:Party><cac:PartyIdentification>");
@@ -108,30 +111,19 @@ public final class EInvoiceXmlBuilder {
         if (d.withTax()) {
             x.append("<cac:TaxTotal>");
             money(x, "cbc:TaxAmount", t.tax());
-            if (d.isReturn()) {
-                for (Line l : d.lines()) {
-                    x.append("<cac:TaxSubtotal>");
-                    money(x, "cbc:TaxableAmount", lineExtension(l));
-                    money(x, "cbc:TaxAmount", nz(l.taxAmount()));
-                    taxCategory(x, l);
-                    x.append("</cac:TaxSubtotal>");
-                }
-            }
             x.append("</cac:TaxTotal>");
         }
         x.append("<cac:LegalMonetaryTotal>");
         money(x, "cbc:TaxExclusiveAmount", t.taxExclusive());
         money(x, "cbc:TaxInclusiveAmount", t.taxInclusive());
         money(x, "cbc:AllowanceTotalAmount", t.discount());
-        if (d.isReturn() && d.withTax()) money(x, "cbc:PrepaidAmount", BigDecimal.ZERO);
         money(x, "cbc:PayableAmount", t.taxInclusive());
         x.append("</cac:LegalMonetaryTotal>");
 
         // F. تفاصيل السلع
-        int n = 1;
         for (Line l : d.lines()) {
             x.append("<cac:InvoiceLine>");
-            el(x, "cbc:ID", String.valueOf(n++));
+            el(x, "cbc:ID", String.valueOf(l.lineNo()));
             x.append("<cbc:InvoicedQuantity unitCode=\"PCE\">").append(qty(l.quantity())).append("</cbc:InvoicedQuantity>");
             money(x, "cbc:LineExtensionAmount", lineExtension(l));
             if (d.withTax()) {
