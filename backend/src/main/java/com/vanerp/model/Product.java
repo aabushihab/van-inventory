@@ -60,6 +60,14 @@ public class Product {
     @Builder.Default
     private BigDecimal minStockThreshold = BigDecimal.ZERO;
 
+    /** أقل سعر بيع للوحدة مسموح للسائق (فارغ = بدون حد أدنى). */
+    @Column(name = "min_sale_price", precision = 14, scale = 3)
+    private BigDecimal minSalePrice;
+
+    /** أعلى سعر بيع للوحدة مسموح للسائق (فارغ = بدون حد أعلى). تساوي الحدين = سعر ثابت. */
+    @Column(name = "max_sale_price", precision = 14, scale = 3)
+    private BigDecimal maxSalePrice;
+
     /** سعر بيع الكرتونة (اختياري) - فارغ = سعر الحبة × عدد الحبات بالكرتونة. */
     @Column(name = "carton_price", precision = 14, scale = 3)
     private BigDecimal cartonPrice;

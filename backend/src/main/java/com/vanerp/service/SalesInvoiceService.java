@@ -88,6 +88,7 @@ public class SalesInvoiceService {
     public SalesInvoiceDto create(SalesInvoiceCreateRequest request, User actingUser) {
         vanAccessService.enforceSalesmanWarehouse(actingUser, request);
         request = normalizePacks(request);
+        enforceDriverPriceRange(request, actingUser);
         Warehouse warehouse = warehouseRepository.findById(request.warehouseId())
                 .orElseThrow(() -> ApiException.notFound("المخزن غير موجود"));
         Branch branch = branchRepository.findById(request.branchId())
@@ -220,6 +221,32 @@ public class SalesInvoiceService {
                 request.checkInfo());
     }
 
+    /**
+     * السائق يبيع فقط ضمن نطاق السعر المحدد لكل صنف (للوحدة، بعد خصم السطر). المدير غير مقيّد.
+     */
+    private void enforceDriverPriceRange(SalesInvoiceCreateRequest request, User user) {
+        if (!vanAccessService.isRestrictedSalesman(user)) return;
+        for (InvoiceItemRequest it : request.items()) {
+            Product p = productRepository.findById(it.productId()).orElse(null);
+            if (p == null || (p.getMinSalePrice() == null && p.getMaxSalePrice() == null)) continue;
+            BigDecimal discount = it.discount() != null ? it.discount() : BigDecimal.ZERO;
+            BigDecimal effective = it.quantity().multiply(it.unitPrice()).subtract(discount)
+                    .divide(it.quantity(), 3, RoundingMode.HALF_UP);
+            BigDecimal tolerance = new BigDecimal("0.001");
+            boolean below = p.getMinSalePrice() != null && effective.add(tolerance).compareTo(p.getMinSalePrice()) < 0;
+            boolean above = p.getMaxSalePrice() != null && effective.subtract(tolerance).compareTo(p.getMaxSalePrice()) > 0;
+            if (below || above) {
+                String range = p.getMinSalePrice() != null && p.getMaxSalePrice() != null
+                        && p.getMinSalePrice().compareTo(p.getMaxSalePrice()) == 0
+                        ? "السعر الثابت " + plain(p.getMinSalePrice())
+                        : "من " + (p.getMinSalePrice() != null ? plain(p.getMinSalePrice()) : "-")
+                          + " إلى " + (p.getMaxSalePrice() != null ? plain(p.getMaxSalePrice()) : "-");
+                throw ApiException.badRequest(String.format("سعر \"%s\" (%s للحبة بعد الخصم) خارج المسموح للسائق: %s",
+                        p.getName(), plain(effective), range));
+            }
+        }
+    }
+
     /** المبلغ المستحق حالياً على عميل (صافي بعد المرتجعات والدفعات)، مع استثناء فاتورة معيّنة عند التعديل. */
     @Transactional(readOnly = true)
     public BigDecimal customerOutstanding(Long customerId, Long excludeInvoiceId) {
@@ -328,6 +355,7 @@ public class SalesInvoiceService {
             throw ApiException.badRequest("لا يمكن تعديل فاتورة مدفوعة بشيك - غيّر حالة الشيك أو الغِ الفاتورة");
         }
         request = normalizePacks(request);
+        enforceDriverPriceRange(request, actingUser);
         Warehouse oldWarehouse = invoice.getWarehouse();
         Warehouse newWarehouse = warehouseRepository.findById(request.warehouseId())
                 .orElseThrow(() -> ApiException.notFound("المخزن غير موجود"));

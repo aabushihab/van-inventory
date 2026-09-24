@@ -17,6 +17,8 @@ public record ProductUpsertRequest(
         @NotNull Long unitId,
         BigDecimal unitsPerCarton,
         BigDecimal cartonPrice,
+        BigDecimal minSalePrice,
+        BigDecimal maxSalePrice,
         @NotNull BigDecimal purchasePrice,
         @NotNull BigDecimal salePrice,
         BigDecimal taxRate,

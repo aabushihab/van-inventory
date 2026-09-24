@@ -59,6 +59,7 @@ export const productApi = {
 export const stockApi = {
   byWarehouse: (warehouseId) => client.get(`/stock/warehouse/${warehouseId}`),
   byWarehousePage: (warehouseId, params) => client.get(`/stock/warehouse/${warehouseId}/page`, { params }),
+  searchAll: (params) => client.get('/stock/search', { params }),
   byProduct: (productId) => client.get(`/stock/product/${productId}`),
   lowStock: () => client.get('/stock/low-stock'),
   movements: (params) => client.get('/stock/movements', { params }),

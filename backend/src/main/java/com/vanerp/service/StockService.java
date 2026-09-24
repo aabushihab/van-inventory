@@ -46,6 +46,12 @@ public class StockService {
     }
 
     @Transactional(readOnly = true)
+    public Page<StockItemDto> searchAll(String q, Long categoryId, Pageable pageable) {
+        return stockItemRepository.searchAll(q != null && !q.isBlank() ? q : null, categoryId != null ? categoryId : -1L, pageable)
+                .map(this::toDto);
+    }
+
+    @Transactional(readOnly = true)
     public List<StockItemDto> findByProduct(Long productId) {
         return stockItemRepository.findByProductId(productId).stream().map(this::toDto).toList();
     }
@@ -235,7 +241,13 @@ public class StockService {
                 .note(note).createdBy(actingUser).build();
         stockMovementRepository.save(movement);
 
-        if (product.getMinStockThreshold() != null && product.getMinStockThreshold().signum() > 0
+        boolean vanWarehouse = "VAN".equals(warehouse.getWarehouseType());
+        if (vanWarehouse) {
+            // السيارة: حد التنبيه مصمم للمستودع، لذا ننبّه فقط عند نفاد الصنف من السيارة
+            if (quantity.signum() < 0 && newQuantity.signum() == 0) {
+                notificationService.raiseVanOutOfStockIfNeeded(product, warehouse);
+            }
+        } else if (product.getMinStockThreshold() != null && product.getMinStockThreshold().signum() > 0
                 && newQuantity.compareTo(product.getMinStockThreshold()) <= 0) {
             notificationService.raiseLowStockAlertIfNeeded(product, warehouse, newQuantity);
         }

@@ -27,6 +27,8 @@ import ErrorAlert from '../components/ErrorAlert';
 import CheckFields, { emptyCheck, checkIsValid } from '../components/CheckFields';
 import { getFieldErrors, getErrorMessage } from '../utils/apiError';
 
+const fmtN = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
+
 const emptyItem = { productId: '', categoryId: '', warehouseId: '', packType: 'UNIT', quantity: 1, unitPrice: 0, discount: 0, taxRate: 0 };
 
 /** عدد الحبات في العبوة المختارة للسطر (1 للحبة، عدد حبات الكرتونة للكرتونة). */
@@ -275,6 +277,13 @@ export default function SalesInvoicesPage() {
         const p = products.find((pp) => pp.id === updated.productId);
         if (p) updated.unitPrice = patch.packType === 'CARTON' ? cartonPriceOf(p) : Number(p.salePrice);
       }
+      // السائق بسعر ثابت: السعر = السعر الثابت × حجم العبوة
+      if (vanMode && (patch.productId || patch.packType)) {
+        const p = products.find((pp) => pp.id === updated.productId);
+        if (p && p.minSalePrice != null && p.maxSalePrice != null && Number(p.minSalePrice) === Number(p.maxSalePrice)) {
+          updated.unitPrice = Number(p.minSalePrice) * packSizeOf(p, updated.packType);
+        }
+      }
       return updated;
     }));
   }
@@ -293,7 +302,13 @@ export default function SalesInvoicesPage() {
     const packSize = packSizeOf(product, it.packType);
     const baseQty = qty * packSize;
     const belowCost = product && it.unitPrice !== '' && Number(it.unitPrice) / packSize < Number(product.purchasePrice);
-    return { ...it, lineTotal: base + taxAmount, purchasePrice: product ? Number(product.purchasePrice) * packSize : undefined,
+    // نطاق سعر السائق (للحبة) × حجم العبوة، وسعر السطر الفعلي بعد الخصم
+    const minP = vanMode && product?.minSalePrice != null ? Number(product.minSalePrice) * packSize : null;
+    const maxP = vanMode && product?.maxSalePrice != null ? Number(product.maxSalePrice) * packSize : null;
+    const effPrice = qty > 0 ? (qty * price - discount) / qty : price;
+    const outOfRange = !!product && ((minP != null && effPrice < minP - 0.0005) || (maxP != null && effPrice > maxP + 0.0005));
+    const fixedPrice = minP != null && maxP != null && Math.abs(minP - maxP) < 0.0005;
+    return { ...it, minP, maxP, outOfRange, fixedPrice, lineTotal: base + taxAmount, purchasePrice: product ? Number(product.purchasePrice) * packSize : undefined,
       belowCost, packSize, baseQty, canCarton: Number(product?.unitsPerCarton) > 0 };
   });
   const grandTotal = computedItems.reduce((s, it) => s + it.lineTotal, 0);
@@ -308,6 +323,7 @@ export default function SalesInvoicesPage() {
     const baseByProduct = {};
     computedItems.filter((it) => it.productId && Number(it.quantity) > 0)
       .forEach((it) => { baseByProduct[it.productId] = (baseByProduct[it.productId] || 0) + it.baseQty; });
+    if (computedItems.some((it) => it.productId && it.outOfRange)) { setError(t('invoice.priceOutOfRange')); return; }
     if (vanStock && !editingInvoice && Object.entries(baseByProduct).some(([pid, q]) => q > (vanStock[pid] ?? 0))) {
       setError(t('vanLoads.exceedsAvailable')); return;
     }
@@ -666,8 +682,14 @@ export default function SalesInvoicesPage() {
                   </TableCell>
                   <TableCell>
                     <TextField size="small" type="number" value={it.unitPrice} onChange={(e) => updateItem(idx, { unitPrice: e.target.value })}
-                      error={it.belowCost}
-                      helperText={it.belowCost ? `${t('products.purchasePrice')}: ${Number(it.purchasePrice).toLocaleString(undefined, { maximumFractionDigits: 3 })}` : ''}
+                      disabled={it.fixedPrice}
+                      error={(!vanMode && it.belowCost) || it.outOfRange}
+                      helperText={vanMode
+                        ? (it.fixedPrice ? t('invoice.fixedPrice')
+                          : (it.minP != null || it.maxP != null)
+                            ? t('invoice.allowedRange', { from: it.minP != null ? fmtN(it.minP) : '-', to: it.maxP != null ? fmtN(it.maxP) : '-' })
+                            : '')
+                        : (it.belowCost ? `${t('products.purchasePrice')}: ${fmtN(it.purchasePrice)}` : '')}
                       sx={{ minWidth: 90 }} />
                   </TableCell>
                   <TableCell>

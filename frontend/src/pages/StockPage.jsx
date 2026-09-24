@@ -81,6 +81,10 @@ export default function StockPage() {
         const { data } = await stockApi.lowStock();
         setRows(data);
         setTotalElements(data.length);
+      } else if (warehouseId === 'ALL') {
+        const { data } = await stockApi.searchAll({ q: q || undefined, page: overrides.page ?? page, size });
+        setRows(data.content);
+        setTotalElements(data.totalElements);
       } else {
         const { data } = await stockApi.byWarehousePage(warehouseId, {
           q: q || undefined, page: overrides.page ?? page, size,
@@ -102,7 +106,7 @@ export default function StockPage() {
     setError('');
     try {
       const { data } = await stockApi.movements({
-        warehouseId, from: movementFrom, to: movementTo,
+        warehouseId: warehouseId === 'ALL' ? undefined : warehouseId, from: movementFrom, to: movementTo,
         page: overrides.page ?? movementPage, size: movementSize,
       });
       setMovements(data.content);
@@ -232,6 +236,7 @@ export default function StockPage() {
       <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField select size="small" label={t('common.warehouse')} value={warehouseId}
           onChange={(e) => setWarehouseId(e.target.value)} sx={{ minWidth: 220 }}>
+          <MenuItem value="ALL">{t('stock.allWarehouses')}</MenuItem>
           {warehouses.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
         </TextField>
         {tab === 0 && (

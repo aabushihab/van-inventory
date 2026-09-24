@@ -18,7 +18,7 @@ import { compressImage } from '../utils/imageCompress';
 
 const emptyProduct = {
   sku: '', barcode: '', name: '', nameEn: '', categoryId: '', unitId: '',
-  unitsPerCarton: '', cartonPrice: '',
+  unitsPerCarton: '', cartonPrice: '', minSalePrice: '', maxSalePrice: '',
   purchasePrice: '0', salePrice: '0', taxRate: '0', minStockThreshold: '0',
   imageUrl: '', expiryDate: '', expiryAlertDays: '', active: true,
 };
@@ -88,6 +88,7 @@ export default function ProductsPage() {
       ...emptyProduct, ...row,
       categoryId: row.categoryId || '', unitId: row.unitId || '',
       unitsPerCarton: row.unitsPerCarton ?? '', cartonPrice: row.cartonPrice ?? '',
+      minSalePrice: row.minSalePrice ?? '', maxSalePrice: row.maxSalePrice ?? '',
       expiryDate: row.expiryDate || '', expiryAlertDays: row.expiryAlertDays ?? '',
     });
     setFieldErrors({});
@@ -105,6 +106,8 @@ export default function ProductsPage() {
         unitId: form.unitId,
         unitsPerCarton: form.unitsPerCarton === '' ? null : Number(form.unitsPerCarton),
         cartonPrice: form.cartonPrice === '' || form.cartonPrice == null ? null : Number(form.cartonPrice),
+        minSalePrice: form.minSalePrice === '' || form.minSalePrice == null ? null : Number(form.minSalePrice),
+        maxSalePrice: form.maxSalePrice === '' || form.maxSalePrice == null ? null : Number(form.maxSalePrice),
         purchasePrice: Number(form.purchasePrice || 0),
         salePrice: Number(form.salePrice || 0),
         taxRate: Number(form.taxRate || 0),
@@ -298,6 +301,30 @@ export default function ProductsPage() {
                 placeholder={Number(form.unitsPerCarton) > 0 ? String(Number(form.salePrice || 0) * Number(form.unitsPerCarton)) : ''}
                 helperText={Number(form.unitsPerCarton) > 0 ? t('products.cartonPriceHint') : ''}
                 slotProps={{ inputLabel: { shrink: true } }} />
+            </Grid>
+            <Grid size={12}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 1 }}>{t('products.driverPriceTitle')}</Typography>
+              <Typography variant="caption" color="text.secondary">{t('products.driverPriceHint')}</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField fullWidth type="number" label={t('products.minSalePrice')} value={form.minSalePrice ?? ''}
+                onChange={(e) => setForm({ ...form, minSalePrice: e.target.value })}
+                error={form.minSalePrice !== '' && form.maxSalePrice !== '' && Number(form.minSalePrice) > Number(form.maxSalePrice)}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: 0, step: 'any' } }} />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField fullWidth type="number" label={t('products.maxSalePrice')} value={form.maxSalePrice ?? ''}
+                onChange={(e) => setForm({ ...form, maxSalePrice: e.target.value })}
+                error={form.minSalePrice !== '' && form.maxSalePrice !== '' && Number(form.minSalePrice) > Number(form.maxSalePrice)}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: 0, step: 'any' } }} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button size="small" onClick={() => setForm({ ...form, minSalePrice: form.salePrice, maxSalePrice: form.salePrice })}>
+                {t('products.fixPrice')}
+              </Button>
+              <Button size="small" color="inherit" onClick={() => setForm({ ...form, minSalePrice: '', maxSalePrice: '' })}>
+                {t('products.noPriceLimit')}
+              </Button>
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField fullWidth type="number" label={t('products.purchasePrice')} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}

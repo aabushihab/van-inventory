@@ -35,6 +35,16 @@ public class StockController {
         return stockService.findByWarehouse(warehouseId);
     }
 
+    /** بحث عن صنف في كل المخازن (المستودعات والسيارات). */
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('STOCK_VIEW')")
+    public Page<StockItemDto> searchAll(@RequestParam(required = false) String q,
+                                        @RequestParam(required = false) Long categoryId,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "25") int size) {
+        return stockService.searchAll(q, categoryId, PageRequest.of(page, size));
+    }
+
     @GetMapping("/warehouse/{warehouseId}/page")
     @PreAuthorize("hasAuthority('STOCK_VIEW')")
     public Page<StockItemDto> byWarehousePage(@PathVariable Long warehouseId,

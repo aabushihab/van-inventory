@@ -267,7 +267,13 @@
     "expiresIn": "Expires in {{days}} days",
     "expiredAgo": "Expired {{days}} days ago",
     "cartonPrice": "Carton sale price",
-    "cartonPriceHint": "Empty = piece price × pieces"
+    "cartonPriceHint": "Empty = piece price × pieces",
+    "driverPriceTitle": "Allowed driver sale price (per piece)",
+    "driverPriceHint": "Drivers can't sell below or above this range (after discount). Equal limits = fixed price. Empty = no limit. Doesn't apply to management.",
+    "minSalePrice": "Min price",
+    "maxSalePrice": "Max price",
+    "fixPrice": "Fix at sale price",
+    "noPriceLimit": "No limit"
   },
   "stock": {
     "adjust": "Add Stock",
@@ -282,7 +288,8 @@
     "salePriceOptional": "Sale Price (optional)",
     "purchasePriceHelp": "Averaged with existing stock cost, only applied when increasing stock",
     "salePriceHelp": "Directly replaces the product's sale price regardless of adjustment type",
-    "editPrices": "Edit Prices"
+    "editPrices": "Edit Prices",
+    "allWarehouses": "All warehouses & vans"
   },
   "invoice": {
     "number": "Invoice Number",
@@ -336,7 +343,10 @@
     "packCarton": "Carton",
     "pieces": "= {{count}} pcs",
     "packDamaged": "Damaged",
-    "damagedHint": "Damaged/expired returns go to damaged goods and are not resold"
+    "damagedHint": "Damaged/expired returns go to damaged goods and are not resold",
+    "priceOutOfRange": "A price is outside the allowed range - adjust the price or discount",
+    "fixedPrice": "Fixed price",
+    "allowedRange": "Allowed: {{from}} - {{to}}"
   },
   "notifications": {
     "title": "Notifications",

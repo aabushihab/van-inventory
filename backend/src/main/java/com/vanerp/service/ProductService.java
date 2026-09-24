@@ -39,8 +39,8 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Page<ProductDto> searchInWarehouse(String q, Long categoryId, Long warehouseId, Pageable pageable) {
         return productRepository.searchInWarehouse(q, categoryId, warehouseId, pageable)
-                .map(p -> toDto(p, stockItemRepository.findByProductIdAndWarehouseId(p.getId(), warehouseId)
-                        .map(si -> si.getQuantity()).orElse(BigDecimal.ZERO)));
+                .map(p -> hideCost(toDto(p, stockItemRepository.findByProductIdAndWarehouseId(p.getId(), warehouseId)
+                        .map(si -> si.getQuantity()).orElse(BigDecimal.ZERO))));
     }
 
     @Transactional(readOnly = true)
@@ -48,7 +48,7 @@ public class ProductService {
         BigDecimal qty = stockItemRepository.findByProductIdAndWarehouseId(id, warehouseId)
                 .map(si -> si.getQuantity()).orElse(BigDecimal.ZERO);
         if (qty.signum() <= 0) throw ApiException.notFound("المنتج غير موجود على سيارتك");
-        return toDto(getOrThrow(id), qty);
+        return hideCost(toDto(getOrThrow(id), qty));
     }
 
     @Transactional(readOnly = true)
@@ -58,6 +58,7 @@ public class ProductService {
 
     @Transactional
     public ProductDto create(ProductUpsertRequest request) {
+        validatePriceRange(request);
         if (productRepository.existsBySku(request.sku())) {
             throw ApiException.conflict("رمز المنتج (SKU) مستخدم مسبقاً");
         }
@@ -79,6 +80,8 @@ public class ProductService {
                 .unit(unit)
                 .unitsPerCarton(request.unitsPerCarton())
                 .cartonPrice(request.cartonPrice())
+                .minSalePrice(request.minSalePrice())
+                .maxSalePrice(request.maxSalePrice())
                 .purchasePrice(request.purchasePrice())
                 .salePrice(request.salePrice())
                 .taxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO)
@@ -94,8 +97,15 @@ public class ProductService {
         return toDto(product);
     }
 
+    private void validatePriceRange(ProductUpsertRequest r) {
+        if (r.minSalePrice() != null && r.maxSalePrice() != null && r.minSalePrice().compareTo(r.maxSalePrice()) > 0) {
+            throw ApiException.badRequest("أقل سعر بيع للسائق أكبر من أعلى سعر");
+        }
+    }
+
     @Transactional
     public ProductDto update(Long id, ProductUpsertRequest request) {
+        validatePriceRange(request);
         Product product = getOrThrow(id);
 
         productRepository.findBySku(request.sku()).ifPresent(existing -> {
@@ -121,6 +131,8 @@ public class ProductService {
         product.setUnit(unit);
         product.setUnitsPerCarton(request.unitsPerCarton());
         product.setCartonPrice(request.cartonPrice());
+        product.setMinSalePrice(request.minSalePrice());
+        product.setMaxSalePrice(request.maxSalePrice());
         product.setPurchasePrice(request.purchasePrice());
         product.setSalePrice(request.salePrice());
         product.setTaxRate(request.taxRate() != null ? request.taxRate() : BigDecimal.ZERO);
@@ -160,6 +172,14 @@ public class ProductService {
         return days <= alertDays ? "SOON" : "OK";
     }
 
+    /** نسخة بدون سعر التكلفة (للسائق/المندوب). */
+    private ProductDto hideCost(ProductDto d) {
+        return new ProductDto(d.id(), d.sku(), d.barcode(), d.name(), d.nameEn(), d.categoryId(), d.categoryName(),
+                d.unitId(), d.unitName(), d.unitsPerCarton(), d.cartonPrice(), d.minSalePrice(), d.maxSalePrice(),
+                null, d.salePrice(), d.taxRate(), d.minStockThreshold(), d.imageUrl(), d.expiryDate(), d.expiryAlertDays(),
+                d.expiryStatus(), d.daysToExpiry(), d.active(), d.totalStock());
+    }
+
     private ProductDto toDto(Product p) {
         BigDecimal totalStock = stockItemRepository.findByProductId(p.getId()).stream()
                 .map(si -> si.getQuantity())
@@ -174,7 +194,7 @@ public class ProductService {
                 p.getCategory() != null ? p.getCategory().getId() : null,
                 p.getCategory() != null ? p.getCategory().getName() : null,
                 p.getUnit().getId(), p.getUnit().getName(),
-                p.getUnitsPerCarton(), p.getCartonPrice(),
+                p.getUnitsPerCarton(), p.getCartonPrice(), p.getMinSalePrice(), p.getMaxSalePrice(),
                 p.getPurchasePrice(), p.getSalePrice(), p.getTaxRate(), p.getMinStockThreshold(),
                 p.getImageUrl(), p.getExpiryDate(), p.getExpiryAlertDays(),
                 expiryStatus(p), p.getExpiryDate() != null

@@ -10,6 +10,7 @@ public enum NotificationType {
     VAN_NOT_UNLOADED,
     VAN_SHORTAGE,
     VAN_LOAD_REQUEST,
+    VAN_OUT_OF_STOCK,
     SYSTEM,
     INFO
 }

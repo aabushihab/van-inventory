@@ -36,8 +36,22 @@ public interface StockItemRepository extends JpaRepository<StockItem, Long> {
         SELECT si FROM StockItem si
         JOIN si.product p
         WHERE p.minStockThreshold > 0 AND si.quantity <= p.minStockThreshold AND p.active = TRUE
+          AND si.warehouse.warehouseType <> 'VAN'
         """)
     List<StockItem> findLowStockItems();
+
+    /** بحث المخزون في كل المخازن (أو مخزن واحد) بالاسم/الرمز. */
+    @Query("""
+        SELECT si FROM StockItem si
+        JOIN si.product p
+        JOIN si.warehouse w
+        WHERE (:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                          OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+          AND (:categoryId = -1 OR p.category.id = :categoryId)
+        ORDER BY p.name, w.name
+        """)
+    Page<StockItem> searchAll(@Param("q") String q, @Param("categoryId") Long categoryId, Pageable pageable);
 
     @Query("""
         SELECT si FROM StockItem si

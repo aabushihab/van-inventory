@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final CompanySettingsService companySettingsService;
 
     @Transactional(readOnly = true)
     public Page<NotificationDto> findAll(Pageable pageable) {
@@ -75,6 +76,20 @@ public class NotificationService {
                 .build();
 
         notificationRepository.save(notification);
+    }
+
+    /** نفاد صنف من سيارة توزيع - مرة واحدة يومياً لكل صنف وسيارة (إن كانت تنبيهات السيارات مفعّلة). */
+    @Transactional
+    public void raiseVanOutOfStockIfNeeded(Product product, Warehouse vanWarehouse) {
+        if (!companySettingsService.getOrCreate().isVanAlertsEnabled()) return;
+        String key = "VAN_OUT:" + vanWarehouse.getId() + ":" + product.getId() + ":" + java.time.LocalDate.now();
+        if (notificationRepository.existsByAlertKey(key)) return;
+        notificationRepository.save(Notification.builder()
+                .type(NotificationType.VAN_OUT_OF_STOCK)
+                .title("نفد صنف من السيارة: " + product.getName())
+                .message(String.format("نفدت كمية \"%s\" من \"%s\" - قد تحتاج السيارة لتحميل إضافي.",
+                        product.getName(), vanWarehouse.getName()))
+                .relatedProduct(product).relatedWarehouse(vanWarehouse).alertKey(key).read(false).build());
     }
 
     /**
