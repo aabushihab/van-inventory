@@ -16,7 +16,8 @@ public interface SalesReturnRepository extends JpaRepository<SalesReturn, Long> 
      * بالتقرير المالي حتى يُخصم المرتجع من فترة الفاتورة الأصلية بدل فترة الإرجاع نفسه، فلا يظهر يوم
      * هادئ بخسارة وهمية بسبب إرجاع بضاعة بيعت بفترة سابقة.
      */
-    @Query("SELECT r FROM SalesReturn r WHERE r.salesInvoice.createdAt >= :from AND r.salesInvoice.createdAt < :to")
+    @Query("SELECT r FROM SalesReturn r WHERE r.salesInvoice.createdAt >= :from AND r.salesInvoice.createdAt < :to"
+            + " AND r.salesInvoice.status <> com.vanerp.model.InvoiceStatus.CANCELLED")
     List<SalesReturn> findByInvoiceCreatedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     @Query("SELECT COALESCE(SUM(r.totalValue), 0) FROM SalesReturn r WHERE r.salesInvoice.id = :invoiceId")

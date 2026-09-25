@@ -34,6 +34,12 @@ public class StockService {
     private final WarehouseRepository warehouseRepository;
     private final NotificationService notificationService;
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
+    /** مساحة مفاتيح أقفال المخزون (pg_advisory_xact_lock) - قفل لكل مخزن/سيارة. */
+    private static final long STOCK_LOCK_NAMESPACE = 910_000_000L;
+
     @Transactional(readOnly = true)
     public List<StockItemDto> findByWarehouse(Long warehouseId) {
         return stockItemRepository.findByWarehouseId(warehouseId).stream().map(this::toDto).toList();
@@ -221,7 +227,18 @@ public class StockService {
     public StockItem applyMovement(Product product, Warehouse warehouse, BigDecimal quantity,
                                     MovementType type, String referenceType, Long referenceId,
                                     String note, User actingUser) {
+        // قفل المخزن حتى نهاية المعاملة: عمليتان متزامنتان على نفس المخزن/السيارة لا تقرآن نفس الرصيد أبداً
+        // (بدونه كان البيع المتزامن يتجاوز المخزون ويضيع جزء من الخصم). مخازن مختلفة تبقى متوازية بالكامل،
+        // والقفل على مستوى المخزن (لا السطر) فلا يحدث تعارض (deadlock) مهما كان ترتيب أصناف الفاتورة.
+        entityManager.createNativeQuery("SELECT CAST(pg_advisory_xact_lock(?1) AS text)")
+                .setParameter(1, STOCK_LOCK_NAMESPACE + warehouse.getId())
+                .getSingleResult();
         StockItem item = stockItemRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId())
+                .map(existing -> {
+                    // قراءة الرصيد الحالي من قاعدة البيانات بعد القفل (وليس نسخة قديمة من ذاكرة المعاملة)
+                    entityManager.refresh(existing);
+                    return existing;
+                })
                 .orElseGet(() -> StockItem.builder()
                         .product(product).warehouse(warehouse).quantity(BigDecimal.ZERO).build());
 

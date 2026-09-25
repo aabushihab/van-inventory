@@ -51,6 +51,9 @@ public class SalesInvoiceService {
     private final CompanySettingsService companySettingsService;
     private final com.vanerp.einvoice.EInvoiceService eInvoiceService;
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     /** يمنع تعديل/إلغاء/إرجاع فاتورة تاريخها ضمن فترة مالية مقفلة - نفس حارس AccountService.recordTransaction. */
     private void guardNotClosed(SalesInvoice invoice) {
         fiscalYearClosingService.latestClosingDate()
@@ -320,7 +323,7 @@ public class SalesInvoiceService {
 
     @Transactional
     public void cancel(Long id, User actingUser) {
-        SalesInvoice invoice = getOrThrow(id);
+        SalesInvoice invoice = getForUpdate(id);
         if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
             throw ApiException.badRequest("الفاتورة ملغاة مسبقاً");
         }
@@ -345,7 +348,7 @@ public class SalesInvoiceService {
      */
     @Transactional
     public SalesInvoiceDto update(Long id, SalesInvoiceCreateRequest request, User actingUser) {
-        SalesInvoice invoice = getOrThrow(id);
+        SalesInvoice invoice = getForUpdate(id);
         if (invoice.getStatus() != InvoiceStatus.CONFIRMED) {
             throw ApiException.badRequest("لا يمكن تعديل فاتورة ملغاة أو مرتجعة");
         }
@@ -451,7 +454,7 @@ public class SalesInvoiceService {
      */
     @Transactional
     public SalesReturnDto recordReturn(Long invoiceId, SalesReturnRequest request, User actingUser) {
-        SalesInvoice invoice = getOrThrow(invoiceId);
+        SalesInvoice invoice = getForUpdate(invoiceId);
         if (invoice.getStatus() != InvoiceStatus.CONFIRMED) {
             throw ApiException.badRequest("لا يمكن الإرجاع إلا من فاتورة مؤكدة");
         }
@@ -569,6 +572,16 @@ public class SalesInvoiceService {
         return "SI-" + datePart + "-" + String.format("%04d", countToday + 1) + "-" + suffix;
     }
 
+    /**
+     * قراءة الفاتورة مع قفل سطرها حتى نهاية المعاملة: دفعتان/إرجاعان متزامنان على نفس الفاتورة (مثلاً السائق
+     * والمحاسب بنفس اللحظة) ينفّذان بالتتابع فلا يضيع تحديث المدفوع أو الكمية المرتجعة.
+     */
+    private SalesInvoice getForUpdate(Long id) {
+        SalesInvoice invoice = entityManager.find(SalesInvoice.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (invoice == null) throw ApiException.notFound("فاتورة البيع غير موجودة");
+        return invoice;
+    }
+
     private SalesInvoice getOrThrow(Long id) {
         return salesInvoiceRepository.findById(id).orElseThrow(() -> ApiException.notFound("فاتورة البيع غير موجودة"));
     }
@@ -632,7 +645,7 @@ public class SalesInvoiceService {
      */
     @Transactional
     public SalesInvoiceDto addPayment(Long invoiceId, SalesPaymentRequest request, User actingUser) {
-        SalesInvoice invoice = getOrThrow(invoiceId);
+        SalesInvoice invoice = getForUpdate(invoiceId);
         if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
             throw ApiException.badRequest("لا يمكن إضافة دفعة لفاتورة ملغاة");
         }
@@ -681,7 +694,7 @@ public class SalesInvoiceService {
      */
     @Transactional
     public SalesInvoiceDto recordRefund(Long invoiceId, SalesRefundRequest request, User actingUser) {
-        SalesInvoice invoice = getOrThrow(invoiceId);
+        SalesInvoice invoice = getForUpdate(invoiceId);
         BigDecimal owed = netCreditOwed(invoice);
         if (request.amount().compareTo(owed) > 0) {
             throw ApiException.badRequest("المبلغ أكبر من المستحق إرجاعه للعميل (المستحق: "

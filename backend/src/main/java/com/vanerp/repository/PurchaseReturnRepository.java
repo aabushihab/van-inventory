@@ -12,7 +12,8 @@ public interface PurchaseReturnRepository extends JpaRepository<PurchaseReturn, 
     List<PurchaseReturn> findByPurchaseInvoiceIdOrderByCreatedAtDesc(Long purchaseInvoiceId);
 
     /** نفس منهجية SalesReturnRepository.findByInvoiceCreatedAtBetween: يُخصم المرتجع من فترة الفاتورة الأصلية. */
-    @Query("SELECT r FROM PurchaseReturn r WHERE r.purchaseInvoice.createdAt >= :from AND r.purchaseInvoice.createdAt < :to")
+    @Query("SELECT r FROM PurchaseReturn r WHERE r.purchaseInvoice.createdAt >= :from AND r.purchaseInvoice.createdAt < :to"
+            + " AND r.purchaseInvoice.status <> com.vanerp.model.InvoiceStatus.CANCELLED")
     List<PurchaseReturn> findByInvoiceCreatedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     @Query("SELECT COALESCE(SUM(r.totalValue), 0) FROM PurchaseReturn r WHERE r.purchaseInvoice.id = :invoiceId")

@@ -112,9 +112,17 @@ public class ReportService {
                 // لذا يجب خصم المرتجع بنفس الأساس - سعر وحدة الفاتورة الأصلية، وليس item.getUnitPrice()
                 // الخاص بسطر الإرجاع (وهو سعر شامل الضريبة/الخصم مُحسَّب لغرض credit العميل فقط) وإلا
                 // يُخصم جزء الضريبة المتضمّن في سعر الإرجاع من "المبيعات" فيظهر الربح أعلى من الحقيقة.
-                BigDecimal subtotalPortion = item.getSalesInvoiceItem().getUnitPrice().multiply(item.getQuantity());
-                BigDecimal costPortion = item.getSalesInvoiceItem().getUnitCost().multiply(item.getQuantity());
+                SalesInvoiceItem line = item.getSalesInvoiceItem();
+                BigDecimal subtotalPortion = line.getUnitPrice().multiply(item.getQuantity());
+                BigDecimal costPortion = line.getUnitCost().multiply(item.getQuantity());
+                // صافي المرتجع قبل الضريبة = قيمته الفعلية (اللي رجعت للعميل أو انخصمت من ذمته) − نصيبه من الضريبة
+                // (نفس حساب الضريبة المستحقة)، والفرق عن سعره قبل الخصم هو نصيبه من خصم السطر. هكذا يتطابق
+                // الربح مع حركة الكاش والذمم والضريبة حتى آخر فلس.
+                BigDecimal netPortion = item.getLineValue().subtract(lineTaxPortion(line.getQuantity(), line.getUnitPrice(),
+                        line.getDiscount(), line.getTaxRate(), item.getQuantity()));
+                BigDecimal discountPortion = subtotalPortion.subtract(netPortion);
                 acc.salesTotal = acc.salesTotal.subtract(subtotalPortion);
+                acc.discountTotal = acc.discountTotal.subtract(discountPortion);
                 acc.costOfGoodsSold = acc.costOfGoodsSold.subtract(costPortion);
             }
         }
